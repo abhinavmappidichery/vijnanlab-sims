@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><style>
+@font-face {
+  font-family: "Optimistic";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/OptimisticAI_VF_Optimized.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Optimistic Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/OptimisticMono_W_TextRegular.woff2") format("woff2");
+}
+:where(html) {
+  font-family: "Optimistic", system-ui, sans-serif;
+}
+:where(code, pre, kbd, samp) {
+  font-family: "Optimistic Mono", ui-monospace, monospace;
+}
+</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Electromagnet Simulator</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:linear-gradient(135deg,#edf7ff,#fff9eb);font-family:system-ui,sans-serif;color:#17364c;display:flex;flex-direction:column}
+header{background:#07547d;color:#fff;padding:10px 12px;text-align:center}
+h1{margin:0;font-size:16px}header p{margin:2px 0 0;font-size:11px;opacity:.9}
+main{flex:1;max-width:1050px;width:100%;margin:auto;padding:8px;display:grid;grid-template-columns:1fr 280px;gap:10px}
+.card{background:#fff;border-radius:12px;padding:10px;box-shadow:0 4px 12px #1544661e;display:flex;flex-direction:column;justify-content:center}
+canvas{display:block;width:100%;height:100%;min-height:300px;border-radius:8px;background:linear-gradient(#e9f7ff,#d4ecf8)}
+h2{color:#07547d;margin:0 0 6px;font-size:14px}
+.instruction{line-height:1.4;margin:0 0 8px;color:#4a6679;font-size:11px}
+.switch{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border:2px solid #c7dce9;border-radius:8px;margin-bottom:8px}
+.switch span{font-weight:800;font-size:12px}
+.toggle{width:50px;height:26px;border:0;border-radius:14px;background:#aebbc3;padding:2px;cursor:pointer;transition:.25s}
+.dot{display:block;width:22px;height:22px;border-radius:50%;background:#fff;transition:.25s}
+.toggle.on{background:#16a06e}
+.toggle.on .dot{transform:translateX(24px)}
+.add{width:100%;padding:10px;border:0;border-radius:6px;background:#e55831;color:#fff;font:700 12px inherit;cursor:pointer}
+.add:disabled{opacity:.45;cursor:not-allowed}
+#count{margin:6px 0;padding:6px;text-align:center;background:#eaf7ef;border-radius:6px;color:#087247;font-weight:800;font-size:12px}
+.reset{width:100%;margin-top:6px;padding:8px;border:2px solid #07547d;border-radius:6px;background:#fff;color:#07547d;font:700 12px inherit;cursor:pointer}
+@media(max-width:680px){main{grid-template-columns:1fr}canvas{height:260px}}
+</style>
+</head>
+<body>
+<header><h1>ELECTROMAGNET SIMULATOR</h1><p>Turn nail into magnet using electricity</p></header>
+<main>
+<section class="card"><canvas id="scene"></canvas></section>
+<section class="card">
+<h2>Controls</h2>
+<p class="instruction">1. Switch battery ON.<br>2. Add pins one by one.<br>3. Switch OFF to drop pins.</p>
+<div class="switch"><span>Power: <b id="switchText">OFF</b></span><button class="toggle" id="toggle" onclick="togglePower()"><i class="dot"></i></button></div>
+<button class="add" id="addPin" onclick="addPin()" disabled>ADD ONE PIN</button>
+<div id="count">Pins attracted: 0</div>
+<button class="reset" onclick="resetLab()">RESET EXPERIMENT</button>
+</section>
+</main>
+<script>
+const canvas=document.getElementById('scene'),ctx=canvas.getContext('2d');
+const toggle=document.getElementById('toggle'),switchText=document.getElementById('switchText'),addButton=document.getElementById('addPin'),countEl=document.getElementById('count');
+let powered=false,pins=[],tablePins=[],falling=null,last=performance.now(),dashOffset=0;
+const maxPins=6;
+function resize(){const r=canvas.getBoundingClientRect();canvas.width=r.width;canvas.height=r.height;draw();}
+window.addEventListener('resize',resize);
+function togglePower(){
+powered=!powered;toggle.classList.toggle('on',powered);switchText.textContent=powered?'ON':'OFF';
+if(!powered && pins.length){
+const w=canvas.width,h=canvas.height;
+tablePins=pins.map((pin,i)=>({x:w*(.30+Math.random()*.42),y:pin.y,targetY:h*.90-(i%2)*8,angle:(Math.random()-.5)*1.3,speed:2+i*.4}));
+pins=[];falling={dropAll:true};countEl.textContent=`Pins fallen: ${tablePins.length}`;
+}
+addButton.disabled=!powered||pins.length>=maxPins||falling;
+animate();
+}
+function addPin(){if(!powered||falling||pins.length>=maxPins)return;falling={dropAll:false,y:-30,rotation:(Math.random()-.5)*.4};addButton.disabled=true;animate();}
+function resetLab(){powered=false;pins=[];tablePins=[];falling=null;toggle.classList.remove('on');switchText.textContent='OFF';addButton.disabled=true;countEl.textContent='Pins attracted: 0';draw();}
+function animate(now=performance.now()){
+const dt=Math.min(32,now-last);last=now;
+if(powered)dashOffset=(dashOffset+dt*0.05)%16;
+if(falling){
+if(falling.dropAll){
+for(const pin of tablePins)if(pin.y<pin.targetY){pin.speed+=dt*.0018;pin.y=Math.min(pin.targetY,pin.y+pin.speed);}
+if(tablePins.every(pin=>pin.y>=pin.targetY)){falling=null;countEl.textContent=`Pins on table: ${tablePins.length}`;}
+}
+else{falling.y+=dt*.38;const target=getPinPosition(pins.length).y;if(falling.y>=target){pins.push({y:target});falling=null;countEl.textContent=`Pins attracted: ${pins.length}`;addButton.disabled=!powered||pins.length>=maxPins;}}
+}
+draw();if(falling||powered)requestAnimationFrame(animate);
+}
+function getPinPosition(index){const h=canvas.height;return{y:h*.60+10+index*22};}
+function drawPin(x,y,angle=0){ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.fillStyle='#6d7e87';ctx.fillRect(-4,-10,8,20);ctx.beginPath();ctx.moveTo(-4,10);ctx.lineTo(4,10);ctx.lineTo(0,16);ctx.closePath();ctx.fill();ctx.restore();}
+function draw(){
+const w=canvas.width,h=canvas.height;if(!w||!h)return;ctx.clearRect(0,0,w,h);const cx=w*.53;
+ctx.fillStyle='#bd8758';ctx.fillRect(0,h*.92,w,h*.08);
+const bx=w*.10,by=h*.52;ctx.fillStyle='#202429';ctx.fillRect(bx,by,50,80);ctx.fillStyle='#f2c83d';ctx.fillRect(bx+5,by+12,40,48);ctx.fillStyle='#202429';ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.fillText('9V',bx+25,by+40);
+ctx.lineWidth=3;ctx.strokeStyle='#d72b32';ctx.beginPath();ctx.moveTo(bx+12,by);ctx.bezierCurveTo(bx+5,h*.18,cx-70,h*.18,cx-25,h*.25);ctx.stroke();ctx.strokeStyle='#27343b';ctx.beginPath();ctx.moveTo(bx+38,by);ctx.bezierCurveTo(bx+70,h*.62,cx+70,h*.55,cx+25,h*.47);ctx.stroke();
+if(powered){
+ctx.strokeStyle='rgba(26,117,181,.6)';ctx.lineWidth=2;ctx.setLineDash([6,6]);ctx.lineDashOffset=-dashOffset;
+for(let i=1;i<=4;i++){const s=14+i*12;ctx.beginPath();ctx.moveTo(cx-25,h*.24);ctx.bezierCurveTo(cx-s*2,h*.24-s,cx+s*2,h*.62+s,cx+25,h*.62);ctx.stroke();}
+ctx.setLineDash([]);
+}
+ctx.fillStyle='#6e7d85';ctx.fillRect(cx-18,h*.20,36,h*.33);ctx.beginPath();ctx.moveTo(cx-18,h*.53);ctx.lineTo(cx+18,h*.53);ctx.lineTo(cx,h*.60);ctx.closePath();ctx.fillStyle='#69777d';ctx.fill();
+ctx.strokeStyle='#c9781d';ctx.lineWidth=3;for(let y=h*.25;y<h*.47;y+=11){ctx.beginPath();ctx.ellipse(cx,y,24,5,0,0,Math.PI*2);ctx.stroke();}
+ctx.fillStyle='#07547d';ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.fillText(powered?'ELECTROMAGNET (ON)':'IRON NAIL (OFF)',cx,h*.14);
+pins.forEach((pin)=>drawPin(cx,pin.y));
+if(falling&&!falling.dropAll)drawPin(cx,falling.y,falling.rotation);
+tablePins.forEach(pin=>drawPin(pin.x,pin.y,pin.angle));
+if(!powered&&!pins.length&&!tablePins.length){for(let i=0;i<4;i++)drawPin(w*.73+i*14,h*.88,Math.PI/2);}
+}
+setTimeout(resize,100);animate();
+</script>
+<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script></body>
+</html>
