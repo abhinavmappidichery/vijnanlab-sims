@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
+    <title>Soluble & Insoluble – Realistic Lab</title>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+            background: #e6edf4;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 12px;
+        }
+        #root {
+            width: 100%;
+            max-width: 1240px;
+        }
+
+        .lab-container {
+            background: #f8faff;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 20, 40, 0.12);
+            padding: 18px 20px 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .lab-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px 12px;
+        }
+        .lab-header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #0b3b5c;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .lab-header h1 span {
+            font-weight: 400;
+            font-size: 0.85rem;
+            color: #2c5f7a;
+            background: #e1ebf5;
+            padding: 2px 10px;
+            border-radius: 20px;
+        }
+        .lab-header .subtitle {
+            color: #4d6a82;
+            font-size: 0.85rem;
+            background: #eaf1f8;
+            padding: 4px 14px;
+            border-radius: 40px;
+            white-space: nowrap;
+        }
+
+        .main-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        @media (min-width: 860px) {
+            .main-grid {
+                flex-direction: row;
+                align-items: stretch;
+            }
+            .beaker-wrap {
+                flex: 2;
+                min-width: 0;
+            }
+            .controls-wrap {
+                flex: 1;
+                min-width: 280px;
+                max-width: 400px;
+            }
+        }
+
+        .beaker-wrap {
+            background: #dce8f5;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+            touch-action: none;
+            user-select: none;
+            aspect-ratio: 4 / 3;
+            min-height: 320px;
+        }
+        .beaker-wrap canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .beaker-badge {
+            position: absolute;
+            left: 12px;
+            bottom: 12px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(6px);
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #1f4a6b;
+            pointer-events: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .controls-wrap {
+            background: #f5f9ff;
+            border-radius: 20px;
+            padding: 16px 14px;
+            box-shadow: inset 0 0 0 1px #d0e2f2;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 580px;
+            overflow-y: auto;
+        }
+        .controls-wrap h3 {
+            font-size: 0.95rem;
+            color: #1f4a6b;
+            font-weight: 600;
+        }
+
+        .substance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 8px;
+        }
+        .substance-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #ffffff;
+            border: 1px solid #dce8f5;
+            border-radius: 12px;
+            padding: 6px 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #1e3b4f;
+            transition: all 0.15s ease;
+            cursor: pointer;
+            text-align: left;
+            min-height: 44px;
+        }
+        .substance-btn:not(:disabled):hover {
+            border-color: #1f6b9e;
+            background: #f0f7fe;
+            transform: translateY(-1px);
+        }
+        .substance-btn.selected {
+            border-color: #1f6b9e;
+            background: #e6f0fa;
+            box-shadow: 0 0 0 2px rgba(31, 107, 158, 0.2);
+        }
+        .substance-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .substance-btn .emoji {
+            font-size: 1.3rem;
+            flex-shrink: 0;
+            width: 28px;
+            text-align: center;
+        }
+        .substance-btn .label {
+            flex: 1;
+            min-width: 0;
+            line-height: 1.1;
+        }
+        .substance-btn .label .ml {
+            font-size: 0.78rem;
+            font-weight: 600;
+            display: block;
+        }
+        .substance-btn .label .en {
+            font-size: 0.62rem;
+            color: #6a8aa3;
+            display: block;
+        }
+        .badge {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 40px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        .badge-soluble {
+            background: #c8f0d8;
+            color: #0d6b3e;
+        }
+        .badge-insoluble {
+            background: #f8d7da;
+            color: #a11f2c;
+        }
+        .badge-added {
+            background: #d4e4f5;
+            color: #1f4a6b;
+        }
+        .badge-idle {
+            background: #eef3fa;
+            color: #6a8aa3;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 2px;
+            flex-wrap: wrap;
+        }
+        .action-btn {
+            flex: 1;
+            padding: 10px 12px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            transition: all 0.15s;
+            cursor: pointer;
+            text-align: center;
+            min-width: 80px;
+        }
+        .action-btn:not(:disabled):hover {
+            transform: translateY(-1px);
+        }
+        .action-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+        .action-btn.primary {
+            background: #1f6b9e;
+            color: #fff;
+        }
+        .action-btn.primary:not(:disabled):hover {
+            background: #16527a;
+        }
+        .action-btn.secondary {
+            background: #e2ecf7;
+            color: #1f4a6b;
+        }
+        .action-btn.secondary:not(:disabled):hover {
+            background: #c8dcef;
+        }
+        .action-btn.danger {
+            background: #eef1f5;
+            color: #3d5a73;
+        }
+        .action-btn.danger:not(:disabled):hover {
+            background: #dce3ec;
+        }
+
+        .status-line {
+            font-size: 0.8rem;
+            color: #2c5f7a;
+            background: #eef3fa;
+            border-radius: 40px;
+            padding: 6px 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .status-line .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #1f6b9e;
+            display: inline-block;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                opacity: 0.8;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(0.95);
+                opacity: 0.8;
+            }
+        }
+
+        .observation-area {
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 10px 12px;
+            border: 1px solid #dce8f5;
+        }
+        .observation-area h4 {
+            font-size: 0.85rem;
+            color: #1f4a6b;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .obs-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.78rem;
+        }
+        .obs-table th {
+            background: #edf4fa;
+            color: #1a3d57;
+            font-weight: 600;
+            padding: 6px 8px;
+            text-align: left;
+        }
+        .obs-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #f0f4f8;
+            vertical-align: middle;
+        }
+        .obs-table .guess-radio {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .obs-table .guess-radio label {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+
+        .footer-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .footer-actions .note {
+            font-size: 0.72rem;
+            color: #6a8aa3;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script>
+        const SUBSTANCES = [
+            { id: 'sugar', name: 'Sugar', nameMl: 'പഞ്ചസാര', emoji: '🍬', soluble: true, solutionColor: null, type: 'solid',
+                particleColor: '#f7f0dc' },
+            { id: 'salt', name: 'Salt', nameMl: 'ഉപ്പ്', emoji: '🧂', soluble: true, solutionColor: null, type: 'solid',
+                particleColor: '#ffffff' },
+            { id: 'vinegar', name: 'Vinegar', nameMl: 'വിനാഗിരി', emoji: '🧪', soluble: true, solutionColor: '#e3dfcd',
+                type: 'liquid', liquidColor: '#e8e4d5' },
+            { id: 'baking_soda', name: 'Baking soda', nameMl: 'അപ്പക്കാരം', emoji: '🧴', soluble: true, solutionColor: null,
+                type: 'solid', particleColor: '#f2eedf' },
+            { id: 'detergent', name: 'Detergent', nameMl: 'സോപ്പ് പൊടി', emoji: '🧼', soluble: true, solutionColor: '#c5e2f6',
+                type: 'solid', particleColor: '#3a8ed8', isDetergent: true },
+            { id: 'kerosene', name: 'Kerosene', nameMl: 'മണ്ണെണ്ണ', emoji: '🛢️', soluble: false, solutionColor: null,
+                type: 'liquid', liquidColor: '#e8c86b', immiscible: true },
+            { id: 'coconut_oil', name: 'Coconut oil', nameMl: 'വെളിച്ചെണ്ണ', emoji: '🥥', soluble: false,
+                solutionColor: null, type: 'liquid', liquidColor: '#f2e3a8', immiscible: true },
+            { id: 'wax', name: 'Wax', nameMl: 'മെഴുക്', emoji: '🕯️', soluble: false, solutionColor: null, type: 'solid',
+                particleColor: '#f6e5a8' },
+            { id: 'camphor', name: 'Camphor', nameMl: 'കർപ്പൂരം', emoji: '🧊', soluble: false, solutionColor: null,
+                type: 'solid', particleColor: '#e8e2d2' },
+            { id: 'copper_sulphate', name: 'Copper sulphate', nameMl: 'തുരിശ്', emoji: '💎', soluble: true,
+                solutionColor: '#2b78c5', type: 'solid', particleColor: '#2b78c5' },
+            { id: 'potassium_permanganate', name: 'KMnO₄', nameMl: 'പൊട്ടാസ്യം പെർമാംഗനേറ്റ്', emoji: '🔮', soluble: true,
+                solutionColor: '#8a2b8c', type: 'solid', particleColor: '#8a2b8c' }
+        ];
+
+        // State Management
+        const state = {
+            entries: [],
+            waterColor: { r: 197, g: 225, b: 242 },
+            targetWaterColor: { r: 197, g: 225, b: 242 },
+
+            // Oil Layer & Droplets
+            oilVolume: 0,
+            oilTargetThick: 0,
+            oilCurrentThick: 0,
+            oilColor: { r: 233, g: 201, b: 122 },
+            oilDroplets: [],
+            oilLayerVisible: false, // layer only appears during/after stir
+
+            // Soap Foam
+            foamAmount: 0,
+            targetFoamAmount: 0,
+
+            // Stirring
+            stirActive: false,
+            stirProgress: 0,
+            stirAngle: 0,
+            rodYOffset: -100,
+            vortex: 0,
+
+            // Pouring
+            isPouring: false,
+            pourStart: 0,
+            pourDuration: 800,
+            pourParticles: [],
+            pourSubstanceId: null,
+
+            results: {},
+            selectedId: null,
+            animId: null
+        };
+
+        let canvas, ctx, containerEl;
+        let logicalW = 400,
+            logicalH = 300,
+            DPR = 1;
+        let beaker = { x: 50, y: 40, w: 200, h: 220, waterLevel: 130 };
+
+        function initDOM() {
+            const root = document.getElementById('root');
+            root.innerHTML = `
+            <div class="lab-container">
+                <div class="lab-header">
+                    <h1>🧪 Soluble & Insoluble <span>Realistic Lab</span></h1>
+                    <div class="subtitle">Select substance → Add → Stir → Observe</div>
+                </div>
+
+                <div class="main-grid">
+                    <div class="beaker-wrap" id="beakerWrap">
+                        <canvas id="labCanvas"></canvas>
+                        <div class="beaker-badge" id="beakerBadge">💧 Pure Water</div>
+                    </div>
+                    <div class="controls-wrap">
+                        <h3>🧪 Substances</h3>
+                        <div class="substance-grid" id="substanceGrid"></div>
+                        <div class="action-row">
+                            <button class="action-btn primary" id="btnAdd" disabled>➕ Add</button>
+                            <button class="action-btn primary" id="btnStir" disabled>🌀 Stir</button>
+                            <button class="action-btn danger" id="btnReset">⟳ Reset</button>
+                        </div>
+                        <div class="status-line" id="statusLine"><span class="dot"></span> Select a substance</div>
+                        <div class="observation-area">
+                            <h4>📋 Observation Table</h4>
+                            <div style="overflow-x:auto;">
+                                <table class="obs-table">
+                                    <thead><tr><th>Substance</th><th>Your Guess</th><th>Result</th><th>Observation</th></tr></thead>
+                                    <tbody id="obsBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="footer-actions">
+                    <button class="action-btn secondary" id="btnAddAll" style="max-width:160px;">⚡ Add All</button>
+                    <span class="note"> Solution = Solvent + Solute </span>
+                </div>
+            </div>`;
+
+            canvas = document.getElementById('labCanvas');
+            ctx = canvas.getContext('2d');
+            containerEl = document.getElementById('beakerWrap');
+
+            const grid = document.getElementById('substanceGrid');
+            SUBSTANCES.forEach(s => {
+                const btn = document.createElement('button');
+                btn.className = 'substance-btn';
+                btn.id = `btn_sub_${s.id}`;
+                btn.innerHTML = `
+                    <span class="emoji">${s.emoji}</span>
+                    <span class="label">
+                        <span class="ml">${s.nameMl}</span>
+                        <span class="en">${s.name}</span>
+                    </span>
+                    <span class="badge badge-idle" id="badge_${s.id}">⏳</span>
+                `;
+                btn.addEventListener('click', () => selectSubstance(s.id));
+                grid.appendChild(btn);
+            });
+
+            document.getElementById('btnAdd').addEventListener('click', startPour);
+            document.getElementById('btnStir').addEventListener('click', startStir);
+            document.getElementById('btnReset').addEventListener('click', resetAll);
+            document.getElementById('btnAddAll').addEventListener('click', addAll);
+
+            window.addEventListener('resize', resize);
+            resize();
+            updateObsTable();
+            updateButtons();
+
+            if (state.animId) cancelAnimationFrame(state.animId);
+            loop();
+        }
+
+        function resize() {
+            if (!containerEl || !canvas) return;
+            const rect = containerEl.getBoundingClientRect();
+            DPR = window.devicePixelRatio || 1;
+
+            logicalW = rect.width;
+            logicalH = rect.height || logicalW * 0.75;
+
+            canvas.width = logicalW * DPR;
+            canvas.height = logicalH * DPR;
+            canvas.style.width = logicalW + 'px';
+            canvas.style.height = logicalH + 'px';
+
+            ctx.resetTransform();
+            ctx.scale(DPR, DPR);
+
+            const padX = logicalW * 0.18;
+            const padY = logicalH * 0.12;
+            beaker.w = Math.min(logicalW * 0.64, 340);
+            beaker.h = logicalH - padY * 1.5;
+            beaker.x = (logicalW - beaker.w) / 2;
+            beaker.y = padY;
+            beaker.waterLevel = beaker.y + beaker.h * 0.45;
+        }
+
+        function selectSubstance(id) {
+            if (state.stirActive || state.isPouring) return;
+            if (state.entries.some(e => e.id === id) || state.results[id]?.result) return;
+            state.selectedId = id;
+            updateButtons();
+            const s = SUBSTANCES.find(item => item.id === id);
+            document.getElementById('statusLine').innerHTML =
+                `<span class="dot"></span> ${s.emoji} ${s.nameMl} — Press 'Add' to pour it in`;
+        }
+
+        function startPour() {
+            if (!state.selectedId || state.stirActive || state.isPouring) return;
+            const def = SUBSTANCES.find(s => s.id === state.selectedId);
+            if (!def) return;
+
+            state.isPouring = true;
+            state.pourStart = performance.now();
+            state.pourSubstanceId = state.selectedId;
+            state.pourParticles = [];
+
+            const count = def.type === 'solid' ? 35 : 25;
+            const pourX = beaker.x + beaker.w / 2;
+            for (let i = 0; i < count; i++) {
+                state.pourParticles.push({
+                    x: pourX + (Math.random() - 0.5) * 12,
+                    y: beaker.y - 30 - Math.random() * 40,
+                    vx: (Math.random() - 0.5) * 1,
+                    vy: 3 + Math.random() * 3,
+                    size: def.type === 'solid' ? (2.5 + Math.random() * 2) : (4 + Math.random() * 4),
+                    color: def.particleColor || def.liquidColor || '#fff',
+                    alpha: 1
+                });
+            }
+
+            document.getElementById('statusLine').innerHTML =
+                `<span class="dot"></span> 🧪 Adding ${def.nameMl} ...`;
+            updateButtons();
+
+            setTimeout(() => {
+                completePour();
+            }, state.pourDuration);
+        }
+
+        function completePour() {
+            const def = SUBSTANCES.find(s => s.id === state.pourSubstanceId);
+            if (!def) return;
+
+            state.isPouring = false;
+            const entry = {
+                id: def.id,
+                def: def,
+                particles: [],
+                phase: 'added'
+            };
+
+            if (def.immiscible) {
+                // --- OIL / KEROSENE: create DROPLETS only, NO layer yet ---
+                // Do NOT set oilVolume or oilTargetThick here — layer only appears when stirring.
+
+                // Store the oil color for later
+                state.oilColor = hexToRgb(def.liquidColor);
+
+                // Create a LOT of visible droplets at the water surface
+                const dropletCount = 45;
+                for (let i = 0; i < dropletCount; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const radius = 4 + Math.random() * 14;
+                    state.oilDroplets.push({
+                        x: beaker.x + 16 + Math.random() * (beaker.w - 32),
+                        y: beaker.waterLevel - 6 - Math.random() * 25,
+                        vx: (Math.random() - 0.5) * 0.4,
+                        vy: (Math.random() - 0.5) * 0.3,
+                        size: 3 + Math.random() * 6,
+                        color: def.liquidColor,
+                        isSurface: true,
+                        wobble: Math.random() * 100
+                    });
+                }
+                entry.phase = 'insoluble';
+
+            } else if (def.isDetergent) {
+                const count = 40;
+                for (let i = 0; i < count; i++) {
+                    entry.particles.push({
+                        x: beaker.x + 20 + Math.random() * (beaker.w - 40),
+                        y: beaker.waterLevel + 5 + Math.random() * (beaker.h * 0.35),
+                        size: 2 + Math.random() * 2.5,
+                        color: def.particleColor,
+                        settled: false,
+                        settleY: beaker.y + beaker.h - 12 - Math.random() * 15
+                    });
+                }
+            } else if (def.type === 'solid') {
+                const count = (def.id === 'wax' || def.id === 'camphor') ? 16 : 45;
+                for (let i = 0; i < count; i++) {
+                    entry.particles.push({
+                        x: beaker.x + 20 + Math.random() * (beaker.w - 40),
+                        y: beaker.waterLevel + 10 + Math.random() * (beaker.h * 0.4),
+                        size: (def.id === 'wax' || def.id === 'camphor') ? (6 + Math.random() * 6) : (2.5 + Math
+                        .random() * 3),
+                        color: def.particleColor,
+                        angle: Math.random() * Math.PI * 2,
+                        settled: false,
+                        settleY: beaker.y + beaker.h - 12 - Math.random() * 15
+                    });
+                }
+            } else {
+                // Soluble liquid
+                if (def.solutionColor) {
+                    const c = hexToRgb(def.solutionColor);
+                    state.targetWaterColor = {
+                        r: Math.round((state.targetWaterColor.r + c.r) / 2),
+                        g: Math.round((state.targetWaterColor.g + c.g) / 2),
+                        b: Math.round((state.targetWaterColor.b + c.b) / 2)
+                    };
+                }
+                entry.phase = 'dissolved';
+            }
+
+            state.entries.push(entry);
+            state.selectedId = null;
+            updateBadges();
+            updateObsTable();
+            updateButtons();
+
+            document.getElementById('statusLine').innerHTML =
+                `<span class="dot"></span> ✅ Added ${def.nameMl}. Now stir (🌀) to mix & observe.`;
+        }
+
+        function startStir() {
+            if (state.stirActive || state.entries.length === 0) return;
+
+            state.stirActive = true;
+            state.stirProgress = 0;
+
+            // If we have immiscible oil droplets, make the layer appear during stirring
+            const hasOil = state.entries.some(e => e.def.immiscible);
+            if (hasOil && state.oilDroplets.length > 0) {
+                // Calculate oil volume from droplets
+                const totalOil = state.entries.filter(e => e.def.immiscible).length;
+                state.oilVolume = totalOil;
+                state.oilTargetThick = totalOil * 18;
+                state.oilLayerVisible = true;
+            }
+
+            if (state.entries.some(e => e.def.isDetergent)) {
+                state.targetFoamAmount += 20;
+            }
+
+            document.getElementById('statusLine').innerHTML =
+                `<span class="dot"></span> 🌀 Stirring ... watch the mixture change`;
+            updateButtons();
+
+            const duration = 5000;
+            const startTime = performance.now();
+
+            const stirInterval = setInterval(() => {
+                const elapsed = performance.now() - startTime;
+                state.stirProgress = Math.min(1, elapsed / duration);
+                state.vortex = Math.sin(state.stirProgress * Math.PI) * 1.3;
+
+                if (state.stirProgress >= 1) {
+                    clearInterval(stirInterval);
+                    completeStir();
+                }
+            }, 30);
+        }
+
+        function completeStir() {
+            state.stirActive = false;
+            state.vortex = 0;
+
+            state.entries.forEach(entry => {
+                const def = entry.def;
+                if (def.soluble) {
+                    entry.phase = 'dissolved';
+                    entry.particles = [];
+
+                    if (def.solutionColor) {
+                        const c = hexToRgb(def.solutionColor);
+                        const intensity = (def.id === 'copper_sulphate' || def.id === 'potassium_permanganate') ?
+                            0.75 : 0.45;
+                        state.targetWaterColor = {
+                            r: Math.round(state.targetWaterColor.r * (1 - intensity) + c.r * intensity),
+                            g: Math.round(state.targetWaterColor.g * (1 - intensity) + c.g * intensity),
+                            b: Math.round(state.targetWaterColor.b * (1 - intensity) + c.b * intensity)
+                        };
+                    }
+                } else {
+                    entry.phase = 'insoluble';
+                }
+
+                if (!state.results[entry.id]) state.results[entry.id] = {};
+                state.results[entry.id].result = def.soluble ? 'soluble' : 'insoluble';
+                if (state.results[entry.id].guess) {
+                    state.results[entry.id].correct = state.results[entry.id].guess === state.results[entry.id]
+                        .result;
+                }
+            });
+
+            // Keep oil layer visible after stirring
+            if (state.oilLayerVisible && state.oilVolume > 0) {
+                state.oilTargetThick = state.oilVolume * 18;
+            }
+
+            document.getElementById('statusLine').innerHTML =
+                `<span class="dot"></span> ✅ Stirring complete. Check the observation table.`;
+            updateBadges();
+            updateObsTable();
+            updateButtons();
+        }
+
+        function resetAll() {
+            state.entries = [];
+            state.waterColor = { r: 197, g: 225, b: 242 };
+            state.targetWaterColor = { r: 197, g: 225, b: 242 };
+            state.oilVolume = 0;
+            state.oilTargetThick = 0;
+            state.oilCurrentThick = 0;
+            state.oilDroplets = [];
+            state.oilLayerVisible = false;
+            state.foamAmount = 0;
+            state.targetFoamAmount = 0;
+            state.stirActive = false;
+            state.stirProgress = 0;
+            state.vortex = 0;
+            state.isPouring = false;
+            state.pourParticles = [];
+            state.results = {};
+            state.selectedId = null;
+
+            document.getElementById('statusLine').innerHTML =
+                `<span class="dot"></span> 🧪 Lab reset. Select a substance.`;
+            updateBadges();
+            updateObsTable();
+            updateButtons();
+        }
+
+        function addAll() {
+            if (state.stirActive || state.isPouring) return;
+            // Add each substance one by one
+            const toAdd = SUBSTANCES.filter(s => !state.entries.some(e => e.id === s.id));
+            if (toAdd.length === 0) return;
+
+            let idx = 0;
+
+            function addNext() {
+                if (idx >= toAdd.length) {
+                    // After all added, auto-stir
+                    setTimeout(() => { if (state.entries.length > 0) startStir(); }, 400);
+                    return;
+                }
+                const s = toAdd[idx];
+                state.selectedId = s.id;
+                // Use completePour directly (bypass the pour animation for speed)
+                const def = SUBSTANCES.find(item => item.id === s.id);
+                if (def) {
+                    // Quick-add without animation
+                    const entry = {
+                        id: def.id,
+                        def: def,
+                        particles: [],
+                        phase: 'added'
+                    };
+
+                    if (def.immiscible) {
+                        state.oilColor = hexToRgb(def.liquidColor);
+                        const dropletCount = 30;
+                        for (let i = 0; i < dropletCount; i++) {
+                            state.oilDroplets.push({
+                                x: beaker.x + 16 + Math.random() * (beaker.w - 32),
+                                y: beaker.waterLevel - 6 - Math.random() * 20,
+                                vx: (Math.random() - 0.5) * 0.3,
+                                vy: (Math.random() - 0.5) * 0.3,
+                                size: 3 + Math.random() * 5,
+                                color: def.liquidColor,
+                                isSurface: true,
+                                wobble: Math.random() * 100
+                            });
+                        }
+                        entry.phase = 'insoluble';
+                    } else if (def.isDetergent) {
+                        const count = 30;
+                        for (let i = 0; i < count; i++) {
+                            entry.particles.push({
+                                x: beaker.x + 20 + Math.random() * (beaker.w - 40),
+                                y: beaker.waterLevel + 5 + Math.random() * (beaker.h * 0.35),
+                                size: 2 + Math.random() * 2.5,
+                                color: def.particleColor,
+                                settled: false,
+                                settleY: beaker.y + beaker.h - 12 - Math.random() * 15
+                            });
+                        }
+                    } else if (def.type === 'solid') {
+                        const count = (def.id === 'wax' || def.id === 'camphor') ? 14 : 35;
+                        for (let i = 0; i < count; i++) {
+                            entry.particles.push({
+                                x: beaker.x + 20 + Math.random() * (beaker.w - 40),
+                                y: beaker.waterLevel + 10 + Math.random() * (beaker.h * 0.4),
+                                size: (def.id === 'wax' || def.id === 'camphor') ? (6 + Math.random() * 6) : (2.5 +
+                                    Math.random() * 3),
+                                color: def.particleColor,
+                                angle: Math.random() * Math.PI * 2,
+                                settled: false,
+                                settleY: beaker.y + beaker.h - 12 - Math.random() * 15
+                            });
+                        }
+                    } else {
+                        if (def.solutionColor) {
+                            const c = hexToRgb(def.solutionColor);
+                            state.targetWaterColor = {
+                                r: Math.round((state.targetWaterColor.r + c.r) / 2),
+                                g: Math.round((state.targetWaterColor.g + c.g) / 2),
+                                b: Math.round((state.targetWaterColor.b + c.b) / 2)
+                            };
+                        }
+                        entry.phase = 'dissolved';
+                    }
+
+                    state.entries.push(entry);
+                    state.selectedId = null;
+                    updateBadges();
+                    updateObsTable();
+                    updateButtons();
+                }
+                idx++;
+                setTimeout(addNext, 250);
+            }
+
+            addNext();
+        }
+
+        function updateBadges() {
+            SUBSTANCES.forEach(s => {
+                const el = document.getElementById(`badge_${s.id}`);
+                if (!el) return;
+                const entry = state.entries.find(e => e.id === s.id);
+                const res = state.results[s.id];
+
+                if (res?.result === 'soluble') {
+                    el.textContent = '✅ Soluble';
+                    el.className = 'badge badge-soluble';
+                } else if (res?.result === 'insoluble') {
+                    el.textContent = '❌ Insoluble';
+                    el.className = 'badge badge-insoluble';
+                } else if (entry) {
+                    el.textContent = '⏳ Added';
+                    el.className = 'badge badge-added';
+                } else {
+                    el.textContent = '⏳';
+                    el.className = 'badge badge-idle';
+                }
+            });
+        }
+
+        function updateObsTable() {
+            const tbody = document.getElementById('obsBody');
+            if (!tbody) return;
+            let html = '';
+            SUBSTANCES.forEach(s => {
+                const res = state.results[s.id] || {};
+                const hasResult = res.result !== undefined;
+                const guess = res.guess || '';
+                const resultText = hasResult ? (res.result === 'soluble' ? 'Soluble' : 'Insoluble') : '—';
+                const correctText = res.correct === true ? '✅ Correct' : res.correct === false ? '❌ Wrong' : '⏳';
+
+                html += `<tr>
+                    <td><strong>${s.nameMl}</strong> <span style="color:#6a8aa3;font-size:0.65rem;">(${s.name})</span></td>
+                    <td>
+                        <div class="guess-radio">
+                            <label><input type="radio" name="guess_${s.id}" value="soluble" ${guess==='soluble'?'checked':''} ${hasResult?'disabled':''} onchange="setGuess('${s.id}','soluble')"> Soluble</label>
+                            <label><input type="radio" name="guess_${s.id}" value="insoluble" ${guess==='insoluble'?'checked':''} ${hasResult?'disabled':''} onchange="setGuess('${s.id}','insoluble')"> Insoluble</label>
+                        </div>
+                    </td>
+                    <td style="font-weight:600; color:${hasResult?(res.result==='soluble'?'#0d6b3e':'#a11f2c'):'#6a8aa3'}">${resultText}</td>
+                    <td>${correctText}</td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        window.setGuess = function(id, val) {
+            if (!state.results[id]) state.results[id] = {};
+            state.results[id].guess = val;
+            if (state.results[id].result) {
+                state.results[id].correct = state.results[id].result === val;
+            }
+            updateObsTable();
+        };
+
+        function updateButtons() {
+            const hasSelected = !!state.selectedId;
+            const hasEntries = state.entries.length > 0;
+            const isBusy = state.stirActive || state.isPouring;
+
+            document.getElementById('btnAdd').disabled = !hasSelected || isBusy;
+            document.getElementById('btnStir').disabled = !hasEntries || isBusy;
+
+            SUBSTANCES.forEach(s => {
+                const btn = document.getElementById(`btn_sub_${s.id}`);
+                if (!btn) return;
+                const isAdded = state.entries.some(e => e.id === s.id);
+                btn.disabled = isAdded || isBusy;
+                if (state.selectedId === s.id) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+        }
+
+        function hexToRgb(hex) {
+            const res = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return res ? { r: parseInt(res[1], 16), g: parseInt(res[2], 16), b: parseInt(res[3], 16) } : { r: 233,
+                g: 201, b: 122 };
+        }
+
+        // --- DRAWING FUNCTIONS ---
+
+        function drawBeaker() {
+            const { x, y, w, h, waterLevel } = beaker;
+
+            ctx.clearRect(0, 0, logicalW, logicalH);
+
+            // Lab Bench Background
+            const bgGrad = ctx.createLinearGradient(0, 0, 0, logicalH);
+            bgGrad.addColorStop(0, '#eaf0f7');
+            bgGrad.addColorStop(1, '#c8d6e2');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, logicalW, logicalH);
+
+            // Beaker Shadow
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 20, 40, 0.15)';
+            ctx.shadowBlur = 25;
+            ctx.shadowOffsetY = 12;
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            roundRect(ctx, x, y, w, h, 16);
+            ctx.fill();
+            ctx.restore();
+
+            // Water smooth color transition
+            state.waterColor.r += (state.targetWaterColor.r - state.waterColor.r) * 0.05;
+            state.waterColor.g += (state.targetWaterColor.g - state.waterColor.g) * 0.05;
+            state.waterColor.b += (state.targetWaterColor.b - state.waterColor.b) * 0.05;
+
+            const wc = state.waterColor;
+            const waterGrad = ctx.createLinearGradient(x, waterLevel, x, y + h);
+            waterGrad.addColorStop(0, `rgba(${wc.r}, ${wc.g}, ${wc.b}, 0.85)`);
+            waterGrad.addColorStop(1, `rgba(${wc.r*0.8}, ${wc.g*0.85}, ${wc.b*0.9}, 0.95)`);
+
+            // Clip inner liquid area
+            ctx.save();
+            roundRect(ctx, x + 3, y + 3, w - 6, h - 8, 14);
+            ctx.clip();
+
+            // Draw Water Liquid Body
+            ctx.fillStyle = waterGrad;
+            ctx.beginPath();
+            const vortexDepth = state.vortex * 18;
+            const midX = x + w / 2;
+
+            ctx.moveTo(x + 4, waterLevel);
+            ctx.quadraticCurveTo(midX, waterLevel + vortexDepth, x + w - 4, waterLevel);
+            ctx.lineTo(x + w - 4, y + h);
+            ctx.lineTo(x + 4, y + h);
+            ctx.closePath();
+            ctx.fill();
+
+            // --- OIL DROPLETS (always visible, before & during stirring) ---
+            if (state.oilDroplets.length > 0) {
+                state.oilDroplets.forEach(d => {
+                    // Slight wobble at surface
+                    if (d.isSurface) {
+                        d.wobble += 0.02;
+                        d.x += Math.sin(d.wobble) * 0.08;
+                        // Keep near surface
+                        d.y += (beaker.waterLevel - 6 - d.y) * 0.005;
+                    }
+                    ctx.save();
+                    const col = hexToRgb(d.color || '#e8c86b');
+                    ctx.shadowColor = 'rgba(0,0,0,0.08)';
+                    ctx.shadowBlur = 6;
+                    ctx.fillStyle = `rgba(${col.r}, ${col.g}, ${col.b}, 0.88)`;
+                    ctx.strokeStyle = `rgba(255, 255, 255, 0.5)`;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.arc(d.x, d.y, d.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.restore();
+                });
+            }
+
+            // --- OIL LAYER (only visible when oilLayerVisible is true, i.e. during/after stirring) ---
+            if (state.oilLayerVisible) {
+                state.oilCurrentThick += (state.oilTargetThick - state.oilCurrentThick) * 0.05;
+                if (state.oilCurrentThick > 1) {
+                    const oc = state.oilColor;
+                    const oilTop = waterLevel - state.oilCurrentThick;
+                    const oilGrad = ctx.createLinearGradient(x, oilTop, x, waterLevel);
+                    oilGrad.addColorStop(0, `rgba(${oc.r}, ${oc.g}, ${oc.b}, 0.92)`);
+                    oilGrad.addColorStop(1, `rgba(${oc.r*0.85}, ${oc.g*0.8}, ${oc.b*0.6}, 0.85)`);
+
+                    ctx.fillStyle = oilGrad;
+                    ctx.beginPath();
+                    ctx.moveTo(x + 4, oilTop);
+                    ctx.lineTo(x + w - 4, oilTop);
+                    ctx.lineTo(x + w - 4, waterLevel);
+                    ctx.quadraticCurveTo(midX, waterLevel + vortexDepth, x + 4, waterLevel);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Oil Meniscus Top Line
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(x + 4, oilTop);
+                    ctx.lineTo(x + w - 4, oilTop);
+                    ctx.stroke();
+
+                    // Oil-Water Interface Boundary
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(x + 4, waterLevel);
+                    ctx.quadraticCurveTo(midX, waterLevel + vortexDepth, x + w - 4, waterLevel);
+                    ctx.stroke();
+                }
+            }
+
+            // --- Soap Foam Layer ---
+            state.foamAmount += (state.targetFoamAmount - state.foamAmount) * 0.05;
+            if (state.foamAmount > 1) {
+                const foamBase = waterLevel - state.oilCurrentThick;
+                const foamTop = foamBase - state.foamAmount;
+
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+                ctx.beginPath();
+                ctx.moveTo(x + 4, foamTop);
+                ctx.lineTo(x + w - 4, foamTop);
+                ctx.lineTo(x + w - 4, foamBase);
+                ctx.quadraticCurveTo(midX, foamBase + vortexDepth, x + 4, foamBase);
+                ctx.closePath();
+                ctx.fill();
+
+                const bubbleCount = Math.floor((w - 20) / 10);
+                for (let i = 0; i < bubbleCount; i++) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+                    ctx.strokeStyle = 'rgba(180, 210, 235, 0.6)';
+                    ctx.lineWidth = 0.8;
+                    ctx.beginPath();
+                    const bx = x + 10 + i * 10;
+                    const by = foamTop + Math.sin(i * 1.5) * 2;
+                    ctx.arc(bx, by, 3.5 + (i % 3), 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                }
+            }
+
+            // --- Solids/Particles ---
+            state.entries.forEach(entry => {
+                if (entry.phase === 'dissolved') return;
+                entry.particles.forEach(p => {
+                    ctx.save();
+                    ctx.fillStyle = p.color || '#fff';
+                    if (entry.def.id === 'wax' || entry.def.id === 'camphor') {
+                        ctx.translate(p.x, p.y);
+                        ctx.rotate(p.angle || 0);
+                        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                    } else {
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    ctx.restore();
+                });
+            });
+
+            // Pouring Stream Animation
+            if (state.isPouring) {
+                state.pourParticles.forEach(p => {
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
+
+            ctx.restore(); // end clip
+
+            // Glass Beaker Outline
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = 3;
+            roundRect(ctx, x, y, w, h, 16);
+            ctx.stroke();
+
+            // Glass Shine Streaks
+            const shine = ctx.createLinearGradient(x, y, x + 30, y);
+            shine.addColorStop(0, 'rgba(255,255,255,0.4)');
+            shine.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = shine;
+            ctx.fillRect(x + 6, y + 10, 20, h - 25);
+
+            drawStirringRod();
+
+            // Update Status Badge
+            const badge = document.getElementById('beakerBadge');
+            if (badge) {
+                if (state.oilLayerVisible && state.oilCurrentThick > 5) {
+                    badge.textContent = '🛢️ Oil Layer (Immiscible)';
+                } else if (state.oilDroplets.length > 10 && !state.oilLayerVisible) {
+                    badge.textContent = '🟡 Oil Droplets (floating)';
+                } else if (state.foamAmount > 5) {
+                    badge.textContent = '🧼 Soap Solution';
+                } else if (state.entries.some(e => e.phase === 'dissolved')) {
+                    badge.textContent = '🧪 Solution';
+                } else if (state.entries.length > 0) {
+                    badge.textContent = '💧 Water + Mixture';
+                } else {
+                    badge.textContent = '💧 Pure Water';
+                }
+            }
+        }
+
+        function drawStirringRod() {
+            const targetY = state.stirActive ? 0 : -120;
+            state.rodYOffset += (targetY - state.rodYOffset) * 0.1;
+
+            if (state.rodYOffset < -110 && !state.stirActive) return;
+
+            const cx = beaker.x + beaker.w / 2;
+            const topY = beaker.y - 40 + state.rodYOffset;
+            const bottomY = beaker.waterLevel + beaker.h * 0.35 + state.rodYOffset;
+
+            if (state.stirActive) {
+                state.stirAngle += 0.15;
+            } else {
+                state.stirAngle += 0.02;
+            }
+
+            const orbitRadius = state.stirActive ? 25 : 2;
+            const rx = Math.cos(state.stirAngle) * orbitRadius;
+            const ry = Math.sin(state.stirAngle) * (orbitRadius * 0.4);
+
+            const rodBottomX = cx + rx;
+            const rodBottomY = bottomY + ry;
+            const rodTopX = cx - rx * 0.5;
+            const rodTopY = topY;
+
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 30, 60, 0.2)';
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetX = 4;
+
+            ctx.beginPath();
+            ctx.moveTo(rodTopX - 4, rodTopY);
+            ctx.lineTo(rodBottomX - 4, rodBottomY);
+            ctx.arc(rodBottomX, rodBottomY, 4, Math.PI, 0, true);
+            ctx.lineTo(rodTopX + 4, rodTopY);
+            ctx.closePath();
+
+            const rodGrad = ctx.createLinearGradient(rodTopX - 10, rodTopY, rodTopX + 10, rodTopY);
+            rodGrad.addColorStop(0, 'rgba(220, 235, 245, 0.9)');
+            rodGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.95)');
+            rodGrad.addColorStop(1, 'rgba(180, 205, 225, 0.85)');
+
+            ctx.fillStyle = rodGrad;
+            ctx.fill();
+
+            ctx.shadowColor = 'transparent';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(rodTopX - 1, rodTopY + 5);
+            ctx.lineTo(rodBottomX - 1, rodBottomY - 5);
+            ctx.stroke();
+
+            ctx.fillStyle = '#1f6b9e';
+            ctx.beginPath();
+            ctx.arc(rodTopX, rodTopY, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function roundRect(ctx, x, y, w, h, r) {
+            if (r > w / 2) r = w / 2;
+            if (r > h / 2) r = h / 2;
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        }
+
+        function updatePhysics() {
+            // Pouring physics
+            if (state.isPouring) {
+                state.pourParticles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    if (p.y > beaker.waterLevel) p.alpha *= 0.9;
+                });
+            }
+
+            // Oil Droplets: rise to surface when not stirring
+            state.oilDroplets.forEach(d => {
+                if (state.stirActive) {
+                    // During stirring: swirl around
+                    const cx = beaker.x + beaker.w / 2;
+                    const cy = beaker.waterLevel + beaker.h * 0.3;
+                    const dx = d.x - cx;
+                    const dy = d.y - cy;
+                    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                    const angle = Math.atan2(dy, dx) + 0.12;
+                    d.x = cx + Math.cos(angle) * dist;
+                    d.y = cy + Math.sin(angle) * dist * 0.8;
+                    // If layer is visible, some droplets merge into it
+                    if (state.oilLayerVisible && d.y < beaker.waterLevel) {
+                        d.size *= 0.98;
+                    }
+                } else {
+                    // Float to surface
+                    const targetY = beaker.waterLevel - 6 - Math.random() * 10;
+                    d.y += (targetY - d.y) * 0.02;
+                    d.x += Math.sin(d.y * 0.05 + d.wobble) * 0.3;
+                    // Keep at surface
+                    if (d.y < beaker.waterLevel - 20) d.y += 0.2;
+                    if (d.y > beaker.waterLevel + 2) d.y -= 0.2;
+                }
+            });
+
+            // Remove tiny droplets
+            state.oilDroplets = state.oilDroplets.filter(d => d.size > 0.4);
+
+            // Particle physics for solids
+            state.entries.forEach(entry => {
+                if (entry.phase === 'dissolved') return;
+                entry.particles.forEach(p => {
+                    if (state.stirActive) {
+                        const cx = beaker.x + beaker.w / 2;
+                        const cy = beaker.waterLevel + beaker.h * 0.3;
+                        const dx = p.x - cx;
+                        const dy = p.y - cy;
+                        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                        const angle = Math.atan2(dy, dx) + 0.12;
+                        p.x = cx + Math.cos(angle) * dist;
+                        p.y = cy + Math.sin(angle) * dist * 0.8;
+                    } else if (!entry.def.soluble && entry.def.type === 'solid') {
+                        if (entry.def.id === 'wax' || entry.def.id === 'camphor') {
+                            p.y += (beaker.waterLevel + 8 - p.y) * 0.05;
+                        } else if (!p.settled) {
+                            p.y += (p.settleY - p.y) * 0.05;
+                            if (Math.abs(p.settleY - p.y) < 1) p.settled = true;
+                        }
+                    }
+                });
+            });
+        }
+
+        function loop() {
+            updatePhysics();
+            drawBeaker();
+            state.animId = requestAnimationFrame(loop);
+        }
+
+        document.addEventListener('DOMContentLoaded', initDOM);
+    </script>
+</body>
+</html>
