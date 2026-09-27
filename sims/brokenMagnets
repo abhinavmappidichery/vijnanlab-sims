@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Broken Magnet Interaction</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+body{font-family:'Inter',sans-serif;background-color:#f8fafc;overflow:hidden;margin:0;padding:0}
+#app-container{display:flex;flex-direction:column;height:100vh;width:100vw}
+#canvas-container{flex:1;position:relative;overflow:hidden;background-color:#ffffff}
+canvas{display:block;width:100%;height:100%}
+#controls-panel{background:white;border-top:1px solid #e2e8f0;padding:1rem;display:flex;flex-direction:column;gap:1rem;box-shadow:0 -4px 10px -1px rgba(0,0,0,0.05);z-index:10}
+.controls-row{display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:center;align-items:center}
+.btn-action{padding:0.5rem 1rem;border-radius:0.5rem;border:2px solid #cbd5e1;background:#f8fafc;color:#475569;font-weight:700;font-size:0.85rem;cursor:pointer;transition:all 0.2s;text-align:center;min-width:140px;display:flex;flex-direction:column;align-items:center}
+.btn-action.active{background:#e2e8f0;border-color:#94a3b8}
+.btn-primary{background:#3b82f6;color:white;border-color:#2563eb;box-shadow:0 4px 6px rgba(59,130,246,0.3)}
+.btn-danger{background:#ef4444;color:white;border-color:#dc2626;box-shadow:0 4px 6px rgba(239,68,68,0.3)}
+#status-overlay{position:absolute;top:15px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.95);padding:0.5rem 1.25rem;border-radius:0.75rem;box-shadow:0 4px 12px rgba(0,0,0,0.08);text-align:center;border:1px solid #e2e8f0;pointer-events:none;max-width:90%;z-index:5}
+</style>
+</head>
+<body>
+<div id="app-container">
+<div id="canvas-container">
+<canvas id="simCanvas"></canvas>
+<div id="status-overlay">
+<div id="status-title" class="text-base font-extrabold text-slate-800">Bar Magnet (ബാർ കാന്തം)</div>
+<div id="status-desc" class="text-xs font-medium text-slate-500">Select and break it</div>
+</div>
+</div>
+<div id="controls-panel">
+<div class="controls-row">
+<button class="btn-action active" id="btn-bar">Bar Magnet<br><span class="text-[10px] font-normal">ബാർ കാന്തം</span></button>
+<button class="btn-action" id="btn-ring">Ring Magnet<br><span class="text-[10px] font-normal">റിംഗ് കാന്തം</span></button>
+</div>
+<div class="controls-row">
+<button class="btn-action btn-danger" id="btn-break">Break Magnet<br><span class="text-[10px]">പൊട്ടിക്കുക</span></button>
+<button class="btn-action btn-primary" id="btn-rejoin" disabled style="opacity:0.5">Bring Closer<br><span class="text-[10px]">അടുപ്പിക്കുക</span></button>
+</div>
+</div>
+</div>
+<script>
+const canvas=document.getElementById('simCanvas');const ctx=canvas.getContext('2d');
+const container=document.getElementById('canvas-container');
+const titleEl=document.getElementById('status-title');const descEl=document.getElementById('status-desc');
+let width,height,magnetType='bar',state='intact',gap=0,targetGap=0,time=0;
+let barJagged=[];
+function resize(){width=container.clientWidth;height=container.clientHeight;canvas.width=width;canvas.height=height;}
+window.addEventListener('resize',resize);resize();
+function genJag(){barJagged=[];const barH=60,seg=8;for(let i=0;i<=seg;i++){let rx=(i===0||i===seg)?0:(Math.random()-0.5)*15;barJagged.push({x:rx,y:-barH/2+(barH/seg)*i});}}
+genJag();
+const btnBar=document.getElementById('btn-bar'),btnRing=document.getElementById('btn-ring'),btnBreak=document.getElementById('btn-break'),btnRejoin=document.getElementById('btn-rejoin');
+function setStatus(t,d,c){titleEl.textContent=t;descEl.textContent=d;titleEl.className='text-base font-extrabold '+(c||'text-slate-800');}
+btnBar.onclick=()=>{magnetType='bar';state='intact';gap=0;targetGap=0;btnBar.classList.add('active');btnRing.classList.remove('active');btnRejoin.disabled=true;btnRejoin.style.opacity='0.5';btnBreak.disabled=false;btnBreak.style.opacity='1';setStatus("Bar Magnet (ബാർ കാന്തം)","Select and break it");genJag();};
+btnRing.onclick=()=>{magnetType='ring';state='intact';gap=0;targetGap=0;btnRing.classList.add('active');btnBar.classList.remove('active');btnRejoin.disabled=true;btnRejoin.style.opacity='0.5';btnBreak.disabled=false;btnBreak.style.opacity='1';setStatus("Ring Magnet (റിംഗ് കാന്തം)","Two halves will repel when broken");genJag();};
+btnBreak.onclick=()=>{state='broken';targetGap=120;btnBreak.disabled=true;btnBreak.style.opacity='0.5';btnRejoin.disabled=false;btnRejoin.style.opacity='1';setStatus(magnetType==='bar'?"Magnet Broken (പൊട്ടി)":"Ring Broken (പൊട്ടി)",magnetType==='bar'?"പുതിയ N & S ധ്രുവങ്ങൾ ഉണ്ടായി! 4 poles total":"Like poles N-N & S-S will repel!","text-orange-600");};
+btnRejoin.onclick=()=>{state='rejoining';targetGap=0;btnRejoin.disabled=true;btnRejoin.style.opacity='0.5';btnBreak.disabled=false;btnBreak.style.opacity='1';};
+function getBField(x,y,poles){let bx=0,by=0;for(const p of poles){const dx=x-p.x,dy=y-p.y,r2=dx*dx+dy*dy;if(r2<5)continue;const mag=30000*p.p/r2;bx+=mag*(dx/Math.sqrt(r2));by+=mag*(dy/Math.sqrt(r2));}return{x:bx,y:by};}
+function trace(sx,sy,poles){let x=sx,y=sy;const path=[{x,y}];for(let i=0;i<4000;i++){const b=getBField(x,y,poles),m=Math.sqrt(b.x*b.x+b.y*b.y);if(m<0.001)break;x+=(b.x/m)*5;y+=(b.y/m)*5;path.push({x,y});let hit=false;for(const p of poles)if(p.p<0&&Math.hypot(x-p.x,y-p.y)<15){hit=true;path.push({x:p.x,y:p.y});}if(hit||x<-2000||x>width+2000||y<-2000||y>height+2000)break;}return path;}
+function drawArrow(x,y,a){ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-7,-4);ctx.lineTo(-7,4);ctx.closePath();ctx.fillStyle='#64748b';ctx.fill();ctx.restore();}
+function drawBar(cx,cy){
+const hw=120,hh=30;ctx.save();ctx.translate(cx,cy);ctx.shadowColor='rgba(0,0,0,0.3)';ctx.shadowBlur=10;ctx.shadowOffsetY=4;
+ctx.save();ctx.translate(-gap/2,0);ctx.beginPath();ctx.moveTo(-hw,-hh);ctx.lineTo(barJagged[0].x,barJagged[0].y);for(let i=1;i<barJagged.length;i++)ctx.lineTo(barJagged[i].x,barJagged[i].y);ctx.lineTo(-hw,hh);ctx.closePath();ctx.fillStyle='#3b82f6';ctx.fill();if(gap>5){ctx.save();ctx.clip();ctx.fillStyle='#ef4444';ctx.fillRect(-hw/2,-hh,hw/2+20,hh*2);ctx.restore();}ctx.strokeStyle='#1e293b';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='white';ctx.font='bold 20px Inter';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('S',-hw+30,0);if(gap>20)ctx.fillText('N',-20,0);ctx.restore();
+ctx.save();ctx.translate(gap/2,0);ctx.beginPath();ctx.moveTo(hw,-hh);ctx.lineTo(barJagged[0].x,barJagged[0].y);for(let i=1;i<barJagged.length;i++)ctx.lineTo(barJagged[i].x,barJagged[i].y);ctx.lineTo(hw,hh);ctx.closePath();ctx.fillStyle='#ef4444';ctx.fill();if(gap>5){ctx.save();ctx.clip();ctx.fillStyle='#3b82f6';ctx.fillRect(-20,-hh,hw/2+20,hh*2);ctx.restore();}ctx.strokeStyle='#1e293b';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='white';ctx.font='bold 20px Inter';if(gap>20)ctx.fillText('S',20,0);ctx.fillText('N',hw-30,0);ctx.restore();ctx.restore();
+let poles=[];if(gap<5){poles.push({x:cx-hw+10,y:cy,p:-1});poles.push({x:cx+hw-10,y:cy,p:1});}else{poles.push({x:cx-gap/2-hw+10,y:cy,p:-1});poles.push({x:cx-gap/2-10,y:cy,p:1});poles.push({x:cx+gap/2+10,y:cy,p:-1});poles.push({x:cx+gap/2+hw-10,y:cy,p:1});}return poles;
+}
+function drawRing(cx,cy){
+const ro=80,ri=35;ctx.save();ctx.translate(cx,cy);ctx.shadowColor='rgba(0,0,0,0.3)';ctx.shadowBlur=10;ctx.shadowOffsetY=4;
+ctx.save();ctx.translate(-gap/2,0);ctx.beginPath();ctx.arc(0,0,ro,-Math.PI/2,Math.PI/2,true);ctx.lineTo(0,ri);ctx.arc(0,0,ri,Math.PI/2,-Math.PI/2,false);ctx.closePath();ctx.fillStyle='#334155';ctx.fill();if(gap>20){ctx.save();ctx.clip();ctx.fillStyle='#ef4444';ctx.fillRect(-ro,-ro,ro,ro);ctx.fillStyle='#3b82f6';ctx.fillRect(-ro,0,ro,ro);ctx.restore();}ctx.strokeStyle='#1e293b';ctx.lineWidth=2;ctx.stroke();if(gap>20){ctx.fillStyle='white';ctx.font='bold 14px Inter';ctx.textAlign='center';ctx.fillText('N',-ro/2,-20);ctx.fillText('S',-ro/2,20);}ctx.restore();
+ctx.save();ctx.translate(gap/2,0);ctx.beginPath();ctx.arc(0,0,ro,-Math.PI/2,Math.PI/2,false);ctx.lineTo(0,ri);ctx.arc(0,0,ri,Math.PI/2,-Math.PI/2,true);ctx.closePath();ctx.fillStyle='#334155';ctx.fill();if(gap>20){ctx.save();ctx.clip();ctx.fillStyle='#ef4444';ctx.fillRect(0,-ro,ro,ro);ctx.fillStyle='#3b82f6';ctx.fillRect(0,0,ro,ro);ctx.restore();}ctx.strokeStyle='#1e293b';ctx.lineWidth=2;ctx.stroke();if(gap>20){ctx.fillStyle='white';ctx.font='bold 14px Inter';ctx.textAlign='center';ctx.fillText('N',ro/2,-20);ctx.fillText('S',ro/2,20);}ctx.restore();ctx.restore();
+let poles=[];if(gap<5){poles.push({x:cx-ro+15,y:cy,p:-1});poles.push({x:cx+ro-15,y:cy,p:1});}else{poles.push({x:cx-gap/2,y:cy-40,p:1});poles.push({x:cx-gap/2,y:cy+40,p:-1});poles.push({x:cx+gap/2,y:cy-40,p:1});poles.push({x:cx+gap/2,y:cy+40,p:-1});}return poles;
+}
+function animate(t){
+ctx.clearRect(0,0,width,height);const cx=width/2,cy=height/2+10;let diff=targetGap-gap;gap+=diff*0.1;
+if(magnetType==='bar'&&state==='rejoining'&&gap<2){state='intact';gap=0;setStatus("Attraction (ആകർഷണം)","N-S ആയതുകൊണ്ട് കൂടിച്ചേർന്നു!","text-green-600");btnBreak.disabled=false;btnBreak.style.opacity='1';}
+if(magnetType==='ring'&&state==='rejoining'&&gap<40){state='repelling';targetGap=120;setStatus("Repulsion (വികർഷണം)","N-N & S-S like poles repel!","text-red-600");btnRejoin.disabled=false;btnRejoin.style.opacity='1';}
+if(state==='repelling'){gap+= (targetGap-gap)*0.1;if(gap>118){state='intact';gap=120;}}
+let poles=magnetType==='bar'?drawBar(cx,cy):drawRing(cx,cy);
+ctx.lineWidth=1.5;
+const norths=poles.filter(p=>p.p>0);
+norths.forEach((np,i)=>{
+for(let j=0;j<24;j++){
+const ang=(j/24)*Math.PI*2,sx=np.x+Math.cos(ang)*15,sy=np.y+Math.sin(ang)*15;
+const path=trace(sx,sy,poles);
+if(path.length>5){ctx.beginPath();ctx.strokeStyle='rgba(100,116,139,0.45)';ctx.moveTo(path[0].x,path[0].y);for(let k=1;k<path.length;k++)ctx.lineTo(path[k].x,path[k].y);ctx.stroke();
+if(path.length>20){const prog=((t*0.001)+(i/24))%1;const idx=Math.floor(prog*path.length);if(idx>0&&idx<path.length-1){const p1=path[idx],p2=path[idx+1];drawArrow(p1.x,p1.y,Math.atan2(p2.y-p1.y,p2.x-p1.x));}}}}
+});
+requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>
