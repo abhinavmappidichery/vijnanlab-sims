@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><style>
+@font-face {
+  font-family: "Optimistic";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/OptimisticAI_VF_Optimized.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Optimistic Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/OptimisticMono_W_TextRegular.woff2") format("woff2");
+}
+:where(html) {
+  font-family: "Optimistic", system-ui, sans-serif;
+}
+:where(code, pre, kbd, samp) {
+  font-family: "Optimistic Mono", ui-monospace, monospace;
+}
+</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Two Magnets Interaction</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+body{font-family:'Inter',sans-serif;background-color:#f8fafc;overflow:hidden;margin:0;padding:0}
+#app-container{display:flex;flex-direction:column;height:100vh;width:100vw}
+#canvas-container{flex:1;position:relative;overflow:hidden;background-color:#ffffff}
+canvas{display:block;width:100%;height:100%}
+#controls-panel{background:white;border-top:1px solid #e2e8f0;padding:0.5rem;display:flex;flex-direction:column;gap:0.4rem;z-index:10}
+.controls-row{display:flex;flex-wrap:wrap;gap:0.4rem;justify-content:center;align-items:center}
+.btn-mode{padding:0.35rem 0.7rem;border-radius:0.4rem;border:1.5px solid #cbd5e1;background:#f8fafc;color:#475569;font-weight:700;font-size:0.75rem;cursor:pointer;transition:all 0.2s;text-align:center}
+.btn-mode.active-attract{background:#22c55e;color:white;border-color:#16a34a}
+.btn-mode.active-repel{background:#ef4444;color:white;border-color:#dc2626}
+.btn-action{padding:0.4rem 1rem;border-radius:999px;border:none;font-weight:700;font-size:0.8rem;cursor:pointer;transition:all 0.2s;text-align:center}
+.btn-primary{background:#3b82f6;color:white}.btn-primary:disabled{background:#94a3b8;cursor:not-allowed}
+.btn-secondary{background:#e2e8f0;color:#475569}
+#status-overlay{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.92);padding:0.3rem 0.8rem;border-radius:0.5rem;border:1px solid #e2e8f0;pointer-events:none;width:max-content;max-width:90%;text-align:center}
+</style>
+</head>
+<body>
+<div id="app-container">
+<div id="canvas-container">
+<canvas id="simCanvas"></canvas>
+<div id="status-overlay"><div id="explanation-title" class="text-xs font-bold text-slate-800"></div></div>
+</div>
+<div id="controls-panel">
+<div class="controls-row">
+<button class="btn-mode active-attract" data-mode="NS">N - S (ആകർഷണം)</button>
+<button class="btn-mode" data-mode="SN">S - N (ആകർഷണം)</button>
+<button class="btn-mode" data-mode="NN">N - N (വികർഷണം)</button>
+<button class="btn-mode" data-mode="SS">S - S (വികർഷണം)</button>
+</div>
+<div class="controls-row">
+<button class="btn-action btn-primary" id="btn-bring-closer">അടുപ്പിക്കുക (Bring Closer)</button>
+<button class="btn-action btn-secondary" id="btn-reset">മാറ്റി വെക്കുക (Reset)</button>
+</div>
+</div>
+</div>
+<script>
+const canvas=document.getElementById('simCanvas');const ctx=canvas.getContext('2d');
+const container=document.getElementById('canvas-container');const titleEl=document.getElementById('explanation-title');
+const btnBringCloser=document.getElementById('btn-bring-closer');const btnReset=document.getElementById('btn-reset');
+let width,height,currentMode='NS',magnetDistance=260,animState='idle',time=0,cachedPaths=null;
+const COLOR_N='#ef4444',COLOR_S='#3b82f6',LINE_COLOR='rgba(100,116,139,0.45)',MAGNET_WIDTH=120,MAGNET_HEIGHT=38,POLE_OFFSET=MAGNET_WIDTH/2-8,FIELD_STRENGTH=30000;
+function resize(){width=container.clientWidth;height=container.clientHeight;canvas.width=width;canvas.height=height;cachedPaths=null;}
+window.addEventListener('resize',resize);resize();
+document.querySelectorAll('.btn-mode').forEach(btn=>{
+btn.addEventListener('click',()=>{
+document.querySelectorAll('.btn-mode').forEach(b=>b.classList.remove('active-attract','active-repel'));
+currentMode=btn.getAttribute('data-mode');
+btn.classList.add((currentMode==='NS'||currentMode==='SN')?'active-attract':'active-repel');
+magnetDistance=260;animState='idle';btnBringCloser.disabled=false;cachedPaths=null;updateExplanation();
+});
+});
+btnBringCloser.addEventListener('click',()=>{if(magnetDistance>0 && animState==='idle'){animState='approaching';btnBringCloser.disabled=true;updateExplanation();}});
+btnReset.addEventListener('click',()=>{magnetDistance=260;animState='idle';btnBringCloser.disabled=false;cachedPaths=null;updateExplanation();});
+function updateExplanation(){
+const isAttraction=(currentMode==='NS'||currentMode==='SN');
+if(animState==='repelling'){titleEl.textContent="സമാന ധ്രുവങ്ങൾ വികർഷിക്കുന്നു! (Like Poles Repel!)";titleEl.className="text-red-600 font-bold text-xs";}
+else if(magnetDistance<=0){titleEl.textContent="വിപരീത ധ്രുവങ്ങൾ ആകർഷിച്ചു! (Unlike Poles Attracted!)";titleEl.className="text-green-600 font-bold text-xs";}
+else if(magnetDistance>=260){titleEl.textContent="കാന്തങ്ങൾ അകലെയാണ് (Magnets Far Apart)";titleEl.className="text-slate-800 font-bold text-xs";}
+else{titleEl.textContent=isAttraction?"ആകർഷിക്കാൻ അടുക്കുന്നു...":"അടുക്കുംതോറും വികർഷണബലം കൂടുന്നു...";titleEl.className=isAttraction?"text-green-600 font-bold text-xs":"text-orange-600 font-bold text-xs";}
+}
+function getMagnetConfig(){
+const cx=width/2,cy=height/2;
+const m1_cx=cx-(magnetDistance/2)-(MAGNET_WIDTH/2),m2_cx=cx+(magnetDistance/2)+(MAGNET_WIDTH/2);
+let m1_l,m1_r,m2_l,m2_r;
+if(currentMode==='NS'){m1_l='S';m1_r='N';m2_l='S';m2_r='N';}
+else if(currentMode==='SN'){m1_l='N';m1_r='S';m2_l='N';m2_r='S';}
+else if(currentMode==='NN'){m1_l='S';m1_r='N';m2_l='N';m2_r='S';}
+else if(currentMode==='SS'){m1_l='N';m1_r='S';m2_l='S';m2_r='N';}
+return{
+m1:{cx:m1_cx,cy:cy,left:m1_l,right:m1_r},m2:{cx:m2_cx,cy:cy,left:m2_l,right:m2_r},
+poles:[{x:m1_cx-POLE_OFFSET,y:cy,p:m1_l==='N'?1:-1},{x:m1_cx+POLE_OFFSET,y:cy,p:m1_r==='N'?1:-1},{x:m2_cx-POLE_OFFSET,y:cy,p:m2_l==='N'?1:-1},{x:m2_cx+POLE_OFFSET,y:cy,p:m2_r==='N'?1:-1}]
+};
+}
+function getBField(x,y,poles){
+let bx=0,by=0;
+for(const pole of poles){
+const dx=x-pole.x,dy=y-pole.y,r2=dx*dx+dy*dy;if(r2<4)continue;
+const mag=(FIELD_STRENGTH*pole.p)/r2;bx+=mag*(dx/Math.sqrt(r2));by+=mag*(dy/Math.sqrt(r2));
+}
+return{x:bx,y:by};
+}
+function traceLine(startX,startY,poles,maxSteps=1500){
+let x=startX,y=startY;const path=[{x,y}],stepSize=5;
+for(let i=0;i<maxSteps;i++){
+const b=getBField(x,y,poles),mag=Math.sqrt(b.x*b.x+b.y*b.y);if(mag<0.001)break;
+x+=(b.x/mag)*stepSize;y+=(b.y/mag)*stepSize;path.push({x,y});
+let hitSouth=false;
+for(const p of poles){if(p.p<0 && Math.sqrt((x-p.x)**2+(y-p.y)**2)<12){hitSouth=true;path.push({x:p.x,y:p.y});}}
+if(hitSouth||x<-2000||x>width+2000||y<-2000||y>height+2000)break;
+}
+return path;
+}
+function drawArrow(x,y,angle){ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-6,-3);ctx.lineTo(-6,3);ctx.closePath();ctx.fillStyle='#64748b';ctx.fill();ctx.restore();}
+function drawMagnetBody(cfg){
+const hw=MAGNET_WIDTH/2,hh=MAGNET_HEIGHT/2;ctx.save();ctx.translate(cfg.cx,cfg.cy);
+ctx.fillStyle=cfg.left==='N'?COLOR_N:COLOR_S;ctx.fillRect(-hw,-hh,hw,MAGNET_HEIGHT);
+ctx.fillStyle=cfg.right==='N'?COLOR_N:COLOR_S;ctx.fillRect(0,-hh,hw,MAGNET_HEIGHT);
+ctx.fillStyle='#0f172a';ctx.fillRect(-1,-hh,2,MAGNET_HEIGHT);
+ctx.strokeStyle='#1e293b';ctx.lineWidth=1.5;ctx.strokeRect(-hw,-hh,MAGNET_WIDTH,MAGNET_HEIGHT);
+ctx.fillStyle='#ffffff';ctx.font='bold 15px Inter';ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.fillText(cfg.left,-hw/2,0);ctx.fillText(cfg.right,hw/2,0);ctx.restore();
+}
+function animate(timestamp){
+time=timestamp;ctx.clearRect(0,0,width,height);
+if(animState==='approaching'){
+magnetDistance-=2;cachedPaths=null;updateExplanation();
+if(currentMode==='NS'||currentMode==='SN'){if(magnetDistance<=0){magnetDistance=0;animState='idle';updateExplanation();}}
+else{if(magnetDistance<=40){animState='repelling';updateExplanation();}}
+}else if(animState==='repelling'){
+magnetDistance+=3.5;cachedPaths=null;
+if(magnetDistance>=260){magnetDistance=260;animState='idle';btnBringCloser.disabled=false;updateExplanation();}
+}
+const cfg=getMagnetConfig();
+if(!cachedPaths){
+cachedPaths=[];const lineCount=14;const norths=cfg.poles.filter(p=>p.p>0);
+norths.forEach(nPole=>{
+for(let i=0;i<lineCount;i++){
+const angle=(i/lineCount)*Math.PI*2,sx=nPole.x+Math.cos(angle)*12,sy=nPole.y+Math.sin(angle)*12;
+cachedPaths.push(traceLine(sx,sy,cfg.poles));
+}
+});
+}
+ctx.lineWidth=1.4;
+for(let i=0;i<cachedPaths.length;i++){
+const path=cachedPaths[i];
+if(path.length>5){
+ctx.beginPath();ctx.strokeStyle=LINE_COLOR;ctx.moveTo(path[0].x,path[0].y);
+for(let j=1;j<path.length;j++)ctx.lineTo(path[j].x,path[j].y);
+ctx.stroke();
+if(path.length>20){
+const progress=((time*0.0008)+(i/cachedPaths.length))%1;
+const idx=Math.floor(progress*(path.length-1));
+if(idx>0 && idx<path.length-1){const p1=path[idx],p2=path[idx+1];drawArrow(p1.x,p1.y,Math.atan2(p2.y-p1.y,p2.x-p1.x));}
+}
+}
+}
+drawMagnetBody(cfg.m1);drawMagnetBody(cfg.m2);requestAnimationFrame(animate);
+}
+updateExplanation();animate();
+</script>
+<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script></body>
+</html>
