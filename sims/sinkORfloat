@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sink or Float? – Realistic Simulation</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            background: #e8f0fe;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .app {
+            max-width: 1100px;
+            width: 100%;
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0b3b5c;
+            margin: 0 0 6px 0;
+            letter-spacing: -0.5px;
+        }
+        .sub {
+            color: #2c5f7a;
+            font-size: 1rem;
+            margin-top: -6px;
+        }
+        .main-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .canvas-wrapper {
+            flex: 2;
+            min-width: 500px;
+            border-radius: 20px;
+            overflow: hidden;
+            background: #c6d9eb;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+            position: relative;
+            height: 480px;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+        canvas:active {
+            cursor: grabbing;
+        }
+        .palette {
+            flex: 1;
+            min-width: 180px;
+            background: #f5f9ff;
+            border-radius: 20px;
+            padding: 16px;
+            box-shadow: inset 0 0 0 1px #d0e2f2;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 480px;
+            overflow-y: auto;
+        }
+        .palette h3 {
+            margin: 0 0 4px 0;
+            font-size: 1.1rem;
+            color: #1f4a6b;
+            font-weight: 600;
+        }
+        .object-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: white;
+            border-radius: 12px;
+            padding: 6px 12px 6px 6px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+            border: 1px solid #dce8f5;
+            cursor: grab;
+            transition: all 0.15s;
+            user-select: none;
+        }
+        .object-item:hover {
+            border-color: #7ba9d4;
+            background: #f0f7fe;
+        }
+        .object-item:active {
+            cursor: grabbing;
+            transform: scale(0.96);
+        }
+        .object-icon {
+            width: 44px;
+            height: 44px;
+            flex-shrink: 0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            background: #eef3fa;
+        }
+        .object-name {
+            flex: 1;
+            font-weight: 500;
+            color: #1e3b4f;
+            font-size: 0.95rem;
+        }
+        .object-status {
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 2px 10px;
+            border-radius: 20px;
+            background: #eef3fa;
+            color: #4d6a82;
+        }
+        .object-status.dropped {
+            background: #d4e4f5;
+        }
+        .table-wrap {
+            background: #f5f9ff;
+            border-radius: 20px;
+            padding: 16px 20px;
+            box-shadow: inset 0 0 0 1px #d0e2f2;
+            overflow-x: auto;
+        }
+        .table-wrap h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.1rem;
+            color: #1f4a6b;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            min-width: 500px;
+        }
+        th {
+            background: #dce8f5;
+            color: #1a3d57;
+            padding: 10px 8px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 8px 8px;
+            border-bottom: 1px solid #e0ebf6;
+        }
+        .guess-radio {
+            display: flex;
+            gap: 14px;
+        }
+        .guess-radio label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .result-badge {
+            display: inline-block;
+            padding: 2px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        .result-badge.correct {
+            background: #c8f0d8;
+            color: #0d6b3e;
+        }
+        .result-badge.wrong {
+            background: #f8d7da;
+            color: #a11f2c;
+        }
+        .result-badge.pending {
+            background: #e9ecf0;
+            color: #5f6c80;
+        }
+        .controls {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+        .btn {
+            padding: 10px 28px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            background: #e2ecf7;
+            color: #1f4a6b;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .btn-primary {
+            background: #1f6b9e;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #16527a;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 12px rgba(31, 107, 158, 0.25);
+        }
+        .btn-secondary {
+            background: #e2ecf7;
+        }
+        .btn-secondary:hover {
+            background: #c8dcef;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        @media (max-width: 720px) {
+            .canvas-wrapper {
+                min-width: 0;
+                height: 340px;
+            }
+            .palette {
+                max-height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div>
+            <h1>🌊 Sink or Float?</h1>
+            <div class="sub">ഓരോ വസ്തുവും വെള്ളത്തിൽ ഇടുക – എന്ത് സംഭവിക്കും?</div>
+        </div>
+
+        <div class="main-area">
+            <div class="canvas-wrapper">
+                <canvas id="tankCanvas"></canvas>
+            </div>
+            <div class="palette" id="palette">
+                <h3>🧰 വസ്തുക്കൾ</h3>
+                <div id="objectList"></div>
+                <div style="margin-top: 8px; font-size:0.8rem; color:#4d6a82;">
+                    ⚡ വസ്തുവിൽ ക്ലിക്ക് ചെയ്ത് ടാങ്കിലേക്ക് വലിക്കുക
+                </div>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <h3>📋 നിങ്ങളുടെ ഊഹങ്ങൾ & ഫലങ്ങൾ</h3>
+            <table id="resultsTable">
+                <thead>
+                    <tr>
+                        <th>വസ്തു</th>
+                        <th>ഊഹം (Guess)</th>
+                        <th>ഫലം (Finding)</th>
+                        <th>ശരിയാണോ?</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" id="resetBtn">🔄 എല്ലാം പുനഃസജ്ജമാക്കുക</button>
+            <button class="btn btn-secondary" id="autoDropBtn">⚡ എല്ലാം ഒരുമിച്ച് ഇടുക</button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        //  DATA: Objects with densities (g/cm³) and visual properties
+        // ============================================================
+        const OBJECTS = [{
+            id: 'stone',
+            name: 'Stone',
+            emoji: '🪨',
+            density: 2.5,
+            color: '#7a7a7a',
+            shape: 'stone',
+            size: 32,
+        }, {
+            id: 'balloon',
+            name: 'Balloon',
+            emoji: '🎈',
+            density: 0.2, // floats easily
+            color: '#e74c3c',
+            shape: 'balloon',
+            size: 36,
+        }, {
+            id: 'coin',
+            name: 'Coin',
+            emoji: '🪙',
+            density: 8.9,
+            color: '#d4af37',
+            shape: 'coin',
+            size: 30,
+        }, {
+            id: 'wood',
+            name: 'Wood piece',
+            emoji: '🪵',
+            density: 0.6,
+            color: '#b68b5c',
+            shape: 'wood',
+            size: 40,
+        }, {
+            id: 'camphor',
+            name: 'Camphor',
+            emoji: '🧊',
+            density: 0.99, // slightly less than water
+            color: '#e8e0d0',
+            shape: 'camphor',
+            size: 32,
+        }, {
+            id: 'plastic',
+            name: 'Plastic',
+            emoji: '🧴',
+            density: 0.95,
+            color: '#5b8db8',
+            shape: 'plastic',
+            size: 36,
+        }, {
+            id: 'nail',
+            name: 'Iron nail',
+            emoji: '🔩',
+            density: 7.8,
+            color: '#8c8c8c',
+            shape: 'nail',
+            size: 38,
+        }, {
+            id: 'leaf',
+            name: 'Leaf',
+            emoji: '🍃',
+            density: 0.8,
+            color: '#4c8c4a',
+            shape: 'leaf',
+            size: 34,
+        }, {
+            id: 'wax',
+            name: 'Wax',
+            emoji: '🕯️',
+            density: 0.9,
+            color: '#f7e4b0',
+            shape: 'wax',
+            size: 32,
+        }, {
+            id: 'ice',
+            name: 'Ice',
+            emoji: '🧊',
+            density: 0.92,
+            color: '#b8d4e3',
+            shape: 'ice',
+            size: 32,
+        }, ];
+
+        // ============================================================
+        //  STATE
+        // ============================================================
+        const canvas = document.getElementById('tankCanvas');
+        const ctx = canvas.getContext('2d');
+        let W, H;
+
+        // Water tank geometry (relative to canvas)
+        const TANK_PADDING = 30;
+        let tankX, tankY, tankW, tankH;
+        let waterLevel; // y coordinate of water surface
+
+        // Dropped objects: each { id, x, y, targetY, velocity, density, size, color, shape, floating, settled }
+        let dropped = [];
+        // Dragging state
+        let dragObj = null; // reference to object data from palette
+        let dragOffsetX = 0,
+            dragOffsetY = 0;
+        let isDragging = false;
+
+        // Guess state: for each object id, { guess: 'float'|'sink'|null, result: 'float'|'sink'|null, correct: null|boolean }
+        let guesses = {};
+
+        // DOM references
+        const objectListEl = document.getElementById('objectList');
+        const tableBody = document.getElementById('tableBody');
+
+        // ============================================================
+        //  INIT
+        // ============================================================
+        function init() {
+            resizeCanvas();
+            buildPalette();
+            buildTable();
+            resetSimulation();
+            // Events
+            canvas.addEventListener('mousedown', onCanvasMouseDown);
+            window.addEventListener('mousemove', onCanvasMouseMove);
+            window.addEventListener('mouseup', onCanvasMouseUp);
+            canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+            window.addEventListener('touchmove', onTouchMove, { passive: false });
+            window.addEventListener('touchend', onTouchEnd, { passive: false });
+            document.getElementById('resetBtn').addEventListener('click', resetSimulation);
+            document.getElementById('autoDropBtn').addEventListener('click', autoDropAll);
+
+            // Resize
+            window.addEventListener('resize', () => { resizeCanvas();
+                draw(); });
+            animate();
+        }
+
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+            W = canvas.width;
+            H = canvas.height;
+            tankX = TANK_PADDING * window.devicePixelRatio;
+            tankY = TANK_PADDING * window.devicePixelRatio;
+            tankW = W - 2 * tankX;
+            tankH = H - 2 * tankY;
+            waterLevel = tankY + tankH * 0.35; // 35% from top
+            // Recalculate target positions for dropped objects
+            dropped.forEach(obj => {
+                if (obj.floating) {
+                    obj.targetY = waterLevel - obj.size / 2;
+                } else {
+                    obj.targetY = tankY + tankH - obj.size / 2;
+                }
+            });
+        }
+
+        // ============================================================
+        //  BUILD UI
+        // ============================================================
+        function buildPalette() {
+            objectListEl.innerHTML = '';
+            OBJECTS.forEach(obj => {
+                const div = document.createElement('div');
+                div.className = 'object-item';
+                div.dataset.id = obj.id;
+                div.innerHTML = `
+                    <div class="object-icon">${obj.emoji}</div>
+                    <span class="object-name">${obj.name}</span>
+                    <span class="object-status" id="status-${obj.id}">⏳</span>
+                `;
+                // Mouse events for drag start
+                div.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    startDrag(obj.id, e.clientX, e.clientY);
+                });
+                div.addEventListener('touchstart', (e) => {
+                    const touch = e.touches[0];
+                    startDrag(obj.id, touch.clientX, touch.clientY);
+                }, { passive: true });
+                objectListEl.appendChild(div);
+            });
+        }
+
+        function buildTable() {
+            tableBody.innerHTML = '';
+            OBJECTS.forEach(obj => {
+                const tr = document.createElement('tr');
+                tr.dataset.id = obj.id;
+                const guess = guesses[obj.id]?.guess || null;
+                const result = guesses[obj.id]?.result || null;
+                const correct = guesses[obj.id]?.correct ?? null;
+
+                let guessHtml = `
+                    <div class="guess-radio">
+                        <label><input type="radio" name="guess-${obj.id}" value="float" ${guess==='float'?'checked':''}> Float</label>
+                        <label><input type="radio" name="guess-${obj.id}" value="sink" ${guess==='sink'?'checked':''}> Sink</label>
+                    </div>
+                `;
+                let resultHtml = result ? (result === 'float' ? '🌊 Float' : '⬇️ Sink') : '—';
+                let correctHtml = correct === true ? '✅' : correct === false ? '❌' : '⏳';
+
+                tr.innerHTML = `
+                    <td><strong>${obj.emoji}</strong> ${obj.name}</td>
+                    <td>${guessHtml}</td>
+                    <td id="result-${obj.id}">${resultHtml}</td>
+                    <td id="correct-${obj.id}">${correctHtml}</td>
+                `;
+                tableBody.appendChild(tr);
+
+                // Add event listeners to radio buttons
+                tr.querySelectorAll('input[type="radio"]').forEach(radio => {
+                    radio.addEventListener('change', (e) => {
+                        const val = e.target.value;
+                        const id = obj.id;
+                        if (!guesses[id]) guesses[id] = {};
+                        guesses[id].guess = val;
+                        updateTableRow(id);
+                    });
+                });
+            });
+        }
+
+        function updateTableRow(id) {
+            const row = tableBody.querySelector(`tr[data-id="${id}"]`);
+            if (!row) return;
+            const data = guesses[id] || {};
+            const result = data.result || null;
+            const correct = data.correct ?? null;
+            const resultCell = row.querySelector(`td:nth-child(3)`);
+            const correctCell = row.querySelector(`td:nth-child(4)`);
+            resultCell.textContent = result ? (result === 'float' ? '🌊 Float' : '⬇️ Sink') : '—';
+            correctCell.textContent = correct === true ? '✅' : correct === false ? '❌' : '⏳';
+            // Update palette status
+            const statusEl = document.getElementById(`status-${id}`);
+            if (statusEl) {
+                if (result) {
+                    statusEl.textContent = result === 'float' ? '🌊' : '⬇️';
+                    statusEl.className = 'object-status dropped';
+                } else {
+                    statusEl.textContent = '⏳';
+                    statusEl.className = 'object-status';
+                }
+            }
+        }
+
+        // ============================================================
+        //  DRAG & DROP LOGIC
+        // ============================================================
+        function startDrag(id, clientX, clientY) {
+            const objData = OBJECTS.find(o => o.id === id);
+            if (!objData) return;
+            // Check if already dropped
+            if (dropped.some(d => d.id === id)) return;
+            // Get palette element position
+            const el = objectListEl.querySelector(`.object-item[data-id="${id}"]`);
+            if (!el) return;
+            const rect = el.getBoundingClientRect();
+            const scaleX = canvas.width / canvas.parentElement.getBoundingClientRect().width;
+            const scaleY = canvas.height / canvas.parentElement.getBoundingClientRect().height;
+            const canvasRect = canvas.getBoundingClientRect();
+            const cx = (clientX - canvasRect.left) * scaleX;
+            const cy = (clientY - canvasRect.top) * scaleY;
+            dragObj = { ...objData, x: cx, y: cy };
+            dragOffsetX = 0;
+            dragOffsetY = 0;
+            isDragging = true;
+            canvas.style.cursor = 'grabbing';
+        }
+
+        function onCanvasMouseDown(e) {
+            // Check if clicking on an already dropped object? Not needed.
+        }
+
+        function onCanvasMouseMove(e) {
+            if (!isDragging || !dragObj) return;
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const mx = (e.clientX - rect.left) * scaleX;
+            const my = (e.clientY - rect.top) * scaleY;
+            dragObj.x = mx - dragOffsetX;
+            dragObj.y = my - dragOffsetY;
+            draw();
+        }
+
+        function onCanvasMouseUp(e) {
+            if (!isDragging || !dragObj) return;
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const mx = (e.clientX - rect.left) * scaleX;
+            const my = (e.clientY - rect.top) * scaleY;
+            // Check if inside tank
+            if (mx > tankX && mx < tankX + tankW && my > tankY && my < tankY + tankH) {
+                dropObject(dragObj.id, mx, my);
+            }
+            isDragging = false;
+            dragObj = null;
+            canvas.style.cursor = 'grab';
+            draw();
+        }
+
+        // Touch events
+        function onTouchStart(e) {
+            // pass to startDrag via touch
+            const touch = e.touches[0];
+            const target = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (target) {
+                const item = target.closest('.object-item');
+                if (item) {
+                    const id = item.dataset.id;
+                    if (id) {
+                        startDrag(id, touch.clientX, touch.clientY);
+                        e.preventDefault();
+                    }
+                }
+            }
+        }
+
+        function onTouchMove(e) {
+            if (!isDragging || !dragObj) return;
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const mx = (touch.clientX - rect.left) * scaleX;
+            const my = (touch.clientY - rect.top) * scaleY;
+            dragObj.x = mx - dragOffsetX;
+            dragObj.y = my - dragOffsetY;
+            draw();
+            e.preventDefault();
+        }
+
+        function onTouchEnd(e) {
+            if (!isDragging || !dragObj) return;
+            const touch = e.changedTouches[0];
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const mx = (touch.clientX - rect.left) * scaleX;
+            const my = (touch.clientY - rect.top) * scaleY;
+            if (mx > tankX && mx < tankX + tankW && my > tankY && my < tankY + tankH) {
+                dropObject(dragObj.id, mx, my);
+            }
+            isDragging = false;
+            dragObj = null;
+            canvas.style.cursor = 'grab';
+            draw();
+        }
+
+        // ============================================================
+        //  DROP & ANIMATE
+        // ============================================================
+        function dropObject(id, x, y) {
+            if (dropped.some(d => d.id === id)) return;
+            const objData = OBJECTS.find(o => o.id === id);
+            if (!objData) return;
+
+            const density = objData.density;
+            const floating = density < 1.0;
+            const size = objData.size * window.devicePixelRatio;
+
+            // Clamp x inside tank
+            const half = size / 2;
+            const clampedX = Math.min(Math.max(x, tankX + half), tankX + tankW - half);
+
+            let targetY;
+            if (floating) {
+                targetY = waterLevel - half;
+            } else {
+                targetY = tankY + tankH - half;
+            }
+
+            const newObj = {
+                id: id,
+                x: clampedX,
+                y: y, // start at drop position
+                targetY: targetY,
+                velocity: 0,
+                size: size,
+                density: density,
+                floating: floating,
+                settled: false,
+                color: objData.color,
+                shape: objData.shape,
+                emoji: objData.emoji,
+                name: objData.name,
+            };
+            dropped.push(newObj);
+
+            // Update guess: if not set, default? Actually we leave it.
+            // The result will be set after animation finishes.
+            // We'll set result now, but correct will be computed when guess is available.
+            if (!guesses[id]) guesses[id] = {};
+            guesses[id].result = floating ? 'float' : 'sink';
+            // Check correctness
+            const guess = guesses[id].guess;
+            if (guess) {
+                guesses[id].correct = (guess === (floating ? 'float' : 'sink'));
+            } else {
+                guesses[id].correct = null; // not guessed yet
+            }
+            updateTableRow(id);
+
+            // Disable palette item
+            const item = objectListEl.querySelector(`.object-item[data-id="${id}"]`);
+            if (item) {
+                item.style.opacity = '0.4';
+                item.style.cursor = 'default';
+                item.style.pointerEvents = 'none';
+            }
+            draw();
+        }
+
+        // ============================================================
+        //  DRAWING
+        // ============================================================
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+
+            // ---- Tank background ----
+            const grad = ctx.createLinearGradient(tankX, tankY, tankX, tankY + tankH);
+            grad.addColorStop(0, '#c6d9eb');
+            grad.addColorStop(0.35, '#9bb8d4');
+            grad.addColorStop(1, '#4a7a9c');
+            ctx.fillStyle = grad;
+            ctx.shadowColor = 'rgba(0,0,0,0.2)';
+            ctx.shadowBlur = 20;
+            ctx.shadowOffsetY = 4;
+            ctx.beginPath();
+            ctx.roundRect(tankX, tankY, tankW, tankH, 12);
+            ctx.fill();
+            ctx.shadowColor = 'transparent';
+
+            // ---- Water surface ----
+            ctx.fillStyle = 'rgba(160, 204, 235, 0.5)';
+            ctx.beginPath();
+            ctx.roundRect(tankX, waterLevel, tankW, tankY + tankH - waterLevel, 0);
+            ctx.fill();
+
+            // Water surface line
+            ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(tankX, waterLevel);
+            ctx.lineTo(tankX + tankW, waterLevel);
+            ctx.stroke();
+
+            // ---- Draw dropped objects ----
+            dropped.forEach(obj => {
+                drawObject(ctx, obj);
+            });
+
+            // ---- Draw drag object ----
+            if (isDragging && dragObj) {
+                drawObject(ctx, {
+                    x: dragObj.x,
+                    y: dragObj.y,
+                    size: dragObj.size * window.devicePixelRatio,
+                    color: dragObj.color,
+                    shape: dragObj.shape,
+                    emoji: dragObj.emoji,
+                    floating: false, // irrelevant
+                }, true);
+            }
+
+            // ---- Tank border ----
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.roundRect(tankX, tankY, tankW, tankH, 12);
+            ctx.stroke();
+
+            // Water label
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.font = `${18 * window.devicePixelRatio}px sans-serif`;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText('💧', tankX + 10, waterLevel + 10);
+        }
+
+        function drawObject(ctx, obj, ghost = false) {
+            const x = obj.x;
+            const y = obj.y;
+            const size = obj.size || 30;
+            const half = size / 2;
+            ctx.save();
+            if (ghost) {
+                ctx.globalAlpha = 0.7;
+            }
+
+            // Use shape to draw realistically
+            const shape = obj.shape || 'stone';
+            const color = obj.color || '#888';
+
+            ctx.shadowColor = 'rgba(0,0,0,0.2)';
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetY = 3;
+
+            switch (shape) {
+                case 'stone':
+                    // irregular blob
+                    ctx.beginPath();
+                    ctx.moveTo(x - half * 0.8, y + half * 0.3);
+                    ctx.quadraticCurveTo(x - half, y - half * 0.2, x - half * 0.4, y - half * 0.7);
+                    ctx.quadraticCurveTo(x, y - half, x + half * 0.5, y - half * 0.6);
+                    ctx.quadraticCurveTo(x + half, y - half * 0.1, x + half * 0.7, y + half * 0.4);
+                    ctx.quadraticCurveTo(x + half * 0.3, y + half * 0.8, x - half * 0.2, y + half * 0.7);
+                    ctx.closePath();
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                    ctx.strokeStyle = '#555';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    break;
+                case 'balloon':
+                    // round with a string
+                    ctx.beginPath();
+                    ctx.ellipse(x, y - half * 0.1, half * 0.8, half * 0.9, 0, 0, Math.PI * 2);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                    ctx.strokeStyle = '#c0392b';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    // string
+                    ctx.beginPath();
+                    ctx.moveTo(x, y + half * 0.7);
+                    ctx.lineTo(x - 4, y + half * 1.2);
+                    ctx.strokeStyle = '#666';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    break;
+                case 'coin':
+                    ctx.beginPath();
+                    ctx.arc(x, y, half * 0.8, 0, Math.PI * 2);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                    ctx.strokeStyle = '#b8860b';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    // inner circle
+                    ctx.beginPath();
+                    ctx.arc(x, y, half * 0.5, 0, Math.PI * 2);
+                    ctx.strokeStyle = '#b8860b';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    break;
+                case 'wood':
+                    ctx.beginPath();
+                    ctx.roundRect(x - half * 0.9, y - half * 0.5, half * 1.8, half * 1.0, 4);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                    ctx.strokeStyle = '#6b4f32';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    // grain lines
+                    ctx.strokeStyle = 'rgba(90,60,30,0.3)';
+                    ctx.lineWidth = 1;
+                    for (let i = -half * 0.4; i <= half * 0.4; i += half * 0.2) {
+                        ctx.beginPath();
+                        ctx.moveTo(x - half * 0.7, y + i);
+                        ctx.lineTo(x + half * 0.7, y + i + half * 0.1);
+                        ctx.stroke();
+                    }
+                    break;
+                case 'camphor':
+                    // translucent block
+                    ctx.beginPath();
+                    ctx.roundRect(x - half * 0.8, y - half * 0.7, half * 1.6, half * 1.4, 6);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(200,190,170,0.8)';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    // highlight
+                    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                    ctx.beginPath();
+                    ctx.ellipse(x - half * 0.3, y - half * 0.2, half * 0.3, half * 0.2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+                case 'plastic':
+                    // rounded rectangle with a shine
+                    ctx.beginPath();
+                    ctx.roundRect(x - half * 0.8, y - half * 0.6, half * 1.6, half * 1.2, 8);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                    ctx.strokeStyle = '#3a6a8a';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+                    ctx.beginPath();
+                    ctx.ellipse(x - half * 0.2, y - half * 0.2, half * 0.3, half * 0.15, -0.3, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+                case 'nail':
+                    // elongated with head
+                    ctx.beginPath();
+                    ctx.roundRect(x - half * 0.2, y - half * 0.9, half * 0.4, half * 1.6, 3);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                    ctx.strokeStyle = '#5a5a5a';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    // head
+                    ctx.beginPath();
+                    ctx.arc(x, y - half * 0.9, half * 0.3, 0, Math.PI * 2);
+                    ctx.fillStyle = '#b0b0b0';
+                    ctx.fill();
+                    ctx.stroke();
+                    break;
+                case 'leaf':
+                    // leaf shape
+                    ctx.beginPath();
+                    ctx.moveTo(x, y - half * 0.9);
+                    ctx.bezierCurveTo(x + half * 0.9, y - half * 0.6, x + half * 0.9, y + half * 0.6, x, y + half * 0.9);
+                    ctx.bezierCurveTo(x - half * 0.9, y + half * 0.6, x - half * 0.9, y - half * 0.6, x, y - half * 0.9);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                    ctx.strokeStyle = '#2d5e2d';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    // vein
+                    ctx.beginPath();
+                    ctx.moveTo(x, y - half * 0.7);
+                    ctx.lineTo(x, y + half * 0.7);
+                    ctx.strokeStyle = '#2d5e2d';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    break;
+                case 'wax':
+                    // block
+                    ctx.beginPath();
+                    ctx.roundRect(x - half * 0.8, y - half * 0.7, half * 1.6, half * 1.4, 4);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                    ctx.strokeStyle = '#c9b088';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    break;
+                case 'ice':
+                    // cube with transparency
+                    ctx.beginPath();
+                    ctx.roundRect(x - half * 0.8, y - half * 0.7, half * 1.6, half * 1.4, 4);
+                    ctx.fillStyle = 'rgba(200,225,240,0.8)';
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(150,190,210,0.6)';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    // highlights
+                    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                    ctx.beginPath();
+                    ctx.ellipse(x - half * 0.2, y - half * 0.2, half * 0.25, half * 0.2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                    ctx.beginPath();
+                    ctx.ellipse(x + half * 0.2, y + half * 0.2, half * 0.15, half * 0.15, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+                default:
+                    // fallback circle
+                    ctx.beginPath();
+                    ctx.arc(x, y, half, 0, Math.PI * 2);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        // ============================================================
+        //  ANIMATION LOOP (smooth settling)
+        // ============================================================
+        function animate() {
+            let anyMoving = false;
+            dropped.forEach(obj => {
+                const diff = obj.targetY - obj.y;
+                if (Math.abs(diff) > 0.5) {
+                    anyMoving = true;
+                    obj.velocity += diff * 0.08;
+                    obj.velocity *= 0.92;
+                    obj.y += obj.velocity;
+                    // Clamp
+                    if (obj.floating && obj.y < obj.targetY) {
+                        obj.y = obj.targetY;
+                        obj.velocity = 0;
+                    }
+                    if (!obj.floating && obj.y > obj.targetY) {
+                        obj.y = obj.targetY;
+                        obj.velocity = 0;
+                    }
+                } else {
+                    obj.y = obj.targetY;
+                    obj.velocity = 0;
+                    if (!obj.settled) {
+                        obj.settled = true;
+                        // Update table correctness if guess is available
+                        const id = obj.id;
+                        if (guesses[id] && guesses[id].guess) {
+                            const guess = guesses[id].guess;
+                            const result = guesses[id].result;
+                            guesses[id].correct = (guess === result);
+                            updateTableRow(id);
+                        }
+                    }
+                }
+            });
+            draw();
+            requestAnimationFrame(animate);
+        }
+
+        // ============================================================
+        //  RESET & AUTO DROP
+        // ============================================================
+        function resetSimulation() {
+            dropped = [];
+            isDragging = false;
+            dragObj = null;
+            canvas.style.cursor = 'grab';
+            // Reset guesses: keep guess but clear result
+            OBJECTS.forEach(obj => {
+                if (!guesses[obj.id]) guesses[obj.id] = {};
+                guesses[obj.id].result = null;
+                guesses[obj.id].correct = null;
+                updateTableRow(obj.id);
+                // Enable palette item
+                const item = objectListEl.querySelector(`.object-item[data-id="${obj.id}"]`);
+                if (item) {
+                    item.style.opacity = '1';
+                    item.style.cursor = 'grab';
+                    item.style.pointerEvents = 'auto';
+                }
+            });
+            draw();
+        }
+
+        function autoDropAll() {
+            // Drop all objects in sequence with a small offset
+            const count = OBJECTS.length;
+            OBJECTS.forEach((obj, idx) => {
+                if (dropped.some(d => d.id === obj.id)) return;
+                const x = tankX + tankW * (0.15 + (idx / count) * 0.7);
+                const y = tankY + 20 + idx * 5;
+                dropObject(obj.id, x, y);
+            });
+        }
+
+        // ============================================================
+        //  POLYFILL roundRect
+        // ============================================================
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+                if (r > w / 2) r = w / 2;
+                if (r > h / 2) r = h / 2;
+                this.moveTo(x + r, y);
+                this.arcTo(x + w, y, x + w, y + h, r);
+                this.arcTo(x + w, y + h, x, y + h, r);
+                this.arcTo(x, y + h, x, y, r);
+                this.arcTo(x, y, x + w, y, r);
+                return this;
+            };
+        }
+
+        // ============================================================
+        //  START
+        // ============================================================
+        init();
+    </script>
+</body>
+</html>
