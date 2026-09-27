@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demagnetization Simulator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manjari:wght@400;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Manjari', 'Inter', system-ui, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      color: #17324d;
+      background: linear-gradient(135deg,#eaf5ff,#fff8e6);
+      font-size: clamp(15px, 1.1vw, 22px);
+    }
+    header {
+      padding: clamp(10px, 2vh, 24px);
+      text-align: center;
+      color: white;
+      background: #0b4f78;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    header h1 {
+      margin: 0;
+      font-size: clamp(24px, 3.5vw, 42px);
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    header p {
+      margin: 6px 0 0;
+      font-size: clamp(13px, 1.2vw, 20px);
+      opacity: .92;
+      font-weight: 400;
+    }
+    main {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: clamp(12px, 2vh, 30px);
+      display: grid;
+      grid-template-columns: minmax(380px, 1.4fr) minmax(280px, 0.8fr);
+      gap: clamp(16px, 2vw, 30px);
+      min-height: 75vh;
+      align-items: stretch;
+    }
+    .card {
+      background: #fff;
+      border-radius: clamp(16px, 2vw, 24px);
+      box-shadow: 0 8px 30px rgba(24,64,96,0.12);
+      padding: clamp(14px, 2vw, 24px);
+      display: flex;
+      flex-direction: column;
+    }
+    #fieldCanvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-height: 380px;
+      max-height: 65vh;
+      border-radius: 14px;
+      background: radial-gradient(circle at center,#f9fdff 0,#e3f3ff 68%,#d0e8f6 100%);
+      touch-action: none;
+      flex: 1;
+    }
+    .reading {
+      text-align: center;
+      margin: 12px 0 2px;
+    }
+    .percent {
+      color: #d13b29;
+      font-size: clamp(32px, 4vw, 52px);
+      font-weight: 800;
+      line-height: 1;
+    }
+    .meter {
+      height: clamp(14px, 1.5vh, 22px);
+      overflow: hidden;
+      border-radius: 12px;
+      background: #e5edf3;
+      margin: 14px 5px 4px;
+    }
+    #meterFill {
+      height: 100%;
+      width: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg,#e33b2f,#f59e0b,#15a36f);
+      transition: width .45s ease, filter .45s;
+    }
+    #status {
+      min-height: clamp(40px, 5vh, 65px);
+      margin: 15px 4px 4px;
+      padding: clamp(8px, 1.2vh, 16px);
+      color: #0b4f78;
+      background: #edf8ff;
+      border-left: 6px solid #1681b5;
+      border-radius: 8px;
+      font-weight: 650;
+      text-align: center;
+      font-size: clamp(14px, 1.1vw, 20px);
+      line-height: 1.4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    h2 {
+      margin: 0 0 clamp(8px, 1.5vh, 16px);
+      font-size: clamp(20px, 2.2vw, 32px);
+      color: #0b4f78;
+      font-weight: 700;
+    }
+    .hint {
+      margin: 0 0 clamp(12px, 2vh, 20px);
+      font-size: clamp(13px, 1vw, 18px);
+      line-height: 1.5;
+      color: #486174;
+    }
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(10px, 1.2vw, 18px);
+      flex: 1;
+    }
+    .action {
+      min-height: clamp(110px, 15vh, 160px);
+      padding: clamp(10px, 1.2vh, 18px);
+      border: 2px solid #cbddea;
+      border-radius: 16px;
+      color: #17324d;
+      background: #fff;
+      font-family: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .18s, box-shadow .18s, background .18s;
+      font-size: clamp(13px, 1vw, 18px);
+      line-height: 1.3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .action:hover, .action:focus-visible {
+      transform: translateY(-4px);
+      background: #f4fbff;
+      box-shadow: 0 8px 20px rgba(11,79,120,0.15);
+      outline: none;
+    }
+    .icon {
+      display: block;
+      font-size: clamp(36px, 4.5vw, 56px);
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+    .loss {
+      display: block;
+      margin-top: 4px;
+      color: #cf402e;
+      font-size: clamp(10px, 0.8vw, 14px);
+      font-weight: 600;
+    }
+    .reset {
+      width: 100%;
+      margin-top: clamp(12px, 2vh, 20px);
+      padding: clamp(12px, 1.5vh, 18px);
+      border: 0;
+      border-radius: 12px;
+      color: #fff;
+      background: #0b4f78;
+      font-family: inherit;
+      font-weight: 750;
+      cursor: pointer;
+      font-size: clamp(14px, 1.1vw, 20px);
+      transition: background 0.2s;
+    }
+    .reset:hover { background: #073b5a; }
+    .note {
+      margin-top: clamp(12px, 2vh, 20px);
+      padding: clamp(10px, 1.2vh, 16px);
+      border-radius: 12px;
+      background: #fff6d9;
+      border-left: 6px solid #f4b327;
+      font-size: clamp(12px, 0.9vw, 16px);
+      line-height: 1.55;
+    }
+    @media (max-width: 780px) {
+      main { display: block; padding: 10px; }
+      .card { margin-bottom: 16px; padding: 12px; }
+      #fieldCanvas { min-height: 280px; max-height: 50vh; }
+      .actions { grid-template-columns: 1fr 1fr; }
+      .action { min-height: 100px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🧲 കാന്തികശക്തി നഷ്ടപ്പെടൽ (Demagnetization)</h1>
+    <p>ആവർത്തിച്ചുള്ള പ്രവർത്തനങ്ങൾ വഴി കാന്തികക്ഷേത്രം എങ്ങനെ ദുർബലമാകുന്നുവെന്ന് നിരീക്ഷിക്കുക.</p>
+  </header>
+  <main>
+    <section class="card">
+      <canvas id="fieldCanvas" aria-label="Magnetic field visualisation"></canvas>
+      <div class="reading">
+        <span class="percent" id="percent">100%</span><br>
+        <strong style="font-size:clamp(14px,1.2vw,22px);">കാന്തിക ശക്തി (Magnetic Strength)</strong>
+      </div>
+      <div class="meter"><div id="meterFill"></div></div>
+      <div id="status">ഒരു പ്രവർത്തനം തിരഞ്ഞെടുക്കുക. കാന്തികക്ഷേത്രം ശ്രദ്ധാപൂർവ്വം നിരീക്ഷിക്കുക.</div>
+    </section>
+    <section class="card">
+      <h2>⚡ ഒരു പ്രവർത്തനം തിരഞ്ഞെടുക്കുക</h2>
+      <p class="hint">ഏത് പ്രവർത്തനവും ആവർത്തിക്കുക. ഓരോ തവണയും ഫീൽഡ് ലൈനുകൾ കുറയുകയും മങ്ങുകയും ചെയ്യുന്നു.</p>
+      <div class="actions">
+        <button class="action" onclick="applyAction('heat')"><span class="icon">🔥</span>കാന്തം ചൂടാക്കുക<span class="loss">ചൂട് കാന്തത്തെ ദുർബലപ്പെടുത്തുന്നു</span></button>
+        <button class="action" onclick="applyAction('hammer')"><span class="icon">🔨</span>ചുറ്റിക കൊണ്ട് അടിക്കുക<span class="loss">ശക്തമായ അടി അതിനെ ദുർബലപ്പെടുത്തുന്നു</span></button>
+        <button class="action" onclick="applyAction('drop')"><span class="icon">↗</span>കാന്തം എറിയുക<span class="loss">തിരിച്ചുള്ള ആഘാതം അതിനെ ദുർബലപ്പെടുത്തുന്നു</span></button>
+        <button class="action" onclick="applyAction('near')"><span class="icon">🧲</span>മറ്റൊരു കാന്തം അടുപ്പിക്കുക<span class="loss">വിപരീത ക്ഷേത്രം അതിനെ ദുർബലപ്പെടുത്തുന്നു</span></button>
+      </div>
+      <button class="reset" onclick="resetExperiment()">🔄 പരീക്ഷണം പുനഃസജ്ജമാക്കുക (Reset)</button>
+      <div class="note"><b>💡 നിരീക്ഷണം (Observation):</b> ചൂടാക്കുക, അടിക്കുക, എറിയുക, അല്ലെങ്കിൽ മറ്റൊരു കാന്തികക്ഷേത്രത്തിൽ വെയ്ക്കുക എന്നിവ കാന്തത്തിന്റെ ഡോമെയ്നുകളെ ക്രമം തെറ്റിക്കുകയും അതിന്റെ ശക്തി കുറയ്ക്കുകയും ചെയ്യുന്നു.</div>
+    </section>
+  </main>
+  <script>
+    const canvas = document.getElementById('fieldCanvas');
+    const ctx = canvas.getContext('2d');
+    const percentEl = document.getElementById('percent');
+    const meterFill = document.getElementById('meterFill');
+    const statusEl = document.getElementById('status');
+    let strength = 100;
+    let animation = { type: null, start: 0, duration: 0 };
+    let throwPath = [];
+    const loss = { heat: 16, hammer: 12, drop: 10, near: 14 };
+    
+    // Bilingual status messages
+    const labels = {
+      heat: 'കാന്തം ചൂടാക്കി (The magnet was heated)',
+      hammer: 'കാന്തത്തിൽ അടിച്ചു (The magnet was struck)',
+      drop: 'കാന്തം എറിഞ്ഞു (The magnet was thrown)',
+      near: 'മറ്റൊരു കാന്തം അടുപ്പിച്ചു (Another magnet was brought close)'
+    };
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      draw();
+    }
+    window.addEventListener('resize', resize);
+
+    function applyAction(type) {
+      if (strength === 0) {
+        statusEl.textContent = 'കാന്തികക്ഷേത്രം വളരെ ദുർബലമാണ്. Reset ചെയ്ത് വീണ്ടും ശ്രമിക്കുക.';
+        return;
+      }
+      if (animation.type) {
+        statusEl.textContent = 'ദയവായി ആദ്യം ഈ പ്രവർത്തനം കാണുക, എന്നിട്ട് അടുത്തത് തിരഞ്ഞെടുക്കുക.';
+        return;
+      }
+      if (type === 'drop') {
+        throwPath = Array.from({ length: 7 }, (_, i) => ({
+          x: i === 0 ? .15 : (i === 6 ? .85 : .13 + Math.random() * .74),
+          y: i === 0 ? .22 : (i === 6 ? .72 : .14 + Math.random() * .67),
+          r: (Math.random() * 6 - 3) * Math.PI
+        }));
+      }
+      animation = { type, start: performance.now(), duration: 3200 };
+      statusEl.textContent = `${labels[type]}... ശ്രദ്ധാപൂർവ്വം നിരീക്ഷിക്കുക.`;
+      draw();
+    }
+
+    function resetExperiment() {
+      strength = 100;
+      animation = { type: null, start: 0, duration: 0 };
+      percentEl.textContent = '100%';
+      meterFill.style.width = '100%';
+      meterFill.style.filter = 'none';
+      statusEl.textContent = 'ഒരു പ്രവർത്തനം തിരഞ്ഞെടുക്കുക. കാന്തികക്ഷേത്രം ശ്രദ്ധാപൂർവ്വം നിരീക്ഷിക്കുക.';
+      draw();
+    }
+
+    function arrow(x, y, angle, color) {
+      ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
+      ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(-8,-5); ctx.lineTo(0,0); ctx.lineTo(-8,5); ctx.stroke();
+      ctx.restore();
+    }
+
+    function draw() {
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      if (!w || !h) return;
+      ctx.clearRect(0, 0, w, h);
+      const now = performance.now();
+      const progress = animation.type ? Math.min(1, (now - animation.start) / animation.duration) : 0;
+      
+      if (animation.type && progress >= 1) {
+        const finishedType = animation.type;
+        strength = Math.max(0, strength - loss[finishedType]);
+        animation = { type: null, start: 0, duration: 0 };
+        percentEl.textContent = strength + '%';
+        meterFill.style.width = strength + '%';
+        meterFill.style.filter = `saturate(${.45 + strength / 100})`;
+        statusEl.textContent = `${labels[finishedType]}. കാന്തിക ശക്തി ഇപ്പോൾ ${strength}% ആണ്.`;
+        draw();
+        return;
+      }
+
+      const active = Boolean(animation.type);
+      const visualStrength = active ? strength - loss[animation.type] * progress : strength;
+      const cx = w / 2, cy = h / 2;
+      const magW = Math.min(200, w * .45), magH = Math.min(64, h * .12);
+      let magnetX = cx, magnetY = cy, magnetRotation = 0;
+      if (active && animation.type === 'drop') {
+        const thrown = getThrownState(w, h, progress);
+        magnetX = thrown.x; magnetY = thrown.y; magnetRotation = thrown.r;
+      }
+      const left = magnetX - magW / 2, top = magnetY - magH / 2;
+      
+      // --- Draw Magnetic Field Lines ---
+      const lineCount = Math.max(0, Math.ceil(visualStrength / 13));
+      const alpha = .12 + visualStrength / 130;
+      if (active) {
+        percentEl.textContent = Math.round(visualStrength) + '%';
+        meterFill.style.width = visualStrength + '%';
+      }
+      const fieldColor = `rgba(19, 113, 158, ${alpha})`;
+      ctx.setLineDash([8, 8]); ctx.lineDashOffset = -(now / 28) % 16; ctx.lineWidth = 2.5;
+      for (let i = 1; i <= lineCount; i++) {
+        const spread = 18 + i * (14 + visualStrength / 16);
+        ctx.strokeStyle = fieldColor;
+        ctx.beginPath(); ctx.moveTo(left + 2, magnetY);
+        ctx.bezierCurveTo(left - spread*.42, top - spread, left + magW + spread*.42, top - spread, left + magW - 2, magnetY); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(left + 2, magnetY);
+        ctx.bezierCurveTo(left - spread*.42, top + magH + spread, left + magW + spread*.42, top + magH + spread, left + magW - 2, magnetY); ctx.stroke();
+        if (i === Math.ceil(lineCount / 2)) arrow(magnetX + 12, top - spread*.67, 0, fieldColor);
+      }
+      ctx.setLineDash([]);
+      
+      // --- Draw Magnet ---
+      drawSmallMagnet(magnetX, magnetY, magW, magH, magnetRotation);
+      
+      // --- Draw Action Animations ---
+      if (active) drawActionAnimation(animation.type, cx, cy, w, h, magW, magH, progress);
+      
+      // Continue loop for smooth animations (fire flicker, hammer, etc.)
+      requestAnimationFrame(draw);
+    }
+
+    function drawSmallMagnet(x, y, width, height, rotation) {
+      ctx.save(); ctx.translate(x, y); ctx.rotate(rotation);
+      ctx.shadowColor = 'rgba(0,0,0,0.2)'; ctx.shadowBlur = 12; ctx.shadowOffsetY = 4;
+      ctx.fillStyle = '#e63f35'; ctx.fillRect(-width/2, -height/2, width/2, height);
+      ctx.fillStyle = '#286bc1'; ctx.fillRect(0, -height/2, width/2, height);
+      ctx.shadowColor = 'transparent';
+      ctx.strokeStyle = '#16334c'; ctx.lineWidth = 2.5; ctx.strokeRect(-width/2, -height/2, width, height);
+      ctx.fillStyle = '#fff'; 
+      ctx.font = `bold ${Math.max(16, height*.55)}px Inter, sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('N', -width/4, 0); ctx.fillText('S', width/4, 0);
+      ctx.restore();
+    }
+
+    function getThrownState(w, h, progress) {
+      const path = throwPath.length ? throwPath : [{x:.15,y:.22,r:0},{x:.85,y:.72,r:Math.PI}];
+      const scaled = progress * (path.length - 1);
+      const index = Math.min(path.length - 2, Math.floor(scaled));
+      const t = scaled - index;
+      const a = path[index], b = path[index + 1];
+      return {
+        x: (a.x + (b.x - a.x) * t) * w,
+        y: (a.y + (b.y - a.y) * t) * h,
+        r: a.r + (b.r - a.r) * t
+      };
+    }
+
+    function drawActionAnimation(type, cx, cy, w, h, magW, magH, progress) {
+      const left = cx - magW / 2, top = cy - magH / 2;
+      ctx.save();
+      if (type === 'heat') {
+        const flicker = Math.sin(performance.now()/70) * 7 + Math.sin(performance.now()/113) * 4;
+        const flameBase = cy + 112;
+        const flameTop = flameBase - (46 + progress * 72 + flicker);
+        ctx.fillStyle='#9aa8ae'; ctx.strokeStyle='#3e5059'; ctx.lineWidth=2.5;
+        ctx.beginPath(); ctx.ellipse(cx, cy+172, 54, 12, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+        const canGrad=ctx.createLinearGradient(cx-45,0,cx+45,0); canGrad.addColorStop(0,'#87979e'); canGrad.addColorStop(.5,'#d8e1e2'); canGrad.addColorStop(1,'#71838b');
+        ctx.fillStyle=canGrad; ctx.fillRect(cx-45, flameBase, 90, 72); ctx.strokeRect(cx-45, flameBase,90,72);
+        ctx.fillStyle='#263944'; ctx.fillRect(cx-16, flameBase-11,32,13);
+        ctx.beginPath(); ctx.moveTo(cx,flameTop); ctx.bezierCurveTo(cx-37,flameTop+45,cx-36,flameBase-10,cx,flameBase); ctx.bezierCurveTo(cx+37,flameBase-11,cx+35,flameTop+46,cx,flameTop); 
+        const outer=ctx.createLinearGradient(0,flameTop,0,flameBase); outer.addColorStop(0,'#ed2024'); outer.addColorStop(.55,'#ff7a1a'); outer.addColorStop(1,'#ffc329'); 
+        ctx.fillStyle=outer; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(cx,flameTop+27); ctx.bezierCurveTo(cx-18,flameTop+53,cx-14,flameBase-10,cx,flameBase-7); ctx.bezierCurveTo(cx+18,flameBase-16,cx+16,flameTop+53,cx,flameTop+27); 
+        ctx.fillStyle='#fff4a3'; ctx.fill();
+      }
+      if (type === 'hammer') {
+        const pivotX = left + magW * .96, pivotY = top - 18;
+        const fall = progress < .76 ? 1 - Math.pow(1 - progress/.76, 3) : 1 - (progress-.76)*.08;
+        const angle = (Math.PI / 2) * (1 - fall);
+        const headX = pivotX - Math.cos(angle) * 151;
+        const headY = pivotY - Math.sin(angle) * 151;
+        ctx.save(); ctx.translate(pivotX, pivotY); ctx.rotate(angle);
+        const wood=ctx.createLinearGradient(-135,0,0,0); wood.addColorStop(0,'#70401f'); wood.addColorStop(.5,'#bd7c40'); wood.addColorStop(1,'#75421f');
+        ctx.fillStyle=wood; ctx.fillRect(-137,-11,137,22); ctx.strokeStyle='#3e2617'; ctx.lineWidth=2; ctx.strokeRect(-137,-11,137,22);
+        const metal=ctx.createLinearGradient(-180,0,-116,0); metal.addColorStop(0,'#52646d'); metal.addColorStop(.5,'#e0e7e8'); metal.addColorStop(1,'#65767d'); ctx.fillStyle=metal;
+        ctx.beginPath(); ctx.moveTo(-181,-28); ctx.lineTo(-129,-28); ctx.lineTo(-117,-14); ctx.lineTo(-119,15); ctx.lineTo(-174,18); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle='#283941'; ctx.beginPath(); ctx.arc(0,0,7,0,Math.PI*2); ctx.fill(); ctx.restore();
+        ctx.fillStyle='#283941'; ctx.beginPath(); ctx.arc(pivotX,pivotY,7,0,Math.PI*2); ctx.fill();
+        if (progress > .66 && progress < .86) { ctx.strokeStyle='#f09b20'; ctx.lineWidth=3; for(let i=0;i<7;i++){ const a=-2.7+i*.34; ctx.beginPath(); ctx.moveTo(headX,headY+10); ctx.lineTo(headX+Math.cos(a)*35,headY+10+Math.sin(a)*35); ctx.stroke(); } }
+      }
+      if (type === 'near') {
+        const startX = cx + magW*.95, endX = cx + magW*.56;
+        const x = startX + (endX - startX) * progress;
+        drawSmallMagnet(x, cy - magH*.88, magW*.7, magH*.72, -0.62);
+        ctx.strokeStyle='rgba(30,74,120,.7)'; ctx.lineWidth=3; ctx.setLineDash([5,5]);
+        ctx.beginPath(); ctx.arc(cx+magW*.38, cy-magH*.45, 24+progress*12, -1.4, 1.4); ctx.stroke(); ctx.setLineDash([]);
+      }
+      ctx.restore();
+    }
+
+    // Initial draw and continuous loop
+    resize();
+    requestAnimationFrame(draw);
+  </script>
+</body>
+</html>
