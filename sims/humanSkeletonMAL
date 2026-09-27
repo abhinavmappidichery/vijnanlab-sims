@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>മനുഷ്യാസ്ഥികൂടം ഇന്ററാക്ടീവ് സിമുലേറ്റർ</title>
+    <style>
+        body {
+            font-family: 'AnjaliOldLipi', 'Manjari', Arial, sans-serif;            
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        h1 {
+            color: #1e3c72;
+            margin-bottom: 5px;
+            text-align: center;
+            font-size: 28px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        .instruction {
+            color: #4a5568;
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 16px;
+        }
+        .main-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            max-width: 950px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            align-items: center;
+            justify-content: center;
+        }
+        /* അസ്ഥികൂടത്തിന്റെ ചിത്രം ഉൾക്കൊള്ളുന്ന ഭാഗം */
+        .skeleton-layout {
+            position: relative;
+            width: 300px;
+            height: 550px;
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/201805_human_skeleton.png/960px-201805_human_skeleton.png?_=20180716181501');
+            background-size: 520px 520px;
+            background-repeat: no-repeat;
+            background-position: center;
+            border-radius: 20px;
+            background-color: #ffffff;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.05);
+            border: 2px solid #e2e8f0;
+        }
+        /* നമ്പർ ബട്ടണുകളുടെ ആകര്‍ഷകമായ ശൈലി */
+        .node-btn {
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            color: white;
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(255, 65, 108, 0.4);
+            transition: all 0.3s ease;
+        }.node-btn-intro {
+            position: absolute;
+            width: 90px;
+            height: 30px;
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            color: white;
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(255, 65, 108, 0.4);
+            transition: all 0.3s ease;
+        }
+        .node-btn:hover {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            transform: scale(1.3);
+            box-shadow: 0 6px 15px rgba(17, 153, 142, 0.5);
+        }
+        /* ചിത്രത്തിന് മുകളിലെ കൃത്യമായ സ്ഥാനങ്ങൾ */
+        #btn-intro  { top: 20px;  left: 10px; } 
+        #btn-skull  { top: 35px;  left: 134px; } 
+        #btn-neck   { top: 85px;  left: 134px; } 
+        #btn-chest  { top: 140px; left: 110px; } 
+        #btn-sternum  { top: 140px; left: 136px; } 
+        #btn-larm   { top: 155px; left: 87px;  } 
+        #btn-spine  { top: 195px; left: 134px; } 
+        #btn-hip    { top: 220px; left: 105px; } 
+        #btn-legs   { top: 400px; left: 134px; } 
+        #btn-sholder { top: 110px; left: 180px; } 
+        #btn-hingejoint { top: 200px; left: 195px; } 
+        #btn-hingejoint1 { top: 360px; left: 160px; } 
+        #btn-cartilage { top: 60px; left: 169px; } 
+        #btn-joints { top: 360px; left: 19px; } 
+
+
+        /* വിവരങ്ങൾ കാണിക്കുന്ന ഇൻഫോ ബോക്സ് */
+        .info-box {
+            flex: 1;
+            min-width: 320px;
+            min-height: 320px;
+            background: linear-gradient(to bottom right, #ffffff, #f7fafc);
+            border: 2px solid #cbd5e0;
+            border-radius: 15px;
+            padding: 25px;
+            box-sizing: border-box;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .info-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #2b6cb0;
+            margin-bottom: 15px;
+            border-bottom: 3px solid #63b3ed;
+            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .info-section {
+            margin-bottom: 14px;
+            line-height: 1.7;
+            font-size: 15px;
+            color: #2d3748;
+        }
+        .section-title {
+            font-weight: bold;
+            color: #2c5282;
+        }
+        .default-text {
+            color: #a0aec0;
+            text-align: center;
+            margin-top: 120px;
+            font-style: italic;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>💀 മനുഷ്യാസ്ഥികൂടം ഇന്ററാക്ടീവ് സിമുലേറ്റർ 🦴</h1>
+    <p class="instruction">✨ ചിത്രത്തിലെ ഓരോ നമ്പറുകളിലും (1 - 13) ക്ലിക്ക് ചെയ്ത് അതാത് ശരീരഭാഗങ്ങളെക്കുറിച്ച് മനസ്സിലാക്കൂ!</p>
+
+    <div class="main-container">
+        <!-- അസ്ഥികൂടത്തിന്റെ ചിത്രം അടങ്ങിയ ഭാഗം -->
+        <div class="skeleton-layout">
+            <button id="btn-intro" class="node-btn-intro" onclick="showDetails('intro')">intoduction</button>
+            <button id="btn-skull" class="node-btn" onclick="showDetails('skull')">1</button>
+            <button id="btn-spine" class="node-btn" onclick="showDetails('spine')">2</button>
+            <button id="btn-chest" class="node-btn" onclick="showDetails('chest')">3</button>
+            <button id="btn-sternum" class="node-btn" onclick="showDetails('Sternum')">4</button>
+            <button id="btn-larm" class="node-btn" onclick="showDetails('larm')">5</button>
+            <button id="btn-legs" class="node-btn" onclick="showDetails('legs')">6</button>
+            <button id="btn-cartilage" class="node-btn" onclick="showDetails('cartilage')">7</button>
+            <button id="btn-joints" class="node-btn" onclick="showDetails('joints_intro')">8</button>
+            <button id="btn-hingejoint" class="node-btn" onclick="showDetails('hingejoint')">9</button>
+            <button id="btn-hingejoint1" class="node-btn" onclick="showDetails('hingejoint1')">10</button>
+            <button id="btn-hip" class="node-btn" onclick="showDetails('hip')">11</button>
+            <button id="btn-sholder" class="node-btn" onclick="showDetails('sholder')">12</button>
+            <button id="btn-neck" class="node-btn" onclick="showDetails('neck')">13</button>
+        </div>
+
+        <div class="info-box" id="info-box">
+            <div class="default-text" id="default-text">വിവരങ്ങൾ പോപ്പ്-ഓൺ ആയി കാണുന്നതിനായി ചിത്രത്തിലെ ഏതെങ്കിലും നമ്പറിൽ ക്ലിക്ക് ചെയ്യുക.</div>
+            <div id="content-area" style="display: none;">
+                <div class="info-title" id="info-title"></div>
+                <div class="info-section" id="box-one"><span class="section-title">🦴</span> <span id="info-one"></span></div>
+                <div class="info-section" id="box-two"><span class="section-title">🔗</span> <span id="info-two"></span></div>
+                <div class="info-section" id="box-three"><span class="section-title">💥</span> <span id="info-three"></span></div>
+                <div class="info-section" id="box-four" style="display: none;"><span class="section-title">💡</span> <span id="info-four"></span></div>
+                <div class="info-section" id="box-five" style="display: none;"><span class="section-title">💡</span> <span id="info-five"></span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const data = {
+            intro: {
+                title: "മനുഷ്യാസ്ഥികൂടം - ഒരു വിവരണം",
+                one: "<b>അസ്ഥികളുടെ എണ്ണം: </b>നവജാതശിശുക്കളിൽ ഏകദേശം 300-ഓളം അസ്ഥികൾ കാണപ്പെടുന്നു. എന്നാൽ പ്രായപൂർത്തിയാകുന്നതോടെ ഇതിൽ പലതും യോജിച്ച് ഒരേ അസ്ഥിയായി മാറി ആകെ എണ്ണം 206 ആയി കുറയുന്നു."
+            },
+            skull: {
+                title: "1. തലയോട് (Skull)",
+                one: "<b>അസ്ഥികളുടെ എണ്ണം: </b>തലയോട് 22 അസ്ഥികൾ ചേർന്നുണ്ടായതാണ്.",
+                two: "<b>സംരക്ഷണം: </b>തലച്ചോറിന് (മസ്തിഷ്കം) പുറമേ കണ്ണ്, ചെവി, മൂക്ക്, നാക്ക് എന്നീ ജ്ഞാനേന്ദ്രിയങ്ങൾക്കും സംരക്ഷണം നൽകുന്നു.",
+                three: "<b>ചലിക്കുന്ന അസ്ഥി: </b>തലയോടിലെ അസ്ഥികളിൽ കീഴ്ത്താടിയെല്ല് മാത്രമാണ് ചലിപ്പിക്കാൻ കഴിയുന്നത്. നമ്മൾ ഭക്ഷണം ചവയ്ക്കുമ്പോൾ ഈ അസ്ഥിയാണ് ചലിക്കുന്നത്.",
+                four: "<b>ഹെൽമെറ്റിന്റെ പ്രാധാന്യം:</b> തലയ്ക്ക് കടുത്ത ആഘാതം ഏൽക്കുമ്പോൾ സംഭവിക്കുന്നു. ഇത് ഉള്ളിലെ മസ്തിഷ്കത്തിന് ക്ഷതമേൽപ്പിക്കാൻ സാധ്യതയുള്ളതിനാൽ അതീവ ഗുരുതരമായ 'സങ്കീർണ്ണഭംഗം' ആയി കണക്കാക്കുന്നു."
+            },
+            spine: {
+                title: "2. നട്ടെല്ല് (Spine)",
+                one: "<b>ധർമ്മം: </b>ശരീരം നിവർന്നുനിൽക്കുന്നതിനും ചലിക്കുന്നതിനും സഹായിക്കുന്നത് നട്ടെല്ലാണ്.",
+                two: "<b>കശേരുക്കൾ: </b>നട്ടെല്ലിലെ ചെറിയ അസ്ഥികളെ കശേരുക്കൾ (33) എന്ന് വിളിക്കുന്നു.",
+                three: "<b>അസ്ഥികളുടെ എണ്ണം: </b>33 കശേരുക്കൾ വളരെ ക്രമമായി വിന്യസിച്ചാണ് നട്ടെല്ല് രൂപപ്പെട്ടിരിക്കുന്നത്.",
+                four: "<b>സുഷുമ്നാനാഡിയുടെ സംരക്ഷണം: </b>നാഡീവ്യൂഹത്തിന്റെ പ്രധാനഭാഗമായ സുഷുമ്നാനാഡി കടന്നുപോകുന്നത് നട്ടെല്ലിനുള്ളിലൂടെയാണ്. അതിനാൽ സുഷുമ്നാനാഡിയുടെ സംരക്ഷണകവചമായി നട്ടെല്ല് പ്രവർത്തിക്കുന്നു.",
+                five: "<b>പ്രാധാന്യം: </b>നട്ടെല്ലിന് കാര്യമായ എന്തെങ്കിലും ക്ഷതമേറ്റാൽ മനുഷ്യന് എഴുന്നേറ്റുനടക്കാൻ പ്രയാസമാണ്."
+            },
+            chest: {
+                title: "3. വാരിയെല്ലുകൾ (Ribs)",
+                one: "<b>സ്ഥാനവും എണ്ണവും: </b>മനുഷ്യശരീരത്തിൽ നെഞ്ചിന്റെ ഭാഗത്താണ് വാരിയെല്ലുകൾ കാണപ്പെടുന്നത്. ആകെ 12 ജോടി (24 എണ്ണം) വാരിയെല്ലുകളാണുള്ളത്.",
+                two: "<b>ബന്ധിപ്പിച്ചിരിക്കുന്ന രീതി: </b>വാരിയെല്ലുകൾ പിന്നിൽ നട്ടെല്ലിനോടും മുന്നിൽ മാറെല്ലിനോടും ബന്ധിപ്പിച്ചിരിക്കുന്നു.",
+                three: "<b>സംരക്ഷണം: </b>ഹൃദയം, ശ്വാസകോശം, കൂടാതെ ചില പ്രധാന രക്തക്കുഴലുകൾ എന്നിവയെ പൊതിഞ്ഞു സംരക്ഷിക്കുന്നത് വാരിയെല്ലുകളാണ്.",
+                four: "<b>വാരിയെല്ല് ഒടിവ്: </b>നെഞ്ചിന് ശക്തമായ ഇടി ലഭിക്കുമ്പോൾ സംഭവിക്കുന്നു. ഒടിഞ്ഞ വാരിയെല്ലുകൾ ഉള്ളിലെ ശ്വാസകോശത്തെയോ ഹൃദയത്തെയോ കുത്തിത്തുളച്ചാൽ അത് അപകടകരമായി മാറുന്നു."
+            },
+            Sternum: {
+                title: "4. മാറെല്ല് (Sternum)",
+                one:"മനുഷ്യശരീരത്തിൽ നെഞ്ചിന്റെ മുൻഭാഗത്തായി കാണപ്പെടുന്ന ഒരു അസ്ഥിയാണിത്. വാരിയെല്ലുകൾ പിന്നിൽ നട്ടെല്ലിനോടും മുൻഭാഗത്ത് ഈ മാറെല്ലിനോടും ബന്ധിപ്പിച്ചിരിക്കുന്നു. ഹൃദയം, ശ്വാസകോശം തുടങ്ങിയ പ്രധാന ആന്തരികാവയവങ്ങളെ പൊതിഞ്ഞു സംരക്ഷിക്കുന്ന അസ്ഥികൂട വ്യവസ്ഥയുടെ ഒരു പ്രധാന ഭാഗമാണിത്."
+            },
+            larm: {
+                title: "5. കൈ (Left Arm)",
+                one: "<b>അസ്ഥികളുടെ എണ്ണം: </b>മനുഷ്യന്റെ ഓരോ കൈയിലും 32 അസ്ഥികൾ വീതമുണ്ട്.",
+                two: "<b>ആകെ എണ്ണം: </b>അതുകൊണ്ട് രണ്ട് കൈകളിലുമായി ആകെ 64 അസ്ഥികളാണുള്ളത്.",
+                three: "<b>ചലനാത്മകത: </b>മനുഷ്യശരീരത്തിലെ കാലുകളെ അപേക്ഷിച്ച് കൈകൾക്ക് കൂടുതൽ ചലനാത്മകതയുണ്ട്.",
+                four: "<b>സന്ധികൾ: </b>കൈമുട്ടിൽ വിജാഗിരി സന്ധിയും (Hinge Joint) തോളെല്ലിൽ ബോൾ ആൻ്റ് സോക്കറ്റ് സന്ധിയും (Ball and Socket Joint) കാണപ്പെടുന്നു. ഇവയാണ് കൈകൾ വിവിധ ദിശകളിലേക്ക് ചലിപ്പിക്കാൻ സഹായിക്കുന്നത്."
+            },
+            legs: {
+                title: "6. കാൽ (Leg Bones)",
+                one: "<b>അസ്ഥികളുടെ എണ്ണം: </b>മനുഷ്യന്റെ ഓരോ കാലിലും 31 അസ്ഥികൾ വീതമുണ്ട് (ആകെ 62).",
+                two: "<b>ബലം: </b>രണ്ടുകാലിൽ നിൽക്കേണ്ടതുകൊണ്ട് കൈകളിലെ അസ്ഥികളെ അപേക്ഷിച്ച് കാലിലെ അസ്ഥികൾ കൂടുതൽ ബലമുള്ളവയാണ്.",
+                three: "<b>ഏറ്റവും നീളം കൂടിയ അസ്ഥി: </b>മനുഷ്യശരീരത്തിലെ ഏറ്റവും നീളം കൂടിയ അസ്ഥിയായ തുടയെല്ല് (Femur) കാലിലാണ് കാണപ്പെടുന്നത്.",
+                four: "<b>സന്ധികൾ: </b>കാലുകളെ ചലിപ്പിക്കാൻ സഹായിക്കുന്ന വിജാഗിരി സന്ധി (കാൽമുട്ടിൽ), ബോൾ ആൻ്റ് സോക്കറ്റ് സന്ധി (ഇടുപ്പെല്ലിൽ) എന്നിവ കാലുകളുമായി ബന്ധപ്പെട്ടിരിക്കുന്നു."
+            },
+               cartilage: {
+                title: "7. തരുണാസ്ഥികൾ (Cartilages)",
+                one: "<b>പ്രത്യേകത: </b>അസ്ഥികളെപ്പോലെ ശരീരത്തിന് താങ്ങും ബലവും നൽകുന്ന വളരെ അധികം വഴക്കമുള്ള ഭാഗങ്ങളാണിത്. ഇവ എല്ലുകളെക്കാൾ മൃദുവാണ്.",
+                two: "<b>കാണപ്പെടുന്ന സ്ഥലങ്ങൾ: </b>പ്രധാനമായും ചെവി, മൂക്ക്, ശ്വാസനാളം, കൈമുട്ട്ക, കാൽമുട്ട്, കണങ്കാൽ കശേരുക്കൾക്കിടയിലെ ഡിസ്കുകൾ തുടങ്ങിയ ഭാഗങ്ങളിലാണ് തരുണാസ്ഥികൾ കാണപ്പെടുന്നത്.",
+                three: "<b>ധർമ്മം: </b>ചെവി, മൂക്ക് തുടങ്ങിയ ഭാഗങ്ങൾ എളുപ്പത്തിൽ വളയ്ക്കാൻ സാധിക്കുന്നതിന് ഇവ സഹായിക്കുന്നു."
+            },
+              joints_intro: {
+                title: "8.അസ്ഥിസന്ധി (Joints)",
+                one: "<b>നിർവ്വചനം: </b>രണ്ടോ അതിലധികമോ അസ്ഥികൾ ചേരുന്ന ഭാഗത്തെ അസ്ഥിസന്ധി എന്നു പറയുന്നു.",
+                two: "<b>വിവിധതരം സന്ധികൾ: </b>നമ്മുടെ ശരീരത്തിൽ വിവിധതരം അസ്ഥിസന്ധികൾ ഉണ്ട്. അസ്ഥിസന്ധികൾ ചലിപ്പിക്കാൻ കഴിയുന്നവയും കഴിയാത്തവയും ഉണ്ട്."
+            },
+            hingejoint: {
+                title: "9. വിജാഗിരി സന്ധി (Hinge Joint)",
+                one: "<b>പ്രത്യേകത: </b>കതക്, ജനൽ എന്നിവയിലെ വിജാഗിരിപോലെ ഒരു വശത്തേക്ക് മാത്രമേ ഈ സന്ധിയിലൂടെ അസ്ഥികൾ ചലിപ്പിക്കാൻ സാധിക്കുകയുള്ളൂ.",
+                two: "<b>കാണപ്പെടുന്ന ഭാഗങ്ങൾ: </b>കൈമുട്ടിലും കാൽമുട്ടിലും കാണപ്പെടുന്ന സന്ധികൾ വിജാഗിരി സന്ധികളാണ്."
+            },
+            hingejoint1: {
+                title: "10. വിജാഗിരി സന്ധി (Hinge Joint)",
+                one: "<b>പ്രത്യേകത: </b>കതക്, ജനൽ എന്നിവയിലെ വിജാഗിരിപോലെ ഒരു വശത്തേക്ക് മാത്രമേ ഈ സന്ധിയിലൂടെ അസ്ഥികൾ ചലിപ്പിക്കാൻ സാധിക്കുകയുള്ളൂ.",
+                two: "<b>കാണപ്പെടുന്ന ഭാഗങ്ങൾ: </b>കൈമുട്ടിലും കാൽമുട്ടിലും കാണപ്പെടുന്ന സന്ധികൾ വിജാഗിരി സന്ധികളാണ്."
+            },
+           hip: {
+                title: "11. ബോൾ ആൻഡ് സോക്കറ്റ് സന്ധി (ഇടുപ്പെല്ല്)",
+                one: "<b>ധർമ്മം: </b>ശരീരത്തിന്റെ മുകൾഭാഗത്തെയും താഴത്തെ ഭാഗത്തെയും ബന്ധിപ്പിക്കുകയും താങ്ങ് നൽകുകയും ചെയ്യുന്നു.",
+                two: "<b>പ്രത്യേകത: </b>ഒരു അസ്ഥിയുടെ അറ്റത്തുള്ള ഉരുണ്ടഭാഗം മറ്റൊരു അസ്ഥിയുടെ കുഴിയിൽ തിരിയുന്നു.",
+                three: "<b>സന്ധി: </b>ഇടുപ്പിൽ ബോൾ ആൻഡ് സോക്കറ്റ് സന്ധിയാണ് കാണപ്പെടുന്നത്. ഇത് കാലുകൾക്ക് കൂടുതൽ ചലനസ്വാതന്ത്ര്യം നൽകുന്നു.",
+                four: "<b>പ്രശ്നങ്ങൾ: </b>പ്രായമായവരിൽ കാൽസ്യം കുറയുന്നത് മൂലമുള്ള ഓസ്റ്റിയോപൊറോസിസ് കാരണം ഇവിടെ പെട്ടെന്ന് ഒടിവ് സംഭവിക്കാം."
+            },    
+            sholder: {
+                title: "12. ബോൾ ആൻഡ് സോക്കറ്റ് സന്ധി (തോളെല്ല്)",
+                one: "<b>ധർമ്മം: </b>കൈകളെ വിവിധ ദിശകളിലേക്ക് ചലിപ്പിക്കാൻ സഹായിക്കുന്നു.",
+                two: "<b>പ്രത്യേകത: </b>ഒരു അസ്ഥിയുടെ അറ്റത്തുള്ള ഉരുണ്ടഭാഗം മറ്റൊരു അസ്ഥിയുടെ കുഴിയിൽ തിരിയുന്നു.",
+                three: "<b>സന്ധി: </b>തോളെല്ലിൽ ബോൾ ആൻഡ് സോക്കറ്റ് സന്ധിയാണ് കാണപ്പെടുന്നത്. ഇത് കൈകൾ എല്ലാവശത്തേക്കും ചലിപ്പിക്കാൻ സാധ്യമാക്കുന്നു."
+            },
+            neck: {
+                title: "13. പിവട്ട് സന്ധി (കഴുത്ത്)",
+                one: "നട്ടെല്ലിന്റെ ഏറ്റവും മുകളിലെ കശേരുക്കൾ തലയോടുമായി ബന്ധിപ്പിക്കുന്ന ഭാഗമാണിത്.",
+                two: "<b>പ്രത്യേകത: </b> ഒരസ്ഥി മറ്റൊരു അസ്ഥിയിൽ മുന്നോട്ടും പിന്നോട്ടും വശങ്ങളിലേക്കും തിരിയുന്ന രീതിയിലുള്ള സന്ധിയാണിത്.",
+                three: "<b>കാണപ്പെടുന്ന ഭാഗം: </b>കഴുത്തിലാണ് പിവട്ട് സന്ധി കാണപ്പെടുന്നത്. ഇതിനാൽ കഴുത്ത് മുന്നോട്ടും പിന്നോട്ടും ഇടത്തോട്ടും വലത്തോട്ടും ചലിപ്പിക്കാൻ സാധിക്കുന്നു."
+            },   
+        };
+
+        function showDetails(key) {
+            document.getElementById('default-text').style.display = 'none';
+            document.getElementById('content-area').style.display = 'block';
+            
+            const item = data[key];
+            document.getElementById('info-title').innerText = item.title;
+
+            // One
+            const boxOne = document.getElementById('box-one');
+            if (item.one) {
+                document.getElementById('info-one').innerHTML = item.one;
+                boxOne.style.display = 'block';
+            } else {
+                boxOne.style.display = 'none';
+            }
+
+            // Two
+            const boxTwo = document.getElementById('box-two');
+            if (item.two) {
+                document.getElementById('info-two').innerHTML = item.two;
+                boxTwo.style.display = 'block';
+            } else {
+                boxTwo.style.display = 'none';
+            }
+
+            // Three (if-else condition added)
+            const boxThree = document.getElementById('box-three');
+            if (item.three) {
+                document.getElementById('info-three').innerHTML = item.three;
+                boxThree.style.display = 'block';
+            } else {
+                boxThree.style.display = 'none';
+            }
+
+            // Four
+            const boxFour = document.getElementById('box-four');
+            if (item.four) {
+                document.getElementById('info-four').innerHTML = item.four;
+                boxFour.style.display = 'block';
+            } else {
+                boxFour.style.display = 'none';
+            }
+
+            // Five
+            const boxFive = document.getElementById('box-five');
+            if (item.five) {
+                document.getElementById('info-five').innerHTML = item.five;
+                boxFive.style.display = 'block';
+            } else {
+                boxFive.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
