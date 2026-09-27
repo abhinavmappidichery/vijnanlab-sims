@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><style>
+@font-face {
+  font-family: "Optimistic";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/OptimisticAI_VF_Optimized.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Optimistic Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/OptimisticMono_W_TextRegular.woff2") format("woff2");
+}
+:where(html) {
+  font-family: "Optimistic", system-ui, sans-serif;
+}
+:where(code, pre, kbd, samp) {
+  font-family: "Optimistic Mono", ui-monospace, monospace;
+}
+</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Magnetic Strength - Creative Lab</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Manjari:wght@400;700&family=Plus+Jakarta+Sans:wght@600;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans','Manjari',sans-serif;background:#0f172a;overflow:hidden;user-select:none;color:#e2e8f0}
+:root{--blue:#0ea5e9;--indigo:#6366f1;--amber:#f59e0b}
+header{height:64px;background:linear-gradient(90deg,#0f172a 0%,#1e293b 50%,#0f4c81 100%);display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid rgba(148,163,184,.15);position:relative;z-index:20}
+header .left{display:flex;align-items:center;gap:12px}
+.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#0ea5e9,#6366f1);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(14,165,233,.4)}
+header h1{font-size:18px;font-weight:800;letter-spacing:.5px;background:linear-gradient(90deg,#fff,#93c5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+header .badge{font-size:10px;background:rgba(14,165,233,.15);border:1px solid rgba(14,165,233,.3);color:#7dd3fc;padding:4px 10px;border-radius:20px}
+#main{display:flex;height:calc(100vh - 64px)}
+#leftPanel{width:360px;background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);padding:0;display:flex;flex-direction:column;box-shadow:4px 0 30px rgba(0,0,0,.2);z-index:10;overflow:hidden}
+.scroll{flex:1;overflow-y:auto;padding:18px}
+.scroll::-webkit-scrollbar{width:4px}
+.scroll::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
+.panel-title{font-size:12px;font-weight:800;letter-spacing:1.2px;color:#64748b;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.magnet-list{display:flex;flex-direction:column;gap:10px}
+.magnet-btn{position:relative;width:100%;padding:14px 14px 14px 16px;border:2px solid #e2e8f0;border-radius:14px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .25s;overflow:hidden}
+.magnet-btn::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:#cbd5e1;transition:all .25s}
+.magnet-btn:hover{border-color:#93c5fd;transform:translateY(-1px);box-shadow:0 6px 20px rgba(15,76,129,.08)}
+.magnet-btn.active{border-color:#0ea5e9;background:linear-gradient(135deg,#f0f9ff 0%,#e0f2fe 100%);box-shadow:0 8px 24px rgba(14,165,233,.25)}
+.magnet-btn.active::before{background:linear-gradient(180deg,#0ea5e9,#6366f1);width:6px}
+.magnet-btn .info{display:flex;align-items:center;gap:12px}
+.magnet-preview{width:56px;height:28px;border-radius:6px;display:flex;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.15);border:2px solid #1e293b}
+.magnet-preview .n{flex:1;background:linear-gradient(135deg,#ef4444,#dc2626);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px}
+.magnet-preview .s{flex:1;background:linear-gradient(135deg,#3b82f6,#1d4ed8);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px}
+.magnet-name{font-weight:700;color:#0f172a;font-size:14px}
+.magnet-sub{font-size:11px;color:#64748b}
+.magnet-btn .strength{width:32px;height:32px;border-radius:10px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:12px;color:#94a3b8}
+.magnet-btn.active .strength{background:#0ea5e9;color:#fff}
+.magnet-btn.done .strength{background:#dcfce7;color:#16a34a}
+.table-card{margin-top:20px;background:#fff;border:2px solid #f1f5f9;border-radius:16px;padding:14px;overflow:hidden}
+.table-card table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+.table-card th{background:#0f172a;color:#fff;padding:10px;font-size:11px;letter-spacing:.6px;text-transform:uppercase}
+.table-card th:first-child{border-radius:10px 0 0 10px}
+.table-card th:last-child{border-radius:0 10px 10px 0}
+.table-card td{padding:11px 10px;text-align:center;border-bottom:1px solid #f1f5f9;color:#334155;font-weight:600}
+.table-card tr:last-child td{border:0}
+td.reading{font-weight:800;color:#0f172a;transition:all .3s}
+td.reading.filled{color:#0ea5e9;background:#f0f9ff;border-radius:8px;animation:pop .4s}
+@keyframes pop{0%{transform:scale(.8)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
+.actions{display:flex;gap:10px;margin-top:16px}
+.btn{flex:1;padding:12px;border-radius:12px;border:0;font-weight:700;font-size:13px;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-reset{background:#fef2f2;color:#dc2626;border:2px solid #fecaca}
+.btn-reset:hover{background:#dc2626;color:#fff}
+.btn-shuffle{background:#0f172a;color:#fff}
+.btn-shuffle:hover{background:#1e293b}
+.note{margin-top:18px;padding:14px;background:linear-gradient(135deg,#fffbeb 0%,#fef3c7 100%);border:1px solid #fde68a;border-left:4px solid #f59e0b;border-radius:12px;font-size:12px;line-height:1.6;color:#78350f}
+#canvasPanel{flex:1;position:relative;background:radial-gradient(120% 120% at 30% 20%,#1e293b 0%,#0f172a 50%,#020617 100%);overflow:hidden}
+#canvasPanel::before{content:'';position:absolute;inset:0;background:radial-gradient(600px at 70% 30%,rgba(14,165,233,.12),transparent 60%);pointer-events:none}
+canvas{display:block;width:100%;height:100%}
+#status{position:absolute;top:16px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.5);padding:10px 18px;border-radius:30px;box-shadow:0 8px 30px rgba(0,0,0,.25),0 0 0 1px rgba(255,255,255,.5) inset;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;color:#0f172a;z-index:5;transition:all .3s;min-width:300px;justify-content:center}
+#status .dot{width:10px;height:10px;border-radius:50%;background:#22c55e;box-shadow:0 0 12px #22c55e;animation:pulse 2s infinite}
+#status.attract{background:linear-gradient(135deg,#dcfce7,#bbf7d0);border-color:#86efac;color:#14532d}
+#status.attract .dot{background:#16a34a;box-shadow:0 0 16px #16a34a}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+#scaleInfo{position:absolute;bottom:14px;right:14px;background:rgba(15,23,42,.8);backdrop-filter:blur(8px);border:1px solid rgba(148,163,184,.2);padding:8px 12px;border-radius:10px;font-size:11px;color:#94a3b8;display:flex;gap:12px}
+#scaleInfo b{color:#e2e8f0}
+@media(max-width:820px){#main{flex-direction:column;height:auto;overflow:auto}body{overflow:auto}#leftPanel{width:100%}#canvasPanel{height:620px;min-height:620px}#status{min-width:auto;width:calc(100% - 24px);font-size:12px}}
+</style>
+</head>
+<body>
+<div id="main">
+<div id="leftPanel">
+<div class="scroll">
+<div class="panel-title"><i class="fa-solid fa-layer-group" style="color:#0ea5e9"></i> Select Magnet</div>
+<div class="magnet-list" id="magnetList"></div>
+<div class="table-card">
+<div class="panel-title" style="margin-bottom:10px"><i class="fa-solid fa-table-list"></i> Observation Table</div>
+<table><thead><tr><th>Magnet</th><th>Strength</th><th>Reading</th></tr></thead><tbody id="tableBody"></tbody></table>
+</div>
+<div class="actions">
+<button class="btn btn-reset" onclick="resetLab()"><i class="fa-solid fa-rotate-left"></i> RESET</button>
+<button class="btn btn-shuffle" onclick="shuffleStrengths()"><i class="fa-solid fa-shuffle"></i> SHUFFLE</button>
+</div>
+</div>
+</div>
+<div id="canvasPanel">
+<canvas id="canvas"></canvas>
+<div id="status"><span class="dot"></span><span id="statusText">Select a magnet & drag it towards blade</span></div>
+<div id="scaleInfo"><span>Scale: <b>0 - 30 cm</b></span><span>N-Pole: <b id="npole">- cm</b></span></div>
+</div>
+</div>
+<script>
+const canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d');
+const statusEl=document.getElementById('status'),statusText=document.getElementById('statusText'),npoleEl=document.getElementById('npole');
+let W,H,cmToPx=20,originX,originY;
+let magnetStrengths=[2,4,6,8,10];
+magnetStrengths.sort(()=>Math.random()-0.5);
+let currentIndex=1,currentStrength=magnetStrengths[0];
+let magnet={x:0,y:0,w:160,h:42,dragging:false,hover:false};
+let blade={pivotX:0,pivotY:0,length:300,angle:0,targetAngle:0,isStuck:false,swing:0.05};
+let particles=[];
+let recorded={1:false,2:false,3:false,4:false,5:false};
+let readings={};
+
+function initUI(){
+ const list=document.getElementById('magnetList');
+ const tbody=document.getElementById('tableBody');
+ list.innerHTML='';tbody.innerHTML='';
+ for(let i=1;i<=5;i++){
+  const btn=document.createElement('div');
+  btn.className='magnet-btn'+(i===1?' active':'');
+  btn.id='btn-'+i;
+  btn.onclick=()=>selectMagnet(i);
+  btn.innerHTML=`<div class="info"><div class="magnet-preview"><div class="n">N</div><div class="s">S</div></div><div><div class="magnet-name">Magnet ${i}</div><div class="magnet-sub">${i===1?'Try this first →':`Strength: ? cm`}</div></div></div><div class="strength" id="ind-${i}"><i class="fa-solid fa-bolt"></i></div>`;
+  list.appendChild(btn);
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td><b>M${i}</b></td><td style="color:#64748b">? cm</td><td class="reading" id="r${i}">-</td>`;
+  tbody.appendChild(tr);
+ }
+}
+function resize(){
+ W=canvas.width=document.getElementById('canvasPanel').clientWidth;
+ H=canvas.height=document.getElementById('canvasPanel').clientHeight;
+// ഇടത് ബോക്സിൽ നിന്ന് എപ്പോഴും 120px കൃത്യമായ അകലം നൽകുന്നു
+ originX = 120;
+  // കാൻവാസിന്റെ ലംബമായ സ്ഥാനം കൃത്യമായി സെന്റർ-ബോട്ടം ആക്കാൻ
+  originY = Math.max(220, H * 0.78);
+  
+  // സ്കെയിൽ അനുപാതം
+  cmToPx = Math.max(14, Math.min(20, (W - originX - 180) / 32));
+  
+  magnet.w = cmToPx * 7;
+  magnet.h = 36;
+  
+  // പെൻഡുലത്തിന്റെ നീളം സ്ക്രീൻ ഉയരത്തിന് ആനുപാതികമായി ക്രമീകരിക്കാൻ
+  blade.length = Math.max(120, Math.min(220, originY * 0.65));
+  blade.pivotX = originX;
+  blade.pivotY = originY - blade.length - 20;
+  
+  const maxCm = 30;
+  magnet.x = originX + 24 * cmToPx;
+  magnet.y = originY - magnet.h;
+}
+window.addEventListener('resize',resize);
+function shuffleStrengths(){
+ magnetStrengths=[2,4,6,8,10].sort(()=>Math.random()-0.5);
+ resetLab(true);
+ statusText.textContent='Magnets shuffled! Try again.';
+}
+function resetLab(keepShuffle=false){
+ if(!keepShuffle) magnetStrengths.sort(()=>Math.random()-0.5);
+ recorded={1:false,2:false,3:false,4:false,5:false};
+ readings={};
+ for(let i=1;i<=5;i++){
+  document.getElementById('r'+i).innerText='-';
+  document.getElementById('r'+i).classList.remove('filled');
+  document.getElementById('btn-'+i).classList.remove('done');
+  const sub=document.querySelector('#btn-'+i+' .magnet-sub');
+  if(sub) sub.textContent=i===currentIndex?'Try this first →':`Strength: ? cm`;
+  document.querySelector(`#tableBody tr:nth-child(${i}) td:nth-child(2)`).textContent='? cm';
+ }
+ selectMagnet(1);
+ particles=[];
+}
+function selectMagnet(idx){
+ currentIndex=idx;
+ currentStrength=magnetStrengths[idx-1]*20;
+ document.querySelectorAll('.magnet-btn').forEach(b=>b.classList.remove('active'));
+ document.getElementById('btn-'+idx).classList.add('active');
+ blade.angle=0;blade.targetAngle=0;blade.isStuck=false;
+ const maxCm=Math.floor((W-originX-magnet.w-30)/cmToPx);
+ magnet.x=originX+Math.min(24,maxCm)*cmToPx;
+ statusText.textContent=`Magnet ${idx} selected. Drag slowly towards blade (left).`;
+ statusEl.classList.remove('attract');
+ if(recorded[idx]) statusText.textContent=`Magnet ${idx} already measured: ${readings[idx]} cm`;
+}
+function getMagnetBounds(){return {x:magnet.x,y:magnet.y,w:magnet.w,h:magnet.h}}
+function startDrag(x,y){
+ const b=getMagnetBounds();
+ if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h){magnet.dragging=true;canvas.style.cursor='grabbing';}
+}
+function endDrag(){magnet.dragging=false;canvas.style.cursor='default';}
+function moveDrag(x){
+ if(!magnet.dragging) return;
+ const maxX=W-magnet.w-20;
+ const raw=x-magnet.w/2;
+ const cm=Math.round((raw-originX)/cmToPx);
+ magnet.x=Math.max(originX,Math.min(maxX,originX+cm*cmToPx));
+}
+canvas.addEventListener('mousedown',e=>{const r=canvas.getBoundingClientRect();startDrag(e.clientX-r.left,e.clientY-r.top)});
+window.addEventListener('mouseup',endDrag);
+window.addEventListener('mousemove',e=>{if(!magnet.dragging)return;const r=canvas.getBoundingClientRect();moveDrag(e.clientX-r.left)});
+canvas.addEventListener('touchstart',e=>{const t=e.touches[0],r=canvas.getBoundingClientRect();startDrag(t.clientX-r.left,t.clientY-r.top);if(magnet.dragging)e.preventDefault()},{passive:false});
+window.addEventListener('touchmove',e=>{if(!magnet.dragging)return;const t=e.touches[0],r=canvas.getBoundingClientRect();moveDrag(t.clientX-r.left);e.preventDefault()},{passive:false});
+window.addEventListener('touchend',endDrag);
+
+function drawLab(){
+ // Table top wood gradient
+ const woodGrad=ctx.createLinearGradient(0,originY,0,originY+50);
+ woodGrad.addColorStop(0,'#ffffff');
+ woodGrad.addColorStop(1,'#94a3b8');
+ ctx.fillStyle=woodGrad;
+ ctx.fillRect(originX-140,originY,W+500,50);
+ ctx.strokeStyle='rgba(148,163,184,.3)';ctx.lineWidth=1.5;ctx.strokeRect(originX-140,originY,W+500,50);
+ // Stand base
+ ctx.fillStyle='#0f172a';ctx.fillRect(originX-70,originY,50,14);
+ // Vertical rod
+ const rodGrad=ctx.createLinearGradient(originX-60,0,originX-35,0);
+ rodGrad.addColorStop(0,'#334155');rodGrad.addColorStop(1,'#94a3b8');
+ ctx.fillStyle=rodGrad;ctx.fillRect(originX-55,originY-360,22,360);
+ // Top clamp
+ ctx.fillStyle='#1e293b';ctx.fillRect(originX-55,originY-360,70,18);
+ ctx.fillStyle='#475569';ctx.fillRect(originX-55,originY-360,70,6);
+ // Scale ticks
+ ctx.fillStyle='#0f172a';ctx.font='600 11px sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
+ const maxCm=Math.floor((W-originX)/cmToPx);
+ for(let i=0;i<=maxCm;i++){
+  const x=originX+i*cmToPx;
+  ctx.strokeStyle='rgba(148,163,184,.6)';ctx.lineWidth=1.2;
+  ctx.beginPath();ctx.moveTo(x,originY);ctx.lineTo(x,originY+(i%5===0?16:9));ctx.stroke();
+  if(i%1===0){ctx.fillText(i,x,originY+20);}
+ }
+ ctx.fillStyle='#94a3b8';ctx.font='700 11px sans-serif';ctx.fillText('cm',originX+maxCm*cmToPx-18,originY+20);
+}
+function drawField(){
+ const strength=magnetStrengths[currentIndex-1];
+ const radius=50+strength*12;
+ const lines=Math.floor(strength/2)+3;
+ const t=Date.now()*0.003;
+ ctx.save();
+ for(let i=1;i<=lines;i++){
+  const offset=(i/lines)*radius;
+  const alpha=0.15+ (i/lines)*0.25 + Math.sin(t+i)*0.05;
+  ctx.strokeStyle=`rgba(14,165,233,${alpha})`;
+  ctx.lineWidth=1.2+ (i%2)*0.6;
+  ctx.setLineDash([6,10]);ctx.lineDashOffset=-t*20;
+  const mx=magnet.x+magnet.w/2,my=magnet.y+magnet.h/2;
+  // top arc N->S
+  ctx.beginPath();
+  ctx.moveTo(magnet.x+2,my);
+  ctx.bezierCurveTo(magnet.x-offset*0.4,my-radius*0.9 - offset*0.2, magnet.x+magnet.w+offset*0.4,my-radius*0.9 - offset*0.2, magnet.x+magnet.w-2,my);
+  ctx.stroke();
+  // bottom arc
+  ctx.beginPath();
+  ctx.moveTo(magnet.x+2,my);
+  ctx.bezierCurveTo(magnet.x-offset*0.4,my+radius*0.9 + offset*0.2, magnet.x+magnet.w+offset*0.4,my+radius*0.9 + offset*0.2, magnet.x+magnet.w-2,my);
+  ctx.stroke();
+ }
+ ctx.setLineDash([]);
+ ctx.restore();
+ // glow around magnet
+ const glow=ctx.createRadialGradient(magnet.x+magnet.w/2,magnet.y+magnet.h/2,10,magnet.x+magnet.w/2,magnet.y+magnet.h/2,90);
+ glow.addColorStop(0,'rgba(14,165,233,.18)');
+ glow.addColorStop(1,'rgba(14,165,233,0)');
+ ctx.fillStyle=glow;ctx.beginPath();ctx.arc(magnet.x+magnet.w/2,magnet.y+magnet.h/2,90,0,Math.PI*2);ctx.fill();
+}
+function drawMagnet(){
+ ctx.save();
+ ctx.shadowColor='rgba(0,0,0,.35)';ctx.shadowBlur=18;ctx.shadowOffsetY=8;
+ const x=magnet.x,y=magnet.y,w=magnet.w,h=magnet.h;
+ // N side
+ const nGrad=ctx.createLinearGradient(x,y,x,y+h);
+ nGrad.addColorStop(0,'#f87171');nGrad.addColorStop(1,'#dc2626');
+ ctx.fillStyle=nGrad;ctx.fillRect(x,y,w/2,h);
+ // S side
+ const sGrad=ctx.createLinearGradient(x+w/2,y,x+w/2,y+h);
+ sGrad.addColorStop(0,'#60a5fa');sGrad.addColorStop(1,'#1d4ed8');
+ ctx.fillStyle=sGrad;ctx.fillRect(x+w/2,y,w/2,h);
+ ctx.shadowColor='transparent';
+ ctx.strokeStyle='#0f172a';ctx.lineWidth=2.5;ctx.strokeRect(x,y,w,h);
+ ctx.beginPath();ctx.moveTo(x+w/2,y);ctx.lineTo(x+w/2,y+h);ctx.stroke();
+ // N S text
+ ctx.fillStyle='#fff';ctx.font='900 20px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.fillText('N',x+w/4,y+h/2);ctx.fillText('S',x+w*0.75,y+h/2);
+ // highlight
+ ctx.fillStyle='rgba(255,255,255,.25)';ctx.fillRect(x,y,w,h*0.35);
+ ctx.restore();
+ // hover ring
+ if(magnet.dragging){ctx.strokeStyle='#38bdf8';ctx.lineWidth=2;ctx.setLineDash([6,6]);ctx.strokeRect(x-4,y-4,w+8,h+8);ctx.setLineDash([]);}
+}
+function drawBlade(){
+ const bx=blade.pivotX+Math.sin(blade.angle)*blade.length;
+ const by=blade.pivotY+Math.cos(blade.angle)*blade.length;
+ // string
+ ctx.strokeStyle='#64748b';ctx.lineWidth=2.2;ctx.beginPath();ctx.moveTo(blade.pivotX,blade.pivotY);ctx.lineTo(bx,by);ctx.stroke();
+ // shadow on table
+ ctx.fillStyle='rgba(0,0,0,.12)';ctx.beginPath();ctx.ellipse(bx,originY+2,18,6,0,0,Math.PI*2);ctx.fill();
+ // blade
+ ctx.save();ctx.translate(bx,by);ctx.rotate(blade.angle*0.15);
+ const bw=22,bh=46;
+ ctx.shadowColor='rgba(0,0,0,.3)';ctx.shadowBlur=10;ctx.shadowOffsetY=4;
+ ctx.fillStyle=blade.isStuck?'#0ea5e9':'#475569';ctx.fillRect(-bw/2,-bh/2,bw,bh);
+ ctx.strokeStyle='#1e293b';ctx.lineWidth=1.5;ctx.strokeRect(-bw/2,-bh/2,bw,bh);
+ ctx.fillStyle='#e2e8f0';ctx.fillRect(-3,2,6,18);
+ ctx.fillStyle='rgba(255,255,255,.4)';ctx.fillRect(-bw/2,-bh/2,bw,8);
+ ctx.restore();
+ // pivot bolt
+ ctx.fillStyle='#cbd5e1';ctx.beginPath();ctx.arc(blade.pivotX,blade.pivotY,6,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#0f172a';ctx.beginPath();ctx.arc(blade.pivotX,blade.pivotY,3,0,Math.PI*2);ctx.fill();
+}
+function drawParticles(){
+ for(let i=particles.length-1;i>=0;i--){
+  const p=particles[i];
+  p.x+=p.vx;p.y+=p.vy;p.life-=0.02;
+  if(p.life<=0){particles.splice(i,1);continue;}
+  ctx.globalAlpha=p.life;
+  ctx.fillStyle=p.color;
+  ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=1;
+ }
+}
+function update(){
+ const attractCm=magnetStrengths[currentIndex-1];
+ let cm=Math.round((magnet.x-originX)/cmToPx);
+ npoleEl.textContent=cm+' cm';
+ if(cm<=attractCm){
+  cm=attractCm;
+  magnet.x=originX+cm*cmToPx;
+  const distFactor=Math.max(0,(attractCm-cm+1)/attractCm);
+  const target=Math.asin(Math.min(0.85,Math.max(0,(magnet.x-originX)/blade.length*0.9)));
+  blade.targetAngle=target;
+  blade.angle+=(blade.targetAngle-blade.angle)*0.12;
+  if(Math.abs(blade.targetAngle-blade.angle)<0.02){
+   blade.isStuck=true;
+   if(!recorded[currentIndex]){
+    readings[currentIndex]=cm;
+    recorded[currentIndex]=true;
+    document.getElementById('r'+currentIndex).textContent=cm+' cm';
+    document.getElementById('r'+currentIndex).classList.add('filled');
+    document.getElementById('btn-'+currentIndex).classList.add('done');
+    document.querySelector(`#tableBody tr:nth-child(${currentIndex}) td:nth-child(2)`).textContent=attractCm+' cm';
+    const sub=document.querySelector('#btn-'+currentIndex+' .magnet-sub');
+    if(sub) sub.textContent=`Measured: ${cm} cm • ${cm<=3?'Weak':cm<=6?'Medium':'Strong'}`;
+statusText.innerHTML = `🎉 Blade attracted! <span style="color: #1e3a8a; font-weight: 800; margin-left: 6px;">(Magnet ${currentIndex} = ${cm} cm)</span>`;    // burst particles
+    const bx=blade.pivotX+Math.sin(blade.angle)*blade.length;
+    const by=blade.pivotY+Math.cos(blade.angle)*blade.length;
+    for(let i=0;i<18;i++) particles.push({x:bx,y:by,vx:(Math.random()-0.5)*6,vy:(Math.random()-0.5)*6-1,r:Math.random()*3+1.5,color:i%2?'#0ea5e9':'#f59e0b',life:1});
+   }
+  }
+ }else{
+  blade.isStuck = false;
+  // കാന്തം അടുത്തേക്ക് വരുമ്പോൾ (attractCm + 6 cm പരിധിയിൽ) മാത്രം shake നൽകുന്നു
+  const swayThreshold = attractCm + 6;
+  if (cm <= swayThreshold) {
+    const intensity = (swayThreshold - cm) / 6;
+    blade.swing = (blade.swing || 0) + 0.15;
+    blade.targetAngle = (intensity * 0.04) + Math.sin(blade.swing) * (0.015 * intensity);
+    blade.angle += (blade.targetAngle - blade.angle) * 0.2;
+  } else {
+    // കാന്തം ദൂരെയാണെങ്കിൽ ഒട്ടും ഷേക്ക് ചെയ്യാതെ നേരെ നിൽക്കുന്നു
+    blade.targetAngle = 0;
+    blade.angle *= 0.85;
+    if (Math.abs(blade.angle) < 0.0001) blade.angle = 0;
+  }
+  if(!magnet.dragging && !recorded[currentIndex]){
+statusText.textContent = `Drag magnet closer to blade`;   statusEl.classList.remove('attract');
+  }
+ }
+}
+function loop(){
+ ctx.clearRect(0,0,W,H);
+ drawLab();
+ drawField();
+ drawMagnet();
+ update();
+ drawBlade();
+ drawParticles();
+ requestAnimationFrame(loop);
+}
+initUI();
+resize();
+selectMagnet(1);
+loop();
+</script>
+<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script></body>
+</html>
