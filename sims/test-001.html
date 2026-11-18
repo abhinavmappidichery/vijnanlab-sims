@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Simulation</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0f172a, #4c1d95);
+    color: white;
+    padding: 24px;
+    text-align: center;
+  }
+  .card {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 24px;
+    padding: 40px 32px;
+    backdrop-filter: blur(12px);
+    max-width: 440px;
+  }
+  .icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 32px;
+    box-shadow: 0 12px 30px rgba(59, 130, 246, 0.4);
+  }
+  h1 { font-size: 22px; margin-bottom: 8px; }
+  .sub { font-size: 13px; color: #cbd5e1; margin-bottom: 24px; }
+  .status {
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    background: rgba(16, 185, 129, 0.2);
+    border: 1px solid rgba(16, 185, 129, 0.5);
+    color: #6ee7b7;
+    display: inline-block;
+    margin-bottom: 24px;
+  }
+  .status::before {
+    content: '●';
+    margin-right: 6px;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  #box {
+    width: 100%;
+    height: 120px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 10px 30px rgba(245, 158, 11, 0.35);
+  }
+  button {
+    padding: 14px 32px;
+    border: 0;
+    border-radius: 999px;
+    background: white;
+    color: #0f172a;
+    font-weight: 800;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.25s;
+    font-family: inherit;
+  }
+  button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(255, 255, 255, 0.3);
+  }
+  .counter {
+    margin-top: 20px;
+    font-size: 13px;
+    color: #94a3b8;
+  }
+  .counter strong { color: #fbbf24; font-size: 18px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">🔬</div>
+    <h1>GitHub Test Simulation</h1>
+    <p class="sub">sims/test-001.html — successfully loaded ✅</p>
+    <div class="status">LIVE</div>
+    <div id="box">🎨</div>
+    <button onclick="changeColor()">Color മാറ്റുക</button>
+    <div class="counter">Clicks: <strong id="count">0</strong></div>
+  </div>
+
+  <script>
+    var count = 0;
+    var colors = [
+      'linear-gradient(135deg, #f59e0b, #ef4444)',
+      'linear-gradient(135deg, #10b981, #14b8a6)',
+      'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+      'linear-gradient(135deg, #ec4899, #f43f5e)',
+      'linear-gradient(135deg, #06b6d4, #0891b2)'
+    ];
+    var idx = 0;
+    var emojis = ['🎨', '🌟', '💎', '🔥', '⚡'];
+
+    function changeColor() {
+      idx = (idx + 1) % colors.length;
+      var box = document.getElementById('box');
+      box.style.background = colors[idx];
+      box.textContent = emojis[idx];
+      count++;
+      document.getElementById('count').textContent = count;
+    }
+  </script>
+</body>
+</html>
