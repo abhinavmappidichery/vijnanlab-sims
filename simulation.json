@@ -18,12 +18,12 @@
   
     {
     "id": "Refraction",
-    "titleML": "ടെസ്റ്റ് സിമുലേഷൻ2",
-    "titleEN": "Test Simulation",
+    "titleML": "Light Refraction",
+    "titleEN": "പ്രകാശ അപവർത്തനം ",
     "category": "physics",
     "badge": "Physics • Test",
     "icon": "fa-flask",
-    "objective": "GitHub-ൽ നിന്ന് simulation load ആകുന്നുണ്ടോ എന്ന് check ചെയ്യുക",
+    "objective": "പ്രകാശത്തിന്റെ അപവർത്തനം വെള്ളം വായു എന്നിവയിലൂടെ നടക്കുന്നതും, critical Angle, TIR  തുടങ്ങിയവയും  കാണിക്കുന്നു ",
     "instructions": ["Button click ചെയ്യുക", "Color change കാണുക"],
     "principle": "Simple test — GitHub integration verify",
     "quiz": [
@@ -35,12 +35,12 @@
 
   {
     "id": "PrismDispersion",
-    "titleML": "ടെസ്റ്റ് സിമുലേഷൻ3",
-    "titleEN": "Test Simulation",
+    "titleML": "Dispersion of Light",
+    "titleEN": "പ്രകാശപ്രകീർണ്ണനം ",
     "category": "physics",
     "badge": "Physics • Test",
     "icon": "fa-flask",
-    "objective": "GitHub-ൽ നിന്ന് simulation load ആകുന്നുണ്ടോ എന്ന് check ചെയ്യുക",
+    "objective": "പ്രകാശം പ്രിസത്തിലൂടെ കടന്നു പോകുമ്പോൾ അതിന്റെ ഘടക വർണങ്ങളായി മാറുന്നതും Angle വ്യതിയാനം സംഭവിക്കുന്നതും",
     "instructions": ["Button click ചെയ്യുക", "Color change കാണുക"],
     "principle": "Simple test — GitHub integration verify",
     "quiz": [
