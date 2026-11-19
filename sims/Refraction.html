@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><style>
+@font-face {
+  font-family: "Optimistic";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/OptimisticAI_VF_Optimized.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Optimistic Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/OptimisticMono_W_TextRegular.woff2") format("woff2");
+}
+:where(html) {
+  font-family: "Optimistic", system-ui, sans-serif;
+}
+:where(code, pre, kbd, samp) {
+  font-family: "Optimistic Mono", ui-monospace, monospace;
+}
+</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Light Lab — Refraction · Prism · Raindrop</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  body{background:#070f1c;color:#e6eefc;overflow:hidden;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Malayalam",sans-serif;-webkit-tap-highlight-color:transparent}
+  #app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+  #stage{position:relative;flex:1 1 auto;min-height:0;overflow:hidden}
+  canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+  canvas.dragging{cursor:grabbing}
+  #hint{position:absolute;left:16px;top:16px;z-index:5;display:flex;align-items:center;gap:10px;padding:10px 18px;border-radius:999px;background:rgba(11,26,46,.82);border:1px solid rgba(125,211,252,.35);color:#bae6fd;font-size:15px;font-weight:700;pointer-events:none;transition:opacity .45s;backdrop-filter:blur(6px)}
+  #hint .dot{width:10px;height:10px;border-radius:50%;background:#fde68a;box-shadow:0 0 12px #fde68a;animation:pulse 1.4s infinite}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.45}}
+  #hint.gone{opacity:0}
+  #dock{flex:0 0 auto;min-height:118px;display:flex;flex-direction:column;gap:10px;padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,#0e1e33,#0a1526);border-top:1px solid rgba(125,211,252,.20);box-shadow:0 -12px 30px rgba(0,0,0,.5)}
+  .dock-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .modes{display:flex;gap:8px;flex-wrap:wrap}
+  .modes button{font:inherit;font-weight:800;font-size:15px;padding:11px 18px;border-radius:12px;border:1px solid rgba(125,211,252,.25);background:rgba(56,189,248,.08);color:#dbeafe;cursor:pointer;transition:all .15s;white-space:nowrap}
+  .modes button:hover{background:rgba(56,189,248,.18)}
+  .modes button.active{background:linear-gradient(180deg,#2563eb,#1d4ed8);border-color:#60a5fa;color:#fff;box-shadow:0 6px 20px rgba(37,99,235,.45)}
+  .modes button .k{display:inline-block;width:22px;height:22px;line-height:22px;text-align:center;border-radius:6px;background:rgba(255,255,255,.16);font-size:12px;font-weight:900;margin-right:8px}
+  .swap-btn{font:inherit;font-weight:800;font-size:14px;padding:10px 16px;border-radius:12px;border:1px solid rgba(251,191,36,.4);background:rgba(251,191,36,.12);color:#fde68a;cursor:pointer;white-space:nowrap}
+  .swap-btn:hover{background:rgba(251,191,36,.22)}
+  .stats{display:flex;gap:8px;min-height:40px;flex-wrap:wrap;flex:1;min-width:0}
+  .chip{display:inline-flex;align-items:baseline;gap:8px;padding:9px 14px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(125,211,252,.18);font-size:15px;white-space:nowrap}
+  .chip .lbl{color:#93c5fd;font-weight:700}
+  .chip .val{color:#fff;font-weight:800;font-variant-numeric:tabular-nums;font-size:17px}
+  .chip.status{font-weight:800;letter-spacing:.03em;font-size:13px;padding:10px 16px}
+  .chip.status.refraction{background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.45);color:#86efac}
+  .chip.status.critical{background:rgba(251,191,36,.18);border-color:rgba(251,191,36,.55);color:#fde68a}
+  .chip.status.tir{background:rgba(244,63,94,.18);border-color:rgba(244,63,94,.55);color:#fda4af}
+  #resetBtn{font:inherit;font-weight:800;font-size:15px;padding:11px 20px;border-radius:12px;border:1px solid rgba(148,197,255,.25);background:rgba(255,255,255,.05);color:#cbd5e1;cursor:pointer;white-space:nowrap}
+  #resetBtn:hover{background:rgba(255,255,255,.1)}
+  .tip{font-size:14px;color:#94a3b8;line-height:1.45}
+  .tip b{color:#fde68a}
+  @media(max-width:720px){.modes button{font-size:13px;padding:9px 12px}.modes button .k{display:none}.chip{font-size:13px;padding:8px 11px}.chip .val{font-size:15px}#resetBtn,.swap-btn{font-size:13px;padding:9px 14px}.tip{font-size:12px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div id="hint"><span class="dot"></span><span id="hintText">Drag to move the light ray</span></div>
+  </div>
+  <footer id="dock">
+    <div class="dock-row">
+      <div class="modes">
+        <button class="mode active" data-mode="refraction"><span class="k">1</span>Critical Angle</button>
+        <button class="mode" data-mode="prism"><span class="k">2</span>Prism</button>
+        <button class="mode" data-mode="raindrop"><span class="k">3</span>Raindrop — 2 Drops</button>
+      </div>
+      <button id="swapBtn" class="swap-btn">⇅ Air → Water</button>
+      <div class="stats" id="stats"></div>
+      <button id="resetBtn">↺ Reset</button>
+    </div>
+    <div class="dock-row"><div class="tip" id="tip"></div></div>
+  </footer>
+</div>
+<script>
+(function(){
+'use strict';
+const D2R = Math.PI / 180;
+const R2D = 180 / Math.PI;
+const N_AIR = 1.000;
+const N_WATER = 1.333;
+const THETA_C = Math.asin(N_AIR / N_WATER);
+const SPECTRUM = [
+  { name:'Red',    color:'#ff4d4d', nGlass:1.510, nWater:1.331 },
+  { name:'Orange', color:'#ff9f43', nGlass:1.513, nWater:1.333 },
+  { name:'Yellow', color:'#ffdd59', nGlass:1.516, nWater:1.335 },
+  { name:'Green',  color:'#4ade80', nGlass:1.518, nWater:1.337 },
+  { name:'Blue',   color:'#3b82f6', nGlass:1.521, nWater:1.340 },
+  { name:'Indigo', color:'#818cf8', nGlass:1.523, nWater:1.342 },
+  { name:'Violet', color:'#a855f7', nGlass:1.526, nWater:1.344 },
+];
+const state = { mode:'refraction', theta:30*D2R, side:1, dir:'water-air', entryS:0.50, source:null, rainH:0.86 };
+let W=1,H=1,DPR=1,dragging=false,hasDragged=false,lastT=0; let _lastStats='',_lastTip=''; function setStats(h,tip){ if(h!==_lastStats){statsEl.innerHTML=h; _lastStats=h;} if(tip!==_lastTip){tipEl.innerHTML=tip; _lastTip=tip;} } let _snapped=false;
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d'), stage=document.getElementById('stage');
+const statsEl=document.getElementById('stats'), tipEl=document.getElementById('tip'), hintEl=document.getElementById('hint'), hintTxt=document.getElementById('hintText'), swapBtn=document.getElementById('swapBtn');
+let _lastW=0,_lastH=0; function resize(){ const r=stage.getBoundingClientRect(); const nw=Math.max(1,Math.round(r.width)), nh=Math.max(1,Math.round(r.height)); if(nw===_lastW && nh===_lastH && cv.width>0) return; _lastW=nw; _lastH=nh; DPR=Math.min(window.devicePixelRatio||1,2); W=nw; H=nh; cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); ctx.setTransform(DPR,0,0,DPR,0,0); }
+new ResizeObserver(resize).observe(stage); resize();
+function norm(x,y){ const m=Math.hypot(x,y)||1; return {x:x/m,y:y/m}; }
+function dot(a,b){ return a.x*b.x+a.y*b.y; }
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function refract(d,n,eta){ let N=n; if(dot(d,N)>0) N={x:-n.x,y:-n.y}; const cosI=-dot(d,N); let sin2=eta*eta*(1-cosI*cosI); if(sin2>1 && sin2<1+1e-9) sin2=1; if(sin2>1) return null; const cosT=Math.sqrt(Math.max(0,1-sin2)); const f=eta*cosI-cosT; return norm(eta*d.x+f*N.x, eta*d.y+f*N.y); }
+function reflect(d,n){ const k=2*dot(d,n); return {x:d.x-k*n.x, y:d.y-k*n.y}; }
+function raySegment(p,d,a,b){ const ex=b.x-a.x, ey=b.y-a.y; const det=ex*d.y-d.x*ey; if(Math.abs(det)<1e-9) return null; const qx=a.x-p.x, qy=a.y-p.y; const t=(qy*ex-qx*ey)/det; const s=(d.x*qy-d.y*qx)/det; if(t<1e-6||s<0||s>1) return null; return t; }
+function circleNext(p,d,c,R){ const ux=p.x-c.x, uy=p.y-c.y; const b=ux*d.x+uy*d.y; const cc=ux*ux+uy*uy-R*R; const disc=b*b-cc; if(disc<0) return null; const t1=-b-Math.sqrt(disc), t2=-b+Math.sqrt(disc); if(t1>1e-4) return t1; if(t2>1e-4) return t2; return null; }
+function outwardNormal(a,b,third){ const ex=b.x-a.x, ey=b.y-a.y; const mx=(a.x+b.x)/2, my=(a.y+b.y)/2; const vx=mx-third.x, vy=my-third.y; const nx1=ey, ny1=-ex; if(nx1*vx+ny1*vy>0) return norm(nx1,ny1); return norm(-ey,ex); }
+function beam(x1,y1,x2,y2,color,alpha,width){ if(alpha<0.02) return; ctx.save(); ctx.lineCap='round'; ctx.globalAlpha=alpha; ctx.shadowColor=color; ctx.shadowBlur=16; ctx.strokeStyle=color; ctx.lineWidth=width; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.shadowBlur=0; ctx.globalAlpha=alpha*0.9; ctx.strokeStyle='rgba(255,255,255,.88)'; ctx.lineWidth=Math.max(1,width*0.35); ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.restore(); }
+function lineNoGlow(x1,y1,x2,y2,color,alpha,width,dash){ ctx.save(); ctx.lineCap='round'; ctx.globalAlpha=alpha; ctx.strokeStyle=color; ctx.lineWidth=width; if(dash) ctx.setLineDash(dash); ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.restore(); }
+function dotAt(x,y,r,color,glow){ ctx.save(); if(glow){ctx.shadowColor=color; ctx.shadowBlur=glow;} ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); ctx.restore(); }
+function puck(x,y,t){ const p=1+0.08*Math.sin(t*4); ctx.save(); ctx.shadowColor='#fde68a'; ctx.shadowBlur=26; ctx.fillStyle='rgba(253,230,138,.97)'; ctx.beginPath(); ctx.arc(x,y,14*p,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0; ctx.strokeStyle='rgba(253,230,138,.40)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(x,y,22*p,0,Math.PI*2); ctx.stroke(); ctx.restore(); }
+function label(txt,x,y,size,color,align){ ctx.save(); ctx.fillStyle=color; ctx.font='800 '+size+'px system-ui, sans-serif'; ctx.textAlign=align||'left'; ctx.textBaseline='middle'; ctx.fillText(txt,x,y); ctx.restore(); }
+function drawAngleArc(ox,oy,radius,normalAng,rayAng,color,labelTxt){
+  let a0=normalAng, a1=rayAng;
+  while(a1-a0>Math.PI) a1-=Math.PI*2;
+  while(a1-a0<-Math.PI) a1+=Math.PI*2;
+  ctx.save(); ctx.strokeStyle=color; ctx.lineWidth=2.2; ctx.shadowColor=color; ctx.shadowBlur=6;
+  ctx.beginPath(); ctx.arc(ox,oy,radius,Math.min(a0,a1),Math.max(a0,a1)); ctx.stroke(); ctx.restore();
+  const mid=(a0+a1)/2, lr=radius+24;
+  let lx=ox+Math.cos(mid)*lr, ly=oy+Math.sin(mid)*lr;
+  lx=Math.max(56,Math.min(W-56,lx)); ly=Math.max(18,Math.min(H-18,ly));
+  label(labelTxt,lx,ly,14,color,'center');
+}
+function arrowHead(x,y,dx,dy,color,size){ const a=Math.atan2(dy,dx); ctx.save(); ctx.fillStyle=color; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x-size*Math.cos(a-0.45), y-size*Math.sin(a-0.45)); ctx.lineTo(x-size*Math.cos(a+0.45), y-size*Math.sin(a+0.45)); ctx.closePath(); ctx.fill(); ctx.restore(); }
+
+/* ===== MODE 1 — REFRACTION / CRITICAL / TIR — FIXED ===== */
+function drawRefraction(t){
+  const ox=W*0.50, oy=H*0.52, L=Math.min(W*0.32,H*0.42);
+  let g=ctx.createLinearGradient(0,0,0,oy); g.addColorStop(0,'#0a1930'); g.addColorStop(1,'#0d2340'); ctx.fillStyle=g; ctx.fillRect(0,0,W,oy);
+  g=ctx.createLinearGradient(0,oy,0,H); g.addColorStop(0,'#0e2a4a'); g.addColorStop(1,'#071626'); ctx.fillStyle=g; ctx.fillRect(0,oy,W,H-oy);
+  ctx.save(); ctx.strokeStyle='rgba(56,189,248,.28)'; ctx.lineWidth=1; for(let x=0;x<W;x+=14){ const yy=oy+Math.sin(x*0.05+t*2)*2; ctx.beginPath(); ctx.moveTo(x,yy); ctx.lineTo(x+8,yy); ctx.stroke(); } ctx.restore();
+  ctx.save(); ctx.shadowColor='#38bdf8'; ctx.shadowBlur=18; ctx.strokeStyle='rgba(125,211,252,.95)'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(0,oy); ctx.lineTo(W,oy); ctx.stroke(); ctx.restore();
+  label('AIR   n = 1.00',20,oy-24,15,'rgba(186,230,253,.85)');
+  label('WATER   n = 1.333',20,oy+30,15,'rgba(147,197,253,.95)');
+  ctx.save(); ctx.setLineDash([7,9]); ctx.strokeStyle='rgba(148,197,255,.45)'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(ox,oy-L*1.15); ctx.lineTo(ox,oy+L*1.25); ctx.stroke(); ctx.restore();
+  label('normal',ox+10,oy-L*1.1,12,'rgba(148,163,184,.8)');
+  const th=state.theta, s=state.side, isWaterAir=state.dir==='water-air';
+  const dirSign=isWaterAir?-1:1;
+  const n1=isWaterAir?N_WATER:N_AIR, n2=isWaterAir?N_AIR:N_WATER;
+  const d={x:s*Math.sin(th), y:dirSign*Math.cos(th)};
+  const src={x:ox-d.x*L, y:oy-d.y*L};
+  const N={x:0,y:1};
+  let refracted=refract(d,N,n1/n2);
+  const _isCritZone=isWaterAir && Math.abs(th-THETA_C)<0.4*D2R;
+  if(_isCritZone && !refracted) refracted={x:s,y:0};
+  const reflected=reflect(d,N);
+  let Rf=1;
+  if(refracted && isFinite(refracted.x) && isFinite(refracted.y)){
+    const cosI=Math.abs(d.y), cosT=Math.abs(refracted.y);
+    const rs=(n1*cosI-n2*cosT)/(n1*cosI+n2*cosT); const rp=(n2*cosI-n1*cosT)/(n2*cosI+n1*cosT);
+    Rf=clamp((rs*rs+rp*rp)/2,0,1);
+  }
+  const Tf=1-Rf;
+  const distToCrit=isWaterAir?Math.abs(th-THETA_C):999;
+  const nearCrit=isWaterAir && distToCrit<6*D2R;
+  const reflEnd={x:ox+reflected.x*L*1.08, y:oy+reflected.y*L*1.08};
+  const reflAlpha=isWaterAir ? clamp(0.35+0.65*Math.pow(Rf,0.5),0.35,1) : clamp(0.15+0.5*Rf,0.15,0.65);
+  beam(ox,oy,reflEnd.x,reflEnd.y,'#fbbf24',reflAlpha,4);
+  let refrEnd=null, th2=null;
+  if(refracted){
+    let alpha; if(nearCrit) alpha=0.92; else alpha=clamp(Tf*1.05,0.25,1);
+    const len=nearCrit?L*1.45:L*1.18;
+    refrEnd={x:ox+refracted.x*len, y:oy+refracted.y*len};
+    beam(ox,oy,refrEnd.x,refrEnd.y,'#7dd3fc',alpha,4.5);
+    th2=Math.acos(Math.min(1,Math.abs(refracted.y)))*R2D;
+    if(_isCritZone) label('θ₂ = 90°  (grazing)', ox+s*L*0.55, oy-18, 15, '#7dd3fc', 'center');
+  } else {
+    if(isWaterAir && th>THETA_C && th<THETA_C+7*D2R){
+      const fade=1-(th-THETA_C)/(7*D2R);
+      ctx.save(); ctx.setLineDash([8,7]); ctx.strokeStyle='rgba(125,211,252,'+(0.55*fade).toFixed(2)+')'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(ox,oy); ctx.lineTo(ox+s*L*1.35, oy); ctx.stroke(); ctx.restore();
+      label('grazing ray fades…', ox+s*L*0.62, oy-18, 13, 'rgba(125,211,252,'+(0.9*fade).toFixed(2)+')', 'center');
+    }
+  }
+  beam(src.x,src.y,ox,oy,'#fde68a',1,5);
+  const UP=-Math.PI/2, DN=Math.PI/2;
+  function closestNormal(rayAng){ return (Math.abs(rayAng-UP)<Math.abs(rayAng-DN))?UP:DN; }
+  const incAng=Math.atan2(src.y-oy, src.x-ox);
+  const refAng=Math.atan2(reflEnd.y-oy, reflEnd.x-ox);
+  drawAngleArc(ox,oy,36, closestNormal(incAng), incAng, '#fde68a', 'θ₁='+(th*R2D).toFixed(1)+'°');
+  drawAngleArc(ox,oy,56, closestNormal(refAng), refAng, '#fbbf24', 'θr='+(th*R2D).toFixed(1)+'°');
+  if(refrEnd){
+    const rfrAng=Math.atan2(refrEnd.y-oy, refrEnd.x-ox);
+    drawAngleArc(ox,oy,36, closestNormal(rfrAng), rfrAng, '#7dd3fc', 'θ₂='+(th2!==null?th2.toFixed(1):'—')+'°');
+  }
+  if(refracted===null){ ctx.save(); ctx.strokeStyle='rgba(251,113,133,.65)'; ctx.lineWidth=2.5; ctx.beginPath(); ctx.arc(ox,oy,30,0,Math.PI*2); ctx.stroke(); ctx.restore(); }
+  puck(src.x,src.y,t);
+  const thDeg=th*R2D; let status,cls,tip;
+  if(isWaterAir){
+    if(_isCritZone){ status='CRITICAL ANGLE'; cls='critical'; tip='At exactly θc the refracted ray grazes at 90°. Drag a little more for TIR.'; }
+    else if(refracted===null){ status='TOTAL INTERNAL REFLECTION'; cls='tir'; tip='Beyond θc light cannot escape — it reflects fully. Reflected angle = incident angle.'; }
+    else if(nearCrit){ status='NEAR CRITICAL'; cls='critical'; tip='Very close to θc — refracted ray almost grazing, reflected ray getting brighter.'; }
+    else { status='REFRACTION'; cls='refraction'; tip='Light bends away from normal as it leaves water.'; }
+  } else { status='REFRACTION (into water)'; cls='refraction'; tip='Light bends toward normal as it enters water.'; }
+  let chips=`<div class="chip"><span class="lbl">θ₁ incident</span><span class="val">${thDeg.toFixed(1)}°</span></div>`;
+  chips+=`<div class="chip"><span class="lbl">θr reflected</span><span class="val">${thDeg.toFixed(1)}°</span></div>`;
+  chips+=`<div class="chip"><span class="lbl">θ₂ refracted</span><span class="val">${th2===null?'— (no escape)':th2.toFixed(1)+'°'}</span></div>`;
+  if(isWaterAir) chips+=`<div class="chip"><span class="lbl">θc</span><span class="val">${(THETA_C*R2D).toFixed(1)}°</span></div>`;
+  chips+=`<div class="chip status ${cls}">${status}</div>`;
+  setStats(chips,'<b>Tip:</b> '+tip+' Drag the yellow puck to change the angle.');
+}
+
+/* ===== MODE 2 — PRISM ===== */
+function prismGeom(){ const baseCx=W*0.40, baseY=H*0.74, halfBase=Math.min(W*0.16,H*0.28); const B={x:baseCx-halfBase,y:baseY}, C={x:baseCx+halfBase,y:baseY}, A={x:baseCx,y:baseY-halfBase*Math.sqrt(3)}; return {A,B,C}; }
+function tracePrism(entry,d,nGlass){ const {A,B,C}=prismGeom(); const nAB=outwardNormal(A,B,C); const r1=refract(d,nAB,N_AIR/nGlass); if(!r1) return null; let best=null; const tAC=raySegment(entry,r1,A,C); if(tAC!==null) best={t:tAC,edge:'AC'}; const tBC=raySegment(entry,r1,B,C); if(tBC!==null&&(best===null||tBC<best.t)) best={t:tBC,edge:'BC'}; if(!best) return null; const exit={x:entry.x+r1.x*best.t, y:entry.y+r1.y*best.t}; const nExit=best.edge==='AC'?outwardNormal(A,C,B):outwardNormal(B,C,A); const r2=refract(r1,nExit,nGlass/N_AIR); if(!r2) return null; return {entry,r1,exit,r2}; }
+function drawPrism(t){
+  let g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#0a1930'); g.addColorStop(1,'#061020'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  const {A,B,C}=prismGeom();
+  ctx.save(); ctx.fillStyle='rgba(125,211,252,.07)'; ctx.strokeStyle='rgba(125,211,252,.8)'; ctx.lineWidth=2.5; ctx.shadowColor='#38bdf8'; ctx.shadowBlur=20; ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.lineTo(C.x,C.y); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+  label('GLASS PRISM',(B.x+C.x)/2,B.y-18,15,'rgba(147,197,253,.95)','center'); label('60° apex',(B.x+C.x)/2,B.y-2,12,'rgba(148,163,184,.8)','center');
+  const E={x:A.x+state.entryS*(B.x-A.x), y:A.y+state.entryS*(B.y-A.y)};
+  if(!state.source) state.source={x:E.x-260, y:E.y};
+  const src=state.source; const d=norm(E.x-src.x,E.y-src.y);
+  beam(src.x,src.y,E.x,E.y,'#ffffff',1,6); label('White light',src.x+10,src.y-16,14,'rgba(255,255,255,.9)');
+  const rays=[]; for(const c of SPECTRUM){ const tr=tracePrism(E,d,c.nGlass); if(tr) rays.push({c,tr}); }
+  for(const {c,tr} of rays){ ctx.save(); ctx.strokeStyle=c.color; ctx.shadowColor=c.color; ctx.shadowBlur=10; ctx.lineWidth=2.2; ctx.globalAlpha=0.9; ctx.beginPath(); ctx.moveTo(tr.entry.x,tr.entry.y); ctx.lineTo(tr.exit.x,tr.exit.y); ctx.stroke(); ctx.restore(); const L=Math.hypot(W,H)*1.1; ctx.save(); ctx.strokeStyle=c.color; ctx.shadowColor=c.color; ctx.shadowBlur=12; ctx.lineWidth=3.2; ctx.lineCap='round'; ctx.globalAlpha=0.95; ctx.beginPath(); ctx.moveTo(tr.exit.x,tr.exit.y); ctx.lineTo(tr.exit.x+tr.r2.x*L, tr.exit.y+tr.r2.y*L); ctx.stroke(); ctx.restore(); }
+  const red=rays.find(r=>r.c.name==='Red'), vio=rays.find(r=>r.c.name==='Violet');
+  if(red&&vio){ const L=Math.hypot(W,H)*0.45; label('Red',red.tr.exit.x+red.tr.r2.x*L+12,red.tr.exit.y+red.tr.r2.y*L,16,'#ff6b6b'); label('Violet',vio.tr.exit.x+vio.tr.r2.x*L+12,vio.tr.exit.y+vio.tr.r2.y*L,16,'#c084fc'); }
+  puck(src.x,src.y,t);
+  let incAngle=null; if(red){ const nAB=outwardNormal(A,B,C); incAngle=Math.acos(Math.min(1,Math.abs(dot(d,nAB))))*R2D; }
+  let spread='—'; if(red&&vio){ const aR=Math.atan2(red.tr.r2.y,red.tr.r2.x)*R2D, aV=Math.atan2(vio.tr.r2.y,vio.tr.r2.x)*R2D; spread=Math.abs(aV-aR).toFixed(1)+'°'; }
+  setStats(`<div class="chip"><span class="lbl">θᵢ</span><span class="val">${incAngle===null?'—':incAngle.toFixed(1)+'°'}</span></div><div class="chip"><span class="lbl">Spread</span><span class="val">${spread}</span></div><div class="chip status refraction">VIBGYOR — Red top</div>`, '<b>Tip:</b> Drag the white light source to change the angle. Red bends least (top), violet bends most (bottom) — that is VIBGYOR order.');
+}
+
+/* ===== MODE 3 — RAINDROP — TEXTBOOK 2-DROP CONCEPT (Fig 3.8) ===== */
+function traceDrop(cx,cy,R,h,n){
+  const ex=cx-Math.sqrt(Math.max(0,R*R-h*h)), ey=cy-h;
+  const entry={x:ex,y:ey};
+  const nOut=norm(ex-cx,ey-cy);
+  const r1=refract({x:1,y:0},nOut,N_AIR/n); if(!r1) return null;
+  const t2=circleNext(entry,r1,{x:cx,y:cy},R); if(!t2) return null;
+  const back={x:ex+r1.x*t2, y:ey+r1.y*t2};
+  const nBack=norm(back.x-cx,back.y-cy);
+  const r2=reflect(r1,nBack);
+  const t3=circleNext(back,r2,{x:cx,y:cy},R); if(!t3) return null;
+  const exit={x:back.x+r2.x*t3, y:back.y+r2.y*t3};
+  const nExit=norm(exit.x-cx,exit.y-cy);
+  const r3=refract(r2,nExit,n/N_AIR); if(!r3) return null;
+  const angle=Math.acos(Math.max(-1,Math.min(1,-r3.x)))*R2D;
+  return {entry,back,exit,r1,r2,r3,angle};
+}
+function drawRaindrop(t){
+  let g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#0a1a33'); g.addColorStop(0.6,'#0a1428'); g.addColorStop(1,'#040a14'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  // Layout — textbook Fig 3.8: sunlight from left, 2 drops on right, observer bottom-left
+  const R1=Math.min(W*0.10,H*0.19), R2=Math.min(W*0.11,H*0.20);
+  const cx1=W*0.70, cy1=H*0.30; // upper drop — farther
+  const cx2=W*0.68, cy2=H*0.60; // lower drop — nearer
+  const obs={x:W*0.20, y:H*0.86};
+  const h1=state.rainH*R1, h2=state.rainH*R2;
+  const upRed=traceDrop(cx1,cy1,R1,h1,1.331);
+  const upVio=traceDrop(cx1,cy1,R1,h1,1.344);
+  const lowRed=traceDrop(cx2,cy2,R2,h2,1.331);
+  const lowVio=traceDrop(cx2,cy2,R2,h2,1.344);
+  // Sunlight — two parallel rays
+  if(upRed) { beam(0,upRed.entry.y,upRed.entry.x,upRed.entry.y,'#fff7cc',1,5); arrowHead(upRed.entry.x-6,upRed.entry.y,1,0,'#fff7cc',10); }
+  if(lowVio){ beam(0,lowVio.entry.y,lowVio.entry.x,lowVio.entry.y,'#fff7cc',1,5); arrowHead(lowVio.entry.x-6,lowVio.entry.y,1,0,'#fff7cc',10); }
+  label('Sunlight  •  സൂര്യപ്രകാശം',18,Math.min(upRed?upRed.entry.y:60,60)-18,14,'rgba(255,247,204,.95)');
+  // Drops
+  function drawDrop(cx,cy,R,lab){
+    const dg=ctx.createRadialGradient(cx-R*0.35,cy-R*0.35,R*0.08,cx,cy,R); dg.addColorStop(0,'rgba(125,211,252,.22)'); dg.addColorStop(1,'rgba(56,189,248,.04)');
+    ctx.fillStyle=dg; ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.fill();
+    ctx.save(); ctx.shadowColor='#38bdf8'; ctx.shadowBlur=22; ctx.strokeStyle='rgba(125,211,252,.8)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.stroke(); ctx.restore();
+    label(lab,cx,cy+R+22,13,'rgba(147,197,253,.95)','center');
+  }
+  drawDrop(cx1,cy1,R1,'Water drop  •  ജലകണിക (upper)');
+  drawDrop(cx2,cy2,R2,'Water drop  •  ജലകണിക (lower)');
+  // Inside each drop — red + violet split
+  function inside(tr,color){ if(!tr) return; lineNoGlow(tr.entry.x,tr.entry.y,tr.back.x,tr.back.y,color,0.95,2.4); lineNoGlow(tr.back.x,tr.back.y,tr.exit.x,tr.exit.y,color,0.95,2.4); dotAt(tr.entry.x,tr.entry.y,3.2,'#ffffff',10); dotAt(tr.back.x,tr.back.y,3.2,'#ffffff',10); dotAt(tr.exit.x,tr.exit.y,3.2,'#ffffff',10); }
+  inside(upRed,'#ff4d4d'); inside(upVio,'#a855f7'); inside(lowRed,'#ff4d4d'); inside(lowVio,'#a855f7');
+  // --- THE KEY TEXTBOOK IDEA ---
+  // Upper drop: RED reaches the eye. Violet from same drop misses ABOVE the eye.
+  // Lower drop: VIOLET reaches the eye. Red from same drop misses BELOW the eye.
+  // So the eye sees RED on TOP, VIOLET at BOTTOM.
+  const Lmiss=Math.hypot(W,H)*0.55;
+  if(upVio){ // misses above — true physics direction, faint dashed
+    lineNoGlow(upVio.exit.x,upVio.exit.y, upVio.exit.x+upVio.r3.x*Lmiss, upVio.exit.y+upVio.r3.y*Lmiss, '#a855f7', 0.38, 2.2, [6,6]);
+    label('violet misses ↑', upVio.exit.x+upVio.r3.x*Lmiss*0.42, upVio.exit.y+upVio.r3.y*Lmiss*0.42-14, 12, 'rgba(192,132,252,.85)', 'center');
+  }
+  if(lowRed){ // misses below — true physics direction, faint dashed
+    lineNoGlow(lowRed.exit.x,lowRed.exit.y, lowRed.exit.x+lowRed.r3.x*Lmiss, lowRed.exit.y+lowRed.r3.y*Lmiss, '#ff4d4d', 0.38, 2.2, [6,6]);
+    label('red misses ↓', lowRed.exit.x+lowRed.r3.x*Lmiss*0.42, lowRed.exit.y+lowRed.r3.y*Lmiss*0.42+18, 12, 'rgba(255,107,107,.85)', 'center');
+  }
+  // Rays that DO reach the eye — drawn as direct lines exit -> eye (textbook schematic, not to scale for distance)
+  if(upRed){ beam(upRed.exit.x,upRed.exit.y,obs.x,obs.y,'#ff4d4d',1,4.2); arrowHead(obs.x-4,obs.y, obs.x-upRed.exit.x, obs.y-upRed.exit.y, '#ff4d4d', 11); label('RED', (upRed.exit.x+obs.x)/2, (upRed.exit.y+obs.y)/2-14, 15, '#ff6b6b', 'center'); }
+  if(lowVio){ beam(lowVio.exit.x,lowVio.exit.y,obs.x,obs.y,'#a855f7',1,4.2); arrowHead(obs.x-4,obs.y, obs.x-lowVio.exit.x, obs.y-lowVio.exit.y, '#a855f7', 11); label('VIOLET', (lowVio.exit.x+obs.x)/2, (lowVio.exit.y+obs.y)/2+18, 15, '#c084fc', 'center'); }
+  // Rainbow patch at the eye — RED on TOP, VIOLET at BOTTOM
+  const avgDx=(obs.x-(upRed?upRed.exit.x:0))+(obs.x-(lowVio?lowVio.exit.x:0)); // not used, patch is vertical
+  // Patch: small slanted bar just before the eye, between the two reaching rays
+  const patchX=obs.x+38, patchY=obs.y-18;
+  const patchH=42, patchW=16;
+  const bands=['#ff4d4d','#ff9f43','#ffdd59','#4ade80','#3b82f6','#818cf8','#a855f7']; // top -> bottom = Red -> Violet
+  ctx.save(); ctx.translate(patchX,patchY); ctx.rotate(0.6);
+  for(let i=0;i<7;i++){ ctx.fillStyle=bands[i]; ctx.fillRect(-patchW/2, -patchH/2 + i*(patchH/7), patchW, patchH/7+1); }
+  ctx.strokeStyle='rgba(255,255,255,.7)'; ctx.lineWidth=1.2; ctx.strokeRect(-patchW/2,-patchH/2,patchW,patchH); ctx.restore();
+  label('Red on top', patchX+22, patchY-28, 13, '#ff6b6b');
+  label('Violet below', patchX+22, patchY+28, 13, '#c084fc');
+  // Observer
+  ctx.save(); ctx.font='30px serif'; ctx.textAlign='center'; ctx.fillText('👁',obs.x,obs.y+6); ctx.restore();
+  label('Observer  •  നിരീക്ഷകൻ', obs.x, obs.y+32, 13, 'rgba(203,213,225,.95)', 'center');
+  // Source puck for dragging — on upper sunlight ray
+  if(upRed) puck(18,upRed.entry.y,t);
+  const aR=upRed?upRed.angle.toFixed(1):'—', aV=lowVio?lowVio.angle.toFixed(1):'—';
+  setStats(`<div class="chip"><span class="lbl">Red (upper drop)</span><span class="val">${aR}° → eye</span></div><div class="chip"><span class="lbl">Violet (lower drop)</span><span class="val">${aV}° → eye</span></div><div class="chip"><span class="lbl">h/R</span><span class="val">${state.rainH.toFixed(2)}</span></div><div class="chip status refraction">RED ON TOP • VIOLET BELOW</div>`,'<b>Tip:</b> Upper drop-il ninn RED, lower drop-il ninn VIOLET aan kannil ethunnath — athukond rainbow-il RED mukalil, VIOLET thazhe. Upper violet mukaliloodum, lower red thazhayiloodum poyi kannil ethunnilla. Drag cheythu sunlight height maattuka.');
+}
+function frame(now){ const t=now/1000; ctx.clearRect(0,0,W,H); if(state.mode==='refraction') drawRefraction(t); else if(state.mode==='prism') drawPrism(t); else drawRaindrop(t); requestAnimationFrame(frame); }
+requestAnimationFrame(frame);
+function pointerPos(e){ const r=cv.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
+function applyPointer(p){
+  if(state.mode==='refraction'){
+    const ox=W*0.5, oy=H*0.52, isWaterAir=state.dir==='water-air';
+    const dy=isWaterAir?Math.max(30,p.y-oy):Math.max(30,oy-p.y);
+    const dx=Math.abs(p.x-ox);
+    if(Math.abs(p.x-ox)>12) state.side=p.x<ox?1:-1;
+    let th=Math.atan2(dx,dy);
+    if(isWaterAir){
+      if(_snapped){ if(Math.abs(th-THETA_C)<2.0*D2R) th=THETA_C; else _snapped=false; }
+      else if(Math.abs(th-THETA_C)<0.8*D2R){ th=THETA_C; _snapped=true; }
+    } else _snapped=false;
+    state.theta=clamp(th,2*D2R,85*D2R);
+  } else if(state.mode==='prism'){
+    const {A,B}=prismGeom(); const E={x:A.x+state.entryS*(B.x-A.x), y:A.y+state.entryS*(B.y-A.y)};
+    let sx=Math.min(p.x,E.x-60); sx=Math.max(20,sx); let sy=clamp(p.y,20,H-20); state.source={x:sx,y:sy};
+  } else {
+    const cy=H*0.45, R=Math.min(W*0.11,H*0.20); state.rainH=clamp(-(p.y-cy)/R,-0.92,0.92);
+    state.rainH=clamp(state.rainH,0.45,0.92);
+  }
+}
+cv.addEventListener('pointerdown',function(e){ e.preventDefault(); dragging=true; cv.classList.add('dragging'); cv.setPointerCapture(e.pointerId); applyPointer(pointerPos(e)); if(!hasDragged){hasDragged=true; hintEl.classList.add('gone');} });
+cv.addEventListener('pointermove',function(e){ if(!dragging) return; e.preventDefault(); applyPointer(pointerPos(e)); });
+function endDrag(e){ if(!dragging) return; dragging=false; cv.classList.remove('dragging'); try{cv.releasePointerCapture(e.pointerId);}catch(_){} }
+cv.addEventListener('pointerup',endDrag); cv.addEventListener('pointercancel',endDrag); cv.addEventListener('pointerleave',function(e){ if(dragging) endDrag(e); });
+const hintMap={ refraction:'Drag anywhere to swing the ray — locks gently at critical (48.6°)', prism:'Drag the white light source to change the angle — watch VIBGYOR split', raindrop:'Drag up/down to change sunlight height — red from upper drop, violet from lower drop' };
+function updateDock(){
+  if(state.mode==='refraction'){ swapBtn.style.display=''; swapBtn.textContent=state.dir==='water-air'?'⇅ Air → Water':'⇅ Water → Air'; } else { swapBtn.style.display='none'; }
+  let hint=hintMap[state.mode]||'Drag to move the light';
+  if(state.mode==='refraction'){ hint=state.dir==='water-air'?'Drag anywhere to swing the ray — near 48.6° the grazing ray stays visible, then fades gradually':'Drag anywhere to change the angle — light bends toward the normal in water'; }
+  hintTxt.textContent=hint;
+  document.querySelectorAll('button.mode').forEach(function(b){ b.classList.toggle('active',b.dataset.mode===state.mode); });
+}
+document.querySelectorAll('button.mode').forEach(function(btn){ btn.addEventListener('click',function(){ state.mode=btn.dataset.mode; if(state.mode==='prism') state.source=null; updateDock(); hintEl.classList.remove('gone'); hasDragged=false; }); });
+swapBtn.addEventListener('click',function(){ state.dir=state.dir==='water-air'?'air-water':'water-air'; state.theta=30*D2R; state.side=1; updateDock(); });
+document.getElementById('resetBtn').addEventListener('click',function(){ if(state.mode==='refraction'){ state.theta=30*D2R; state.side=1; state.dir='water-air'; } else if(state.mode==='prism'){ state.entryS=0.5; state.source=null; } else { state.rainH=0.86; } updateDock(); });
+updateDock();
+window.__lightLab=state;
+})();
+</script>
+<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script></body>
+</html>
