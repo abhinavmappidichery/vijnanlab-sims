@@ -18,7 +18,7 @@
   
     {
     "id": "Refraction",
-    "titleML": "ടെസ്റ്റ് സിമുലേഷൻ",
+    "titleML": "ടെസ്റ്റ് സിമുലേഷൻ2",
     "titleEN": "Test Simulation",
     "category": "physics",
     "badge": "Physics • Test",
@@ -35,7 +35,7 @@
 
   {
     "id": "PrismDispersion",
-    "titleML": "ടെസ്റ്റ് സിമുലേഷൻ",
+    "titleML": "ടെസ്റ്റ് സിമുലേഷൻ3",
     "titleEN": "Test Simulation",
     "category": "physics",
     "badge": "Physics • Test",
@@ -52,7 +52,7 @@
 
   {
     "id": "gh-test-004",
-    "titleML": "ടെസ്റ്റ് സിമുലേഷൻ",
+    "titleML": "ടെസ്റ്റ് സിമുലേഷൻ4",
     "titleEN": "Test Simulation",
     "category": "physics",
     "badge": "Physics • Test", 
