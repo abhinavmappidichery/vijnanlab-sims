@@ -4,7 +4,7 @@
     "titleML": "ടെസ്റ്റ് സിമുലേഷൻ",
     "titleEN": "Test Simulation",
     "category": "physics",
-    "badge": "Physics • Test",
+    "badge": "Physics • Test", 
     "icon": "fa-flask",
     "objective": "GitHub-ൽ നിന്ന് simulation load ആകുന്നുണ്ടോ എന്ന് check ചെയ്യുക",
     "instructions": ["Button click ചെയ്യുക", "Color change കാണുക"],
