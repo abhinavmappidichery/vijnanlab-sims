@@ -28,8 +28,8 @@
 <style>
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;height:100%}
-  body{background:#070f1c;color:#e6eefc;overflow:hidden;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Malayalam",sans-serif;-webkit-tap-highlight-color:transparent}
-  #app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+  body{background:#04070d;color:#e6eefc;overflow:hidden;display:flex;justify-content:center;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Malayalam",sans-serif;-webkit-tap-highlight-color:transparent}
+  #app{display:flex;flex-direction:column;height:100vh;height:100dvh;width:100%;max-width:680px;background:#070f1c;box-shadow:0 0 0 1px rgba(125,211,252,.15),0 0 60px rgba(0,0,0,.6)}
   #stage{position:relative;flex:1 1 auto;min-height:0;overflow:hidden}
   canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
   canvas.dragging{cursor:grabbing}
@@ -58,6 +58,7 @@
   #resetBtn:hover{background:rgba(255,255,255,.1)}
   .tip{font-size:14px;color:#94a3b8;line-height:1.45}
   .tip b{color:#fde68a}
+  @media(min-width:681px){#app{max-width:680px} .chip{font-size:15px} .modes button{font-size:15px;padding:11px 18px}}
   @media(max-width:720px){.modes button{font-size:13px;padding:9px 12px}.modes button .k{display:none}.chip{font-size:13px;padding:8px 11px}.chip .val{font-size:15px}#resetBtn,.swap-btn{font-size:13px;padding:9px 14px}.tip{font-size:12px}}
 </style>
 </head>
@@ -132,7 +133,7 @@ function arrowHead(x,y,dx,dy,color,size){ const a=Math.atan2(dy,dx); ctx.save();
 
 /* ===== MODE 1 — REFRACTION / CRITICAL / TIR — FIXED ===== */
 function drawRefraction(t){
-  const ox=W*0.50, oy=H*0.52, L=Math.min(W*0.32,H*0.42);
+  const ox=W*0.50, oy=H*0.52, L=Math.min(W*0.38,H*0.42);
   let g=ctx.createLinearGradient(0,0,0,oy); g.addColorStop(0,'#0a1930'); g.addColorStop(1,'#0d2340'); ctx.fillStyle=g; ctx.fillRect(0,0,W,oy);
   g=ctx.createLinearGradient(0,oy,0,H); g.addColorStop(0,'#0e2a4a'); g.addColorStop(1,'#071626'); ctx.fillStyle=g; ctx.fillRect(0,oy,W,H-oy);
   ctx.save(); ctx.strokeStyle='rgba(56,189,248,.28)'; ctx.lineWidth=1; for(let x=0;x<W;x+=14){ const yy=oy+Math.sin(x*0.05+t*2)*2; ctx.beginPath(); ctx.moveTo(x,yy); ctx.lineTo(x+8,yy); ctx.stroke(); } ctx.restore();
@@ -208,7 +209,7 @@ function drawRefraction(t){
 }
 
 /* ===== MODE 2 — PRISM ===== */
-function prismGeom(){ const baseCx=W*0.40, baseY=H*0.74, halfBase=Math.min(W*0.16,H*0.28); const B={x:baseCx-halfBase,y:baseY}, C={x:baseCx+halfBase,y:baseY}, A={x:baseCx,y:baseY-halfBase*Math.sqrt(3)}; return {A,B,C}; }
+function prismGeom(){ const baseCx=W*0.50, baseY=H*0.74, halfBase=Math.min(W*0.22,H*0.28); const B={x:baseCx-halfBase,y:baseY}, C={x:baseCx+halfBase,y:baseY}, A={x:baseCx,y:baseY-halfBase*Math.sqrt(3)}; return {A,B,C}; }
 function tracePrism(entry,d,nGlass){ const {A,B,C}=prismGeom(); const nAB=outwardNormal(A,B,C); const r1=refract(d,nAB,N_AIR/nGlass); if(!r1) return null; let best=null; const tAC=raySegment(entry,r1,A,C); if(tAC!==null) best={t:tAC,edge:'AC'}; const tBC=raySegment(entry,r1,B,C); if(tBC!==null&&(best===null||tBC<best.t)) best={t:tBC,edge:'BC'}; if(!best) return null; const exit={x:entry.x+r1.x*best.t, y:entry.y+r1.y*best.t}; const nExit=best.edge==='AC'?outwardNormal(A,C,B):outwardNormal(B,C,A); const r2=refract(r1,nExit,nGlass/N_AIR); if(!r2) return null; return {entry,r1,exit,r2}; }
 function drawPrism(t){
   let g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#0a1930'); g.addColorStop(1,'#061020'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
@@ -216,7 +217,7 @@ function drawPrism(t){
   ctx.save(); ctx.fillStyle='rgba(125,211,252,.07)'; ctx.strokeStyle='rgba(125,211,252,.8)'; ctx.lineWidth=2.5; ctx.shadowColor='#38bdf8'; ctx.shadowBlur=20; ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.lineTo(C.x,C.y); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
   label('GLASS PRISM',(B.x+C.x)/2,B.y-18,15,'rgba(147,197,253,.95)','center'); label('60° apex',(B.x+C.x)/2,B.y-2,12,'rgba(148,163,184,.8)','center');
   const E={x:A.x+state.entryS*(B.x-A.x), y:A.y+state.entryS*(B.y-A.y)};
-  if(!state.source) state.source={x:E.x-260, y:E.y};
+  if(!state.source) state.source={x:Math.max(16,E.x-W*0.38), y:E.y};
   const src=state.source; const d=norm(E.x-src.x,E.y-src.y);
   beam(src.x,src.y,E.x,E.y,'#ffffff',1,6); label('White light',src.x+10,src.y-16,14,'rgba(255,255,255,.9)');
   const rays=[]; for(const c of SPECTRUM){ const tr=tracePrism(E,d,c.nGlass); if(tr) rays.push({c,tr}); }
