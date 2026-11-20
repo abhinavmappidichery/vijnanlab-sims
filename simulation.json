@@ -116,6 +116,24 @@
     ],
     "htmlPath": "sims/SecondaryCircle.html",
     "classRange": "Class 1-12"
+  },
+
+  
+  {
+    "id": "SecondaryRainbowAngle",
+    "titleML": "ടെസ്റ്റ് സിമുലേഷൻ4",
+    "titleEN": "Test Simulation",
+    "category": "physics",
+    "badge": "Physics • Test", 
+    "icon": "fa-flask",
+    "objective": "GitHub-ൽ നിന്ന് simulation load ആകുന്നുണ്ടോ എന്ന് check ചെയ്യുക",
+    "instructions": ["Button click ചെയ്യുക", "Color change കാണുക"],
+    "principle": "Simple test — GitHub integration verify",
+    "quiz": [
+      { "q": "ഇത് GitHub-ൽ നിന്നാണോ load ആകുന്നത്?", "a": "അതെ ✅" }
+    ],
+    "htmlPath": "sims/SecondaryRainbowAngle.html",
+    "classRange": "Class 1-12"
   }
 
 ]
