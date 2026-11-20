@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Light Lab — Rainbow Formation (Interactive 7 Drops + Angles)</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  body{background:#070f1c;color:#e6eefc;overflow:hidden;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Malayalam",sans-serif;-webkit-tap-highlight-color:transparent}
+  #app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+  #stage{position:relative;flex:1 1 auto;min-height:0;overflow:hidden}
+  canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+  canvas.dragging{cursor:grabbing}
+  #hint{position:absolute;left:16px;top:16px;z-index:5;display:flex;align-items:center;gap:10px;padding:10px 18px;border-radius:999px;background:rgba(11,26,46,.82);border:1px solid rgba(125,211,252,.35);color:#bae6fd;font-size:15px;font-weight:700;pointer-events:none;transition:opacity .45s;backdrop-filter:blur(6px);max-width:calc(100% - 32px)}
+  #hint .dot{width:10px;height:10px;border-radius:50%;background:#fde68a;box-shadow:0 0 12px #fde68a;animation:pulse 1.4s infinite;flex:0 0 auto}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.45}}
+  #hint.gone{opacity:0}
+  #dock{flex:0 0 auto;display:flex;flex-direction:column;gap:8px;padding:10px 18px calc(10px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,#0e1e33,#0a1526);border-top:1px solid rgba(125,211,252,.20);box-shadow:0 -12px 30px rgba(0,0,0,.5)}
+  .dock-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .stats{display:flex;gap:8px;flex-wrap:wrap;flex:1;min-width:0}
+  .chip{display:inline-flex;align-items:baseline;gap:8px;padding:6px 12px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(125,211,252,.18);font-size:14px;white-space:nowrap}
+  .chip .lbl{color:#93c5fd;font-weight:700}
+  .chip .val{color:#fff;font-weight:800;font-variant-numeric:tabular-nums;font-size:16px}
+  
+  /* Toggle Buttons */
+  .toggle-btn{font:inherit;font-weight:700;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.05);color:#cbd5e1;cursor:pointer;transition:all .2s;white-space:nowrap}
+  .toggle-btn.active{box-shadow:0 0 10px rgba(255,255,255,0.1)}
+  .toggle-btn:hover{background:rgba(255,255,255,0.1)}
+  #controlRow { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+  #controlRow::-webkit-scrollbar { height: 4px; }
+  #controlRow::-webkit-scrollbar-thumb { background: rgba(125,211,252,0.3); border-radius: 4px; }
+
+  #resetBtn, #angleBtn{font:inherit;font-weight:800;font-size:13px;padding:7px 14px;border-radius:10px;border:1px solid rgba(148,197,255,.25);background:rgba(255,255,255,.05);color:#cbd5e1;cursor:pointer;white-space:nowrap}
+  #angleBtn.active{background:rgba(56,189,248,.22);border-color:#38bdf8;color:#e0f2fe}
+  #resetBtn:hover, #angleBtn:hover{background:rgba(255,255,255,.12)}
+  .tip{font-size:13px;color:#94a3b8;line-height:1.4}
+  .tip b{color:#fde68a}
+  @media(max-width:720px){.chip{font-size:12px;padding:5px 10px}.chip .val{font-size:14px}.tip{font-size:12px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div id="hint"><span class="dot"></span><span id="hintText">Drag up/down to change sunlight height</span></div>
+  </div>
+  <footer id="dock">
+    <!-- Controls for individual drops -->
+    <div class="dock-row" id="controlRow">
+      <button id="showAllBtn" class="toggle-btn" style="border-color:#fde68a; color:#fde68a;">Show All</button>
+      <button id="hideAllBtn" class="toggle-btn" style="border-color:#fda4af; color:#fda4af;">Hide All</button>
+    </div>
+    
+    <div class="dock-row">
+      <div class="stats" id="stats"></div>
+      <button id="angleBtn" class="active">📐 Angles: ON</button>
+      <button id="resetBtn">↺ Reset Height</button>
+    </div>
+    <div class="dock-row"><div class="tip" id="tip"></div></div>
+  </footer>
+</div>
+<script>
+(function(){
+'use strict';
+const N_AIR = 1.000;
+
+// Order from Violet (40.0°) to Red (42.0°)
+const SPECTRUM = [
+  { name:'Violet', color:'#a855f7', nWater:1.344, deg:'40.0°' },
+  { name:'Indigo', color:'#818cf8', nWater:1.342, deg:'40.3°' },
+  { name:'Blue',   color:'#3b82f6', nWater:1.340, deg:'40.7°' },
+  { name:'Green',  color:'#4ade80', nWater:1.337, deg:'41.0°' },
+  { name:'Yellow', color:'#ffdd59', nWater:1.335, deg:'41.4°' },
+  { name:'Orange', color:'#ff9f43', nWater:1.333, deg:'41.7°' },
+  { name:'Red',    color:'#ff4d4d', nWater:1.331, deg:'42.0°' },
+];
+
+const state = { 
+  rainH: 0.86,
+  showAngles: true,
+  activeDrops: [true, true, true, true, true, true, true]
+}; 
+let W=1,H=1,DPR=1,UI=1,dragging=false,hasDragged=false,lastT=0;
+
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d'), stage=document.getElementById('stage');
+const statsEl=document.getElementById('stats'), tipEl=document.getElementById('tip'), hintEl=document.getElementById('hint');
+const controlRow = document.getElementById('controlRow');
+
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+
+function resize(){
+  const r=stage.getBoundingClientRect();
+  DPR=Math.min(window.devicePixelRatio||1,2);
+  W=Math.max(1,Math.round(r.width));
+  H=Math.max(1,Math.round(r.height));
+  cv.width=Math.round(W*DPR);
+  cv.height=Math.round(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  UI=clamp(H/700,0.90,1.30);
+}
+new ResizeObserver(resize).observe(stage); resize();
+
+// === Vector Math Helpers ===
+function norm(x,y){ const m=Math.hypot(x,y)||1; return {x:x/m,y:y/m}; }
+function dot(a,b){ return a.x*b.x+a.y*b.y; }
+function refract(d,n,eta){ let N=n; if(dot(d,N)>0) N={x:-n.x,y:-n.y}; const cosI=-dot(d,N); const sin2=eta*eta*(1-cosI*cosI); if(sin2>1) return null; const cosT=Math.sqrt(1-sin2); const f=eta*cosI-cosT; return norm(eta*d.x+f*N.x, eta*d.y+f*N.y); }
+function reflect(d,n){ const k=2*dot(d,n); return {x:d.x-k*n.x, y:d.y-k*n.y}; }
+function circleNext(p,d,c,R){ const ux=p.x-c.x, uy=p.y-c.y; const b=ux*d.x+uy*d.y; const cc=ux*ux+uy*uy-R*R; const disc=b*b-cc; if(disc<0) return null; const t1=-b-Math.sqrt(disc), t2=-b+Math.sqrt(disc); if(t1>1e-4) return t1; if(t2>1e-4) return t2; return null; }
+
+// === Drawing Helpers ===
+function lineNoGlow(x1,y1,x2,y2,color,alpha,width,dash){
+  ctx.save(); ctx.lineCap='round'; ctx.globalAlpha=alpha; ctx.strokeStyle=color; ctx.lineWidth=width;
+  if(dash) ctx.setLineDash(dash);
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.restore();
+}
+function beam(x1,y1,x2,y2,color,alpha,width){
+  if(alpha<0.02) return;
+  ctx.save(); ctx.lineCap='round'; ctx.globalAlpha=alpha; ctx.shadowColor=color; ctx.shadowBlur=10;
+  ctx.strokeStyle=color; ctx.lineWidth=width; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  ctx.shadowBlur=0; ctx.globalAlpha=alpha*0.9; ctx.strokeStyle='rgba(255,255,255,.88)'; ctx.lineWidth=Math.max(1,width*0.35);
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.restore();
+}
+function label(txt,x,y,size,color,align){
+  ctx.save(); ctx.fillStyle=color; ctx.font='800 '+(size*UI)+'px system-ui, sans-serif';
+  ctx.textAlign=align||'left'; ctx.textBaseline='middle'; ctx.fillText(txt,x,y); ctx.restore();
+}
+function arrowHead(x,y,dx,dy,color,size){
+  const a=Math.atan2(dy,dx); ctx.save(); ctx.fillStyle=color; ctx.beginPath();
+  ctx.moveTo(x,y); ctx.lineTo(x-size*Math.cos(a-0.45), y-size*Math.sin(a-0.45)); ctx.lineTo(x-size*Math.cos(a+0.45), y-size*Math.sin(a+0.45));
+  ctx.closePath(); ctx.fill(); ctx.restore();
+}
+function drawAngleArc(x, y, radius, startAng, endAng, text, color, textOffset) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, startAng, endAng, false);
+  ctx.stroke();
+
+  const mid = (startAng + endAng) / 2;
+  const tx = x + Math.cos(mid) * (radius + (textOffset || 18));
+  const ty = y + Math.sin(mid) * (radius + (textOffset || 18));
+
+  ctx.font = '800 ' + (12 * UI) + 'px system-ui, sans-serif';
+  ctx.fillStyle = color;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, tx, ty);
+  ctx.restore();
+}
+
+// === 7 Drops Geometry ===
+function rainGeom(){
+  const sw = Math.min(W, H * 1.6); 
+  const sx = (W - sw) / 2;
+  const R = Math.min(sw * 0.045, H * 0.045); 
+  
+  const drops = [];
+  for(let i=0; i<7; i++) {
+    drops.push({
+      cx: sx + sw * 0.74, 
+      cy: H * 0.08 + i * H * 0.112, 
+      targetColor: SPECTRUM[6 - i], 
+      R: R
+    });
+  }
+
+  return {
+    drops,
+    obs: { x: sx + sw * 0.14, y: H * 0.86 },
+    sw, sx
+  };
+}
+
+// === Trace Light inside a Drop ===
+function traceDrop(cx,cy,R,h,n){
+  const ex = cx - Math.sqrt(Math.max(0, R*R - h*h)), ey = cy - h;
+  const entry = {x:ex, y:ey};
+  const nOut = norm(ex-cx, ey-cy);
+  
+  const r1 = refract({x:1,y:0}, nOut, N_AIR/n); if(!r1) return null;
+  const t2 = circleNext(entry, r1, {x:cx,y:cy}, R); if(!t2) return null;
+  const back = {x:ex+r1.x*t2, y:ey+r1.y*t2};
+  
+  const nBack = norm(back.x-cx, back.y-cy);
+  const r2 = reflect(r1, nBack);
+  
+  const t3 = circleNext(back, r2, {x:cx,y:cy}, R); if(!t3) return null;
+  const exit = {x:back.x+r2.x*t3, y:back.y+r2.y*t3};
+  
+  const nExit = norm(exit.x-cx, exit.y-cy);
+  const r3 = refract(r2, nExit, n/N_AIR); if(!r3) return null;
+  
+  return {entry, back, exit, r1, r2, r3};
+}
+
+// === Main Draw Loop ===
+function drawRaindrop(t){
+  let g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#0a1a33'); g.addColorStop(0.6,'#0a1428'); g.addColorStop(1,'#040a14');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+  const {drops, obs} = rainGeom();
+  const h = state.rainH * drops[0].R;
+
+  // 1. Horizontal Axis (0°) from Observer's Eye
+  if (state.showAngles) {
+    lineNoGlow(obs.x, obs.y, W - 24, obs.y, 'rgba(186, 230, 253, 0.55)', 1, 1.6, [7, 6]);
+    label('Horizontal Axis (0°)', obs.x + 150 * UI, obs.y + 14 * UI, 12, 'rgba(186, 230, 253, 0.85)', 'left');
+  }
+
+  // Collect exit points of active drops for clean angle marking
+  const activeIndices = [];
+  const hitExits = {};
+
+  // Loop through all 7 drops
+  drops.forEach((drop, index) => {
+    if (!state.activeDrops[index]) return;
+    activeIndices.push(index);
+
+    const { cx, cy, R, targetColor } = drop;
+    
+    // Drop background
+    const dg=ctx.createRadialGradient(cx-R*0.35,cy-R*0.35,R*0.08,cx,cy,R); 
+    dg.addColorStop(0,'rgba(125,211,252,.25)'); dg.addColorStop(1,'rgba(56,189,248,.05)');
+    ctx.fillStyle=dg; ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.fill();
+    ctx.save(); ctx.shadowColor='#38bdf8'; ctx.shadowBlur=15; ctx.strokeStyle='rgba(125,211,252,.8)'; ctx.lineWidth=1.5; 
+    ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.stroke(); ctx.restore();
+
+    // Draw sunlight hitting this drop
+    const traceWhite = traceDrop(cx, cy, R, h, 1.333);
+    if (traceWhite) {
+      beam(0, traceWhite.entry.y, traceWhite.entry.x, traceWhite.entry.y, '#fff7cc', 0.65, 2);
+      if (index === activeIndices[0]) {
+         label('സൂര്യപ്രകാശം (Sunlight)', 18, Math.max(18, traceWhite.entry.y-18), 13, 'rgba(255,247,204,.95)');
+         label('ജലകണികകൾ', cx + R + 12, cy, 13, 'rgba(147,197,253,.95)', 'left');
+      }
+    }
+
+    // Inside the drop, white light splits into 7 colors (Internal Reflection + Dispersion)
+    for (let i = 0; i < SPECTRUM.length; i++) {
+      const c = SPECTRUM[i];
+      const tr = traceDrop(cx, cy, R, h, c.nWater);
+      if (!tr) continue;
+
+      const obsAngle = Math.atan2(obs.y - tr.exit.y, obs.x - tr.exit.x);
+      const hitIndex = 6 - index;
+      const isHitRay = (i === hitIndex);
+
+      // Textbook order: Violet (i=0) on top, Red (i=6) at bottom
+      const spreadStep = 0.035;
+      const rayAngle = obsAngle + (hitIndex - i) * spreadStep;
+      const dirX = Math.cos(rayAngle);
+      const dirY = Math.sin(rayAngle);
+
+      if (isHitRay) {
+        hitExits[index] = { exit: tr.exit, color: c.color, deg: c.deg };
+        // Highlighted internal reflection + ray to Observer's eye
+        lineNoGlow(tr.entry.x, tr.entry.y, tr.back.x, tr.back.y, c.color, 0.98, 2.5);
+        lineNoGlow(tr.back.x, tr.back.y, tr.exit.x, tr.exit.y, c.color, 0.98, 2.5);
+        beam(tr.exit.x, tr.exit.y, obs.x, obs.y, c.color, 1, 3.2);
+        arrowHead(obs.x - 4, obs.y, obs.x - tr.exit.x, obs.y - tr.exit.y, c.color, 8);
+      } else {
+        // Other dispersed colors (internal + dotted fan)
+        lineNoGlow(tr.entry.x, tr.entry.y, tr.back.x, tr.back.y, c.color, 0.35, 1.3);
+        lineNoGlow(tr.back.x, tr.back.y, tr.exit.x, tr.exit.y, c.color, 0.35, 1.3);
+
+        const rayLen = Math.hypot(W, H) * 0.85;
+        lineNoGlow(
+          tr.exit.x,
+          tr.exit.y,
+          tr.exit.x + dirX * rayLen,
+          tr.exit.y + dirY * rayLen,
+          c.color,
+          0.38,
+          1.5,
+          [6, 5]
+        );
+      }
+    }
+    
+    // Label the target color & angle for this drop
+    label(`${targetColor.name} (${targetColor.deg})`, cx + R + 12, cy + (index === activeIndices[0] ? 18 : 0), 11, targetColor.color, 'left');
+  });
+
+  // 2. Draw Angle Arcs at Observer's Eye & Droplets (Alternate Interior Angles)
+  if (state.showAngles && activeIndices.length > 0) {
+    // If 1 or 2 drops are active, show angles for all of them.
+    // If more than 2 drops are active, show outermost (topmost) & innermost (bottommost) to keep it clean!
+    const angleTargets = activeIndices.length <= 2
+      ? activeIndices
+      : [activeIndices[0], activeIndices[activeIndices.length - 1]];
+
+    angleTargets.forEach((dropIdx, slot) => {
+      const info = hitExits[dropIdx];
+      if (!info) return;
+
+      // Angle at Observer's eye (from ray down to horizontal axis 0°)
+      const angToDrop = Math.atan2(info.exit.y - obs.y, info.exit.x - obs.x);
+      const obsArcR = (slot === 0 ? 115 : 68) * UI;
+      drawAngleArc(obs.x, obs.y, obsArcR, angToDrop, 0, info.deg, info.color, 20 * UI);
+
+      // Alternate interior angle at the droplet exit (parallel horizontal reference line to the left)
+      const refLen = 78 * UI;
+      lineNoGlow(info.exit.x, info.exit.y, info.exit.x - refLen, info.exit.y, 'rgba(255,247,204,0.45)', 1, 1.2, [4, 4]);
+      const angToObs = Math.atan2(obs.y - info.exit.y, obs.x - info.exit.x);
+      drawAngleArc(info.exit.x, info.exit.y, 44 * UI, angToObs, Math.PI, info.deg, info.color, 18 * UI);
+    });
+  }
+
+  // 3. Draw Observer (🧍)
+  ctx.save();
+  ctx.font = (44 * UI) + 'px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🧍', obs.x - 10 * UI, obs.y + 18 * UI);
+  ctx.restore();
+
+  // Eye dot
+  ctx.save();
+  ctx.fillStyle = '#fde68a';
+  ctx.beginPath();
+  ctx.arc(obs.x, obs.y, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  label('(Observer)', obs.x - 10 * UI, obs.y + 44 * UI, 12, 'rgba(203,213,225,.95)', 'center');
+
+  // Stats
+  const activeCount = activeIndices.length;
+  statsEl.innerHTML = `
+    <div class="chip"><span class="lbl">Active Drops</span><span class="val">${activeCount} / 7</span></div>
+    <div class="chip"><span class="lbl">h/R</span><span class="val">${state.rainH.toFixed(2)}</span></div>
+  `;
+  
+  tipEl.innerHTML = '<b>Classroom Tip:</b> ';
+}
+
+function frame(now){ if(!lastT) lastT=now; const t=(now-lastT)/1000; ctx.clearRect(0,0,W,H); drawRaindrop(t); requestAnimationFrame(frame); }
+requestAnimationFrame(frame);
+
+// === Generate Toggle Buttons ===
+const dropNames = ['Red 42°', 'Orange', 'Yellow', 'Green', 'Blue', 'Indigo', 'Violet 40°'];
+const dropColors = ['#ff4d4d','#ff9f43','#ffdd59','#4ade80','#3b82f6','#818cf8','#a855f7'];
+
+for(let i=0; i<7; i++) {
+  const btn = document.createElement('button');
+  btn.className = 'toggle-btn active';
+  btn.style.borderColor = dropColors[i];
+  btn.style.color = dropColors[i];
+  btn.style.background = 'rgba(255,255,255,0.1)';
+  btn.innerText = `Drop ${i+1} (${dropNames[i]})`;
+  
+  btn.addEventListener('click', () => {
+    state.activeDrops[i] = !state.activeDrops[i];
+    if(state.activeDrops[i]) {
+      btn.classList.add('active');
+      btn.style.background = 'rgba(255,255,255,0.1)';
+      btn.style.opacity = '1';
+    } else {
+      btn.classList.remove('active');
+      btn.style.background = 'transparent';
+      btn.style.opacity = '0.4';
+    }
+  });
+  
+  controlRow.appendChild(btn);
+}
+
+// Show/Hide All Logic
+document.getElementById('showAllBtn').addEventListener('click', () => {
+  state.activeDrops = [true, true, true, true, true, true, true];
+  const btns = controlRow.querySelectorAll('.toggle-btn');
+  for(let i=0; i<7; i++) {
+    btns[i+2].classList.add('active'); 
+    btns[i+2].style.background = 'rgba(255,255,255,0.1)';
+    btns[i+2].style.opacity = '1';
+  }
+});
+
+document.getElementById('hideAllBtn').addEventListener('click', () => {
+  state.activeDrops = [false, false, false, false, false, false, false];
+  const btns = controlRow.querySelectorAll('.toggle-btn');
+  for(let i=0; i<7; i++) {
+    btns[i+2].classList.remove('active');
+    btns[i+2].style.background = 'transparent';
+    btns[i+2].style.opacity = '0.4';
+  }
+});
+
+// Toggle Angles Button
+const angleBtn = document.getElementById('angleBtn');
+angleBtn.addEventListener('click', () => {
+  state.showAngles = !state.showAngles;
+  angleBtn.classList.toggle('active', state.showAngles);
+  angleBtn.textContent = state.showAngles ? '📐 Angles: ON' : '📐 Angles: OFF';
+});
+
+// === Interaction ===
+function pointerPos(e){ const r=cv.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
+function applyPointer(p){
+  const { drops } = rainGeom();
+  const midY = (drops[0].cy + drops[6].cy) / 2;
+  state.rainH = clamp((midY - p.y) / (H*0.3), 0.45, 0.92);
+}
+
+cv.addEventListener('pointerdown',function(e){ 
+  e.preventDefault(); dragging=true; cv.classList.add('dragging'); cv.setPointerCapture(e.pointerId); 
+  applyPointer(pointerPos(e)); 
+  if(!hasDragged){hasDragged=true; hintEl.classList.add('gone');} 
+});
+cv.addEventListener('pointermove',function(e){ if(!dragging) return; e.preventDefault(); applyPointer(pointerPos(e)); });
+function endDrag(e){ if(!dragging) return; dragging=false; cv.classList.remove('dragging'); try{cv.releasePointerCapture(e.pointerId);}catch(_){} }
+cv.addEventListener('pointerup',endDrag); cv.addEventListener('pointercancel',endDrag); cv.addEventListener('pointerleave',function(e){ if (dragging) endDrag(e); });
+
+document.getElementById('resetBtn').addEventListener('click',function(){
+  state.rainH = 0.86;
+});
+window.__lightLab=state;
+})();
+</script>
+</body>
+</html>
