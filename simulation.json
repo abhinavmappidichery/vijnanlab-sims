@@ -63,7 +63,7 @@
     "quiz": [
       { "q": "ഇത് GitHub-ൽ നിന്നാണോ load ആകുന്നത്?", "a": "അതെ ✅" }
     ],
-    "htmlPath": "sims/sinkORfloat.html",
+    "htmlPath": "sims/VibgyorAll.html",
     "classRange": "Class 1-12"
   }
 
