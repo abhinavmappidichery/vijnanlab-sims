@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rainbow Lab — Complete Classroom Presentation</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Malayalam", sans-serif; background: #0b1324; color: #f8fafc; }
+
+  #wrapper { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+
+  /* Top Presentation Bar */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 8px 14px; background: #0f172a; border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    flex-wrap: wrap; z-index: 20;
+  }
+  .nav-btns { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .nav-btn {
+    border: 1px solid rgba(148, 163, 184, 0.25); background: rgba(255,255,255,0.06);
+    color: #cbd5e1; padding: 6px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 700;
+    cursor: pointer; transition: all 0.15s ease; white-space: nowrap;
+  }
+  .nav-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
+  .nav-btn.active { background: #0284c7; border-color: #38bdf8; color: #fff; box-shadow: 0 0 12px rgba(56,189,248,0.35); }
+  .nav-btn.home-btn.active { background: #1e293b; border-color: #fde68a; color: #fde68a; }
+  .fs-btn {
+    border: 1px solid rgba(253,230,138,0.35); background: rgba(253,230,138,0.1);
+    color: #fde68a; padding: 6px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 700; cursor: pointer;
+  }
+  .fs-btn:hover { background: rgba(253,230,138,0.2); }
+
+  /* Main Viewport */
+  #main { flex: 1; position: relative; width: 100%; height: 100%; overflow: hidden; }
+
+  /* Front Home Screen */
+  #homeView {
+    position: absolute; inset: 0; overflow-y: auto; padding: 28px 20px;
+    background: radial-gradient(circle at top right, #1e3a5f 0%, #0b1324 55%, #060b16 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .hero { text-align: center; max-width: 720px; margin-bottom: 26px; }
+  .hero h1 { font-size: clamp(22px, 3.5vw, 34px); font-weight: 800; color: #f8fafc; margin-bottom: 8px; }
+  .hero p { font-size: 14.5px; color: #94a3b8; line-height: 1.5; }
+
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 14px; width: 100%; max-width: 960px;
+  }
+  .card {
+    background: rgba(30, 41, 59, 0.72); border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 14px; padding: 18px; cursor: pointer; transition: all 0.2s ease;
+    display: flex; flex-direction: column; gap: 8px; text-align: left;
+  }
+  .card:hover { transform: translateY(-4px); border-color: #38bdf8; background: rgba(30, 41, 59, 0.95); box-shadow: 0 12px 28px rgba(0,0,0,0.35); }
+  .badge {
+    align-self: flex-start; font-size: 11px; font-weight: 800; padding: 3px 9px;
+    border-radius: 999px; letter-spacing: 0.03em;
+  }
+  .b-pri { background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.4); }
+  .b-sec { background: rgba(168,85,247,0.2); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.4); }
+  .b-com { background: rgba(14,165,233,0.2); color: #7dd3fc; border: 1px solid rgba(14,165,233,0.4); }
+  .card h3 { font-size: 16px; color: #fff; font-weight: 800; }
+  .card p { font-size: 12.5px; color: #94a3b8; line-height: 1.45; }
+
+  /* Simulation Iframe */
+  #simFrame {
+    position: absolute; inset: 0; width: 100%; height: 100%; border: none; display: none; background: #070f1c;
+  }
+</style>
+</head>
+<body>
+<div id="wrapper">
+  <header class="topbar">
+    <div class="nav-btns">
+      <button class="nav-btn home-btn active" onclick="openView('home', this)">🏠 Home</button>
+      <button class="nav-btn" onclick="openView('tpl1', this)">1. Primary (Angle )</button>
+      <button class="nav-btn" onclick="openView('tpl2', this)">2. Primary (Circle)</button>
+      <button class="nav-btn" onclick="openView('tpl3', this)">3. Secondary (Angle)</button>
+      <button class="nav-btn" onclick="openView('tpl4', this)">4. Secondary (Circle)</button>
+      <button class="nav-btn" onclick="openView('tpl5', this)">5. Primary and Secondary(Circle)</button>
+    </div>
+    <button class="fs-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+  </header>
+
+  <main id="main">
+    <!-- Front Presentation Dashboard -->
+    <section id="homeView">
+      <div class="hero">
+        <h1>🌈 മഴവില്ല് രൂപപ്പെടുന്നത് എങ്ങനെ? (Rainbow Lab)</h1>
+        <p>താഴെ കൊടുത്തിരിക്കുന്ന മോഡ്യൂളുകൾ തിരഞ്ഞെടുക്കുക.</p>
+      </div>
+
+      <div class="grid">
+        <div class="card" onclick="openFromCard('tpl1', 1)">
+          <span class="badge b-pri">STEP 1 • 40° – 42° ANGLES </span>
+          <h3>Primary Rainbow</h3>
+          <p>ജലകണികകൾക്കുള്ളിലെ Total Internal Reflection ഉം (1 Reflection) 40°– 42° കോണും </p>
+        </div>
+
+        <div class="card" onclick="openFromCard('tpl2', 2)">
+          <span class="badge b-pri">STEP 2 • FULL CIRCLE</span>
+          <h3>Primary Circle</h3>
+          <p>പൂർണ്ണ വൃത്താകൃതിയിൽ Primary Rainbow കാണിക്കുന്നു</p>
+        </div>
+
+        <div class="card" onclick="openFromCard('tpl3', 3)">
+          <span class="badge b-sec">STEP 3 • 50° – 53° ANGLES</span>
+          <h3>Secondary Rainbow (2 TIR)</h3>
+          <p>തുള്ളിയുടെ താഴെ കൂടി പ്രകാശം പ്രവേശിച്ച്  2 തവണ TIRനടന്ന ശേഷം Secondary Rainbow ഉണ്ടാവുന്നത് With Angles</p>
+        </div>
+
+        <div class="card" onclick="openFromCard('tpl4', 4)">
+          <span class="badge b-sec">STEP 4 • INVERTED CIRCLE</span>
+          <h3>Secondary Circle </h3>
+          <p>ഉള്ളിൽ Red (50°), പുറത്ത് Violet (53°) — Secondary Rainbow വൃത്താകൃതിയും കോണുകളും.</p>
+        </div>
+
+        <div class="card" onclick="openFromCard('tpl5', 5)">
+          <span class="badge b-com">STEP 5 • COMBINED</span>
+          <h3>Primary + Secondary + Dark Band</h3>
+          <p>രണ്ട് മഴവില്ലുകളും ഒരുമിച്ച്, ഇടയിലുള്ള Alexander's Dark Band (42°–50°) .</p>
+        </div>
+      </div>
+    </section>
+
+    <iframe id="simFrame"></iframe>
+  </main>
+</div>
+
+<!-- ================= 1. PRIMARY 7 DROPS + ANGLES ================= -->
+<template id="tpl1">
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<style>
+  *{box-sizing:border-box}html,body{margin:0;padding:0;height:100%;background:#070f1c;color:#e6eefc;overflow:hidden;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Malayalam",sans-serif}
+  #app{display:flex;flex-direction:column;height:100vh}#stage{position:relative;flex:1;min-height:0;overflow:hidden}
+  canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}canvas.dragging{cursor:grabbing}
+  #dock{flex:0 0 auto;display:flex;flex-direction:column;gap:8px;padding:10px 16px;background:linear-gradient(180deg,#0e1e33,#0a1526);border-top:1px solid rgba(125,211,252,.2)}
+  .dock-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.stats{display:flex;gap:8px;flex:1}
+  .chip{display:inline-flex;align-items:baseline;gap:8px;padding:5px 11px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(125,211,252,.18);font-size:13px}
+  .chip .lbl{color:#93c5fd;font-weight:700}.chip .val{color:#fff;font-weight:800}
+  .toggle-btn,#resetBtn,#angleBtn{font:inherit;font-weight:700;font-size:12.5px;padding:6px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.05);color:#cbd5e1;cursor:pointer;white-space:nowrap}
+  #angleBtn.active{background:rgba(56,189,248,.22);border-color:#38bdf8;color:#e0f2fe}
+  #controlRow{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}.tip{font-size:12.5px;color:#94a3b8}.tip b{color:#fde68a}
+</style></head><body>
+<div id="app"><div id="stage"><canvas id="cv"></canvas></div>
+<footer id="dock">
+  <div class="dock-row" id="controlRow">
+    <button id="showAllBtn" class="toggle-btn" style="border-color:#fde68a;color:#fde68a">Show All</button>
+    <button id="hideAllBtn" class="toggle-btn" style="border-color:#fda4af;color:#fda4af">Hide All</button>
+  </div>
+  <div class="dock-row"><div class="stats" id="stats"></div><button id="angleBtn" class="active">📐 Angles: ON</button><button id="resetBtn">↺ Reset Height</button></div>
+  <div class="dock-row"><div class="tip"><b>Primary Rainbow (1 Internal Reflection):</b> മഴത്തുള്ളിയിലൂടെ സൂര്യപ്രകാശം പതിച്ച് 1 തവണ Reflection നടന്ന് പുറത്തേക്ക് വരുന്നു (Violet 40° – Red 42° )   .</div></div>
+</footer></div>
+<script>
+(function(){
+const N_AIR=1.0;
+const SPECTRUM=[
+  {name:'Violet',color:'#a855f7',nWater:1.344,deg:'40.0°'},{name:'Indigo',color:'#818cf8',nWater:1.342,deg:'40.3°'},
+  {name:'Blue',color:'#3b82f6',nWater:1.340,deg:'40.7°'},{name:'Green',color:'#4ade80',nWater:1.337,deg:'41.0°'},
+  {name:'Yellow',color:'#ffdd59',nWater:1.335,deg:'41.4°'},{name:'Orange',color:'#ff9f43',nWater:1.333,deg:'41.7°'},
+  {name:'Red',color:'#ff4d4d',nWater:1.331,deg:'42.0°'}
+];
+const state={rainH:0.86,showAngles:true,activeDrops:[true,true,true,true,true,true,true]};
+let W=1,H=1,DPR=1,UI=1,dragging=false;
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),stage=document.getElementById('stage'),statsEl=document.getElementById('stats'),controlRow=document.getElementById('controlRow');
+const clamp=(v,a,b)=>v<a?a:(v>b?b:v);
+function resize(){const r=stage.getBoundingClientRect();DPR=Math.min(window.devicePixelRatio||1,2);W=Math.max(1,Math.round(r.width));H=Math.max(1,Math.round(r.height));cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);UI=clamp(H/700,0.85,1.25);}
+new ResizeObserver(resize).observe(stage);resize();
+const norm=(x,y)=>{const m=Math.hypot(x,y)||1;return{x:x/m,y:y/m};};
+const dot=(a,b)=>a.x*b.x+a.y*b.y;
+function refract(d,n,eta){let N=n;if(dot(d,N)>0)N={x:-n.x,y:-n.y};const cosI=-dot(d,N),sin2=eta*eta*(1-cosI*cosI);if(sin2>1)return null;const f=eta*cosI-Math.sqrt(1-sin2);return norm(eta*d.x+f*N.x,eta*d.y+f*N.y);}
+const reflect=(d,n)=>{const k=2*dot(d,n);return{x:d.x-k*n.x,y:d.y-k*n.y};};
+function circleNext(p,d,c,R){const ux=p.x-c.x,uy=p.y-c.y,b=ux*d.x+uy*d.y,cc=ux*ux+uy*uy-R*R,disc=b*b-cc;if(disc<0)return null;const t1=-b-Math.sqrt(disc),t2=-b+Math.sqrt(disc);return t1>1e-4?t1:(t2>1e-4?t2:null);}
+function lineNoGlow(x1,y1,x2,y2,c,a,w,d){ctx.save();ctx.lineCap='round';ctx.globalAlpha=a;ctx.strokeStyle=c;ctx.lineWidth=w;if(d)ctx.setLineDash(d);ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.restore();}
+function beam(x1,y1,x2,y2,c,a,w){ctx.save();ctx.lineCap='round';ctx.globalAlpha=a;ctx.shadowColor=c;ctx.shadowBlur=10;ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.shadowBlur=0;ctx.globalAlpha=a*0.9;ctx.strokeStyle='rgba(255,255,255,.88)';ctx.lineWidth=Math.max(1,w*0.35);ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.restore();}
+function label(t,x,y,s,c,al){ctx.save();ctx.fillStyle=c;ctx.font='800 '+(s*UI)+'px system-ui,sans-serif';ctx.textAlign=al||'left';ctx.textBaseline='middle';ctx.fillText(t,x,y);ctx.restore();}
+function arrowHead(x,y,dx,dy,c,s){const a=Math.atan2(dy,dx);ctx.save();ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-s*Math.cos(a-0.45),y-s*Math.sin(a-0.45));ctx.lineTo(x-s*Math.cos(a+0.45),y-s*Math.sin(a+0.45));ctx.closePath();ctx.fill();ctx.restore();}
+function drawAngleArc(x,y,r,s,e,t,c,o){ctx.save();ctx.strokeStyle=c;ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(x,y,r,s,e,false);ctx.stroke();const m=(s+e)/2;ctx.font='800 '+(12*UI)+'px system-ui,sans-serif';ctx.fillStyle=c;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,x+Math.cos(m)*(r+(o||18)),y+Math.sin(m)*(r+(o||18)));ctx.restore();}
+function rainGeom(){const sw=Math.min(W,H*1.6),sx=(W-sw)/2,R=Math.min(sw*0.045,H*0.045),drops=[];for(let i=0;i<7;i++)drops.push({cx:sx+sw*0.74,cy:H*0.08+i*H*0.112,targetColor:SPECTRUM[6-i],R});return{drops,obs:{x:sx+sw*0.14,y:H*0.86}};}
+function traceDrop(cx,cy,R,h,n){const ex=cx-Math.sqrt(Math.max(0,R*R-h*h)),ey=cy-h,entry={x:ex,y:ey},r1=refract({x:1,y:0},norm(ex-cx,ey-cy),N_AIR/n);if(!r1)return null;const t2=circleNext(entry,r1,{x:cx,y:cy},R);if(!t2)return null;const back={x:ex+r1.x*t2,y:ey+r1.y*t2},r2=reflect(r1,norm(back.x-cx,back.y-cy)),t3=circleNext(back,r2,{x:cx,y:cy},R);if(!t3)return null;const exit={x:back.x+r2.x*t3,y:back.y+r2.y*t3};return{entry,back,exit};}
+function draw(){
+  let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0a1a33');g.addColorStop(1,'#040a14');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  const{drops,obs}=rainGeom(),h=state.rainH*drops[0].R;
+  if(state.showAngles){lineNoGlow(obs.x,obs.y,W-20,obs.y,'rgba(186,230,253,0.55)',1,1.6,[7,6]);label('Horizontal Axis (0°)',obs.x+140*UI,obs.y+14*UI,12,'rgba(186,230,253,0.85)');}
+  const activeIndices=[],hitExits={};
+  drops.forEach((drop,index)=>{
+    if(!state.activeDrops[index])return;activeIndices.push(index);
+    const{cx,cy,R,targetColor}=drop;
+    const dg=ctx.createRadialGradient(cx-R*0.35,cy-R*0.35,R*0.08,cx,cy,R);dg.addColorStop(0,'rgba(125,211,252,.25)');dg.addColorStop(1,'rgba(56,189,248,.05)');
+    ctx.fillStyle=dg;ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.fill();
+    ctx.save();ctx.shadowColor='#38bdf8';ctx.shadowBlur=14;ctx.strokeStyle='rgba(125,211,252,.8)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.stroke();ctx.restore();
+    const tw=traceDrop(cx,cy,R,h,1.333);
+    if(tw){beam(0,tw.entry.y,tw.entry.x,tw.entry.y,'#fff7cc',0.65,2);if(index===activeIndices[0])label('സൂര്യപ്രകാശം (Sunlight)',16,Math.max(18,tw.entry.y-16),13,'rgba(255,247,204,.95)');}
+    for(let i=0;i<7;i++){
+      const c=SPECTRUM[i],tr=traceDrop(cx,cy,R,h,c.nWater);if(!tr)continue;
+      const obsA=Math.atan2(obs.y-tr.exit.y,obs.x-tr.exit.x),hitIdx=6-index;
+      if(i===hitIdx){
+        hitExits[index]={exit:tr.exit,color:c.color,deg:c.deg};
+        lineNoGlow(tr.entry.x,tr.entry.y,tr.back.x,tr.back.y,c.color,0.98,2.5);
+        lineNoGlow(tr.back.x,tr.back.y,tr.exit.x,tr.exit.y,c.color,0.98,2.5);
+        beam(tr.exit.x,tr.exit.y,obs.x,obs.y,c.color,1,3.2);
+        arrowHead(obs.x-4,obs.y,obs.x-tr.exit.x,obs.y-tr.exit.y,c.color,8);
+      }else{
+        lineNoGlow(tr.entry.x,tr.entry.y,tr.back.x,tr.back.y,c.color,0.32,1.2);
+        lineNoGlow(tr.back.x,tr.back.y,tr.exit.x,tr.exit.y,c.color,0.32,1.2);
+        const ra=obsA+(hitIdx-i)*0.035,len=Math.hypot(W,H)*0.85;
+        lineNoGlow(tr.exit.x,tr.exit.y,tr.exit.x+Math.cos(ra)*len,tr.exit.y+Math.sin(ra)*len,c.color,0.36,1.4,[6,5]);
+      }
+    }
+    label(`${targetColor.name} (${targetColor.deg})`,cx+R+10,cy,11,targetColor.color,'left');
+  });
+  if(state.showAngles&&activeIndices.length>0){
+    const targets=activeIndices.length<=2?activeIndices:[activeIndices[0],activeIndices[activeIndices.length-1]];
+    targets.forEach((dIdx,slot)=>{
+      const info=hitExits[dIdx];if(!info)return;
+      drawAngleArc(obs.x,obs.y,(slot===0?110:64)*UI,Math.atan2(info.exit.y-obs.y,info.exit.x-obs.x),0,info.deg,info.color,19*UI);
+      lineNoGlow(info.exit.x,info.exit.y,info.exit.x-72*UI,info.exit.y,'rgba(255,247,204,0.45)',1,1.2,[4,4]);
+      drawAngleArc(info.exit.x,info.exit.y,42*UI,Math.atan2(obs.y-info.exit.y,obs.x-info.exit.x),Math.PI,info.deg,info.color,17*UI);
+    });
+  }
+  ctx.save();ctx.font=(42*UI)+'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🧍',obs.x-10*UI,obs.y+16*UI);ctx.restore();
+  ctx.fillStyle='#fde68a';ctx.beginPath();ctx.arc(obs.x,obs.y,3.5,0,Math.PI*2);ctx.fill();
+  label('(Observer)',obs.x-10*UI,obs.y+42*UI,12,'rgba(203,213,225,.95)','center');
+  statsEl.innerHTML=`<div class="chip"><span class="lbl">Active Drops</span><span class="val">${activeIndices.length} / 7</span></div><div class="chip"><span class="lbl">h/R</span><span class="val">${state.rainH.toFixed(2)}</span></div>`;
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+const names=['Red 42°','Orange','Yellow','Green','Blue','Indigo','Violet 40°'],cols=['#ff4d4d','#ff9f43','#ffdd59','#4ade80','#3b82f6','#818cf8','#a855f7'];
+for(let i=0;i<7;i++){
+  const b=document.createElement('button');b.className='toggle-btn active';b.style.borderColor=cols[i];b.style.color=cols[i];b.style.background='rgba(255,255,255,0.1)';b.textContent=`Drop ${i+1} (${names[i]})`;
+  b.onclick=()=>{state.activeDrops[i]=!state.activeDrops[i];b.style.opacity=state.activeDrops[i]?'1':'0.38';b.style.background=state.activeDrops[i]?'rgba(255,255,255,0.1)':'transparent';};
+  controlRow.appendChild(b);
+}
+document.getElementById('showAllBtn').onclick=()=>{state.activeDrops.fill(true);controlRow.querySelectorAll('.toggle-btn').forEach((b,i)=>{if(i>=2){b.style.opacity='1';b.style.background='rgba(255,255,255,0.1)';}});};
+document.getElementById('hideAllBtn').onclick=()=>{state.activeDrops.fill(false);controlRow.querySelectorAll('.toggle-btn').forEach((b,i)=>{if(i>=2){b.style.opacity='0.38';b.style.background='transparent';}});};
+const ab=document.getElementById('angleBtn');ab.onclick=()=>{state.showAngles=!state.showAngles;ab.classList.toggle('active',state.showAngles);ab.textContent=state.showAngles?'📐 Angles: ON':'📐 Angles: OFF';};
+document.getElementById('resetBtn').onclick=()=>{state.rainH=0.86;};
+function applyP(e){const r=cv.getBoundingClientRect(),{drops}=rainGeom(),mid=(drops[0].cy+drops[6].cy)/2;state.rainH=clamp((mid-(e.clientY-r.top))/(H*0.3),0.45,0.92);}
+cv.addEventListener('pointerdown',e=>{dragging=true;cv.classList.add('dragging');applyP(e);});
+cv.addEventListener('pointermove',e=>{if(dragging)applyP(e);});
+window.addEventListener('pointerup',()=>{dragging=false;cv.classList.remove('dragging');});
+})();
+</script></body></html>
+</template>
+
+<!-- ================= 2. PRIMARY FULL CIRCLE (40° - 42°) ================= -->
+<template id="tpl2">
+<!DOCTYPE html><html lang="ml"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#bae6fd;color:#0f172a;overflow:hidden;height:100vh;display:flex;flex-direction:column}
+  .toolbar{background:rgba(255,255,255,.88);border-bottom:1px solid rgba(15,23,42,.12);padding:7px 14px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+  .title{font-size:13.5px;font-weight:700;color:#0369a1}.controls{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+  .btn{border:1px solid rgba(15,23,42,.18);background:#fff;color:#1e293b;padding:5px 10px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer}
+  .btn.active{background:#0284c7;color:#fff;border-color:#0284c7}
+  .color-pills{display:flex;align-items:center;gap:4px;background:rgba(15,23,42,.05);padding:3px 6px;border-radius:8px}
+  .pill{width:23px;height:23px;border-radius:50%;border:2px solid transparent;color:#fff;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .pill.selected{border-color:#0f172a;transform:scale(1.15);box-shadow:0 0 0 2px #fff}
+  .canvas-wrap{flex:1;position:relative;width:100%;height:100%}canvas{display:block;width:100%;height:100%}
+  .legend-note{position:absolute;bottom:10px;left:14px;background:rgba(255,255,255,.85);padding:6px 10px;border-radius:8px;font-size:12px;border:1px solid rgba(15,23,42,.1)}
+</style></head><body>
+<div class="toolbar"><div class="title">🌈 Primary Rainbow Circle (40° – 42°)</div>
+<div class="controls"><div class="color-pills" id="colorPills"><button class="btn active" id="btnAll" style="padding:3px 8px">All</button></div>
+<button class="btn active" id="btnAngles">40° / 42° Angles</button><button class="btn active" id="btnCircles">Circles</button><button class="btn" id="btnHorizon">Horizon (ഭൂമി)</button><button class="btn active" id="btnAnim">Pause</button></div></div>
+<div class="canvas-wrap"><canvas id="sim"></canvas><div class="legend-note" id="infoBox"><b>Full Circle Rainbow:</b> മുകളിലും താഴെയും 40° (Violet) മുതൽ 42° (Red) വരെയുള്ള തുള്ളികൾ ചേർന്നാണ് വൃത്താകൃതിയിൽ മഴവില്ല് കാണുന്നത്.</div></div>
+<script>
+const canvas=document.getElementById('sim'),ctx=canvas.getContext('2d');
+const COLORS=[
+  {key:'V',name:'Violet',deg:'40.0°',hex:'#7c3aed',rgba:'rgba(124,58,237,0.42)'},{key:'I',name:'Indigo',deg:'40.3°',hex:'#4f46e5',rgba:'rgba(79,70,229,0.40)'},
+  {key:'B',name:'Blue',deg:'40.7°',hex:'#0284c7',rgba:'rgba(2,132,199,0.40)'},{key:'G',name:'Green',deg:'41.0°',hex:'#16a34a',rgba:'rgba(22,163,74,0.40)'},
+  {key:'Y',name:'Yellow',deg:'41.4°',hex:'#eab308',rgba:'rgba(234,179,8,0.45)'},{key:'O',name:'Orange',deg:'41.7°',hex:'#f97316',rgba:'rgba(249,115,22,0.42)'},
+  {key:'R',name:'Red',deg:'42.0°',hex:'#dc2626',rgba:'rgba(220,38,38,0.42)'}
+];
+const state={selected:-1,showAngles:true,showCircles:true,showHorizon:false,animate:true,t:0};
+const pillsWrap=document.getElementById('colorPills'),btnAll=document.getElementById('btnAll'),pillEls=[];
+COLORS.slice().reverse().forEach((c,rev)=>{const idx=6-rev,b=document.createElement('button');b.className='pill';b.style.background=c.hex;b.textContent=c.key;b.onclick=()=>selectColor(idx);pillsWrap.appendChild(b);pillEls[idx]=b;});
+function selectColor(i){state.selected=i;btnAll.classList.toggle('active',i===-1);pillEls.forEach((el,k)=>el.classList.toggle('selected',k===i));}
+btnAll.onclick=()=>selectColor(-1);
+['btnAngles','btnCircles','btnHorizon'].forEach((id,k)=>{const keys=['showAngles','showCircles','showHorizon'];document.getElementById(id).onclick=function(){state[keys[k]]=!state[keys[k]];this.classList.toggle('active',state[keys[k]]);};});
+document.getElementById('btnAnim').onclick=function(){state.animate=!state.animate;this.textContent=state.animate?'Pause':'Play';this.classList.toggle('active',state.animate);};
+let W=800,H=600,DPR=1;function resize(){const r=canvas.parentElement.getBoundingClientRect();W=r.width;H=r.height;DPR=window.devicePixelRatio||1;canvas.width=W*DPR;canvas.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}window.addEventListener('resize',resize);resize();
+function arrow(x,y,a,c,s=7){ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-s,-s*0.48);ctx.lineTo(-s,s*0.48);ctx.closePath();ctx.fill();ctx.restore();}
+function droplet(x,y,r,c,hi){ctx.save();const g=ctx.createRadialGradient(x-r*0.3,y-r*0.3,r*0.1,x,y,r);g.addColorStop(0,'rgba(255,255,255,0.85)');g.addColorStop(0.5,hi?c.rgba:'rgba(224,242,254,0.32)');g.addColorStop(1,hi?c.hex:'rgba(56,189,248,0.35)');ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();ctx.lineWidth=hi?1.7:1;ctx.strokeStyle=hi?c.hex:'rgba(255,255,255,0.85)';ctx.stroke();ctx.restore();}
+function ray(x1,y1,x2,y2,c,w,a=1,d=false){ctx.save();ctx.globalAlpha=a;ctx.strokeStyle=c;ctx.lineWidth=w;if(d)ctx.setLineDash([6,5]);ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.setLineDash([]);if(!d){const dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy),ang=Math.atan2(dy,dx),sp=55,off=(state.t*75)%sp;for(let p=off;p<len-12;p+=sp)arrow(x1+(dx/len)*p,y1+(dy/len)*p,ang,c,6);}ctx.restore();}
+function arc(x,y,r,s,e,t,c,o=14){ctx.save();ctx.strokeStyle=c;ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(x,y,r,s,e,false);ctx.stroke();const m=(s+e)/2;ctx.font='bold 11.5px system-ui,sans-serif';ctx.fillStyle=c;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,x+Math.cos(m)*(r+o),y+Math.sin(m)*(r+o));ctx.restore();}
+function draw(){
+  const sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,'#7dd3fc');sky.addColorStop(0.55,'#bae6fd');sky.addColorStop(1,'#e0f2fe');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+  const obsX=Math.max(76,W*0.20),obsY=H*0.5,cx=Math.min(W-130,W*0.62),cy=obsY,dx=cx-obsX,maxR=Math.min(H*0.43,W-cx-26,dx*0.96),minR=maxR*0.34,dropR=Math.max(6,Math.min(10.5,(maxR-minR)/14.5));
+  const radii=COLORS.map((_,i)=>minR+(i/6)*(maxR-minR)),angles=radii.map(r=>Math.atan2(r,dx));
+  if(state.showCircles)COLORS.forEach((c,i)=>{const act=(state.selected===-1||state.selected===i);ctx.save();ctx.beginPath();ctx.arc(cx,cy,radii[i],0,Math.PI*2);ctx.strokeStyle=c.hex;ctx.lineWidth=act?3.2:1.2;ctx.globalAlpha=act?0.42:0.14;ctx.stroke();ctx.restore();});
+  ctx.save();ctx.strokeStyle='rgba(15,23,42,0.55)';ctx.lineWidth=1.5;ctx.setLineDash([7,6]);ctx.beginPath();ctx.moveTo(obsX,obsY);ctx.lineTo(cx+maxR+16,cy);ctx.stroke();ctx.setLineDash([]);ctx.font='600 11.5px system-ui,sans-serif';ctx.fillStyle='#334155';ctx.fillText('Horizontal Axis (0°)',obsX+dx*0.26,obsY-8);ctx.restore();
+  ctx.font='bold 12px system-ui,sans-serif';ctx.fillStyle='#b45309';ctx.fillText('☀️ Sunlight',14,24);
+  const active=state.selected===-1?[0,6]:[state.selected];
+  active.forEach(idx=>{
+    const c=COLORS[idx],r=radii[idx],ty=cy-r,by=cy+r;
+    ray(12,ty,cx-dropR,ty,'#f59e0b',2.1,0.9);ray(12,by,cx-dropR,by,'#f59e0b',2.1,0.9);
+    if(state.selected===-1&&idx===6)ray(cx,ty,cx+Math.cos(Math.PI-angles[0])*dx*0.7,ty+Math.sin(Math.PI-angles[0])*dx*0.7,COLORS[0].hex,1.7,0.75,true);
+    ray(cx,ty,obsX,obsY,c.hex,2.6,0.98);ray(cx,by,obsX,obsY,c.hex,2.6,0.98);
+  });
+  if(state.showAngles){
+    if(state.selected===-1){
+      arc(obsX,obsY,44,-angles[0],0,'40°',COLORS[0].hex);arc(obsX,obsY,72,-angles[6],0,'42°',COLORS[6].hex);
+      arc(obsX,obsY,44,0,angles[0],'40°',COLORS[0].hex);arc(obsX,obsY,72,0,angles[6],'42°',COLORS[6].hex);
+      arc(cx,cy-radii[6],42,Math.PI-angles[0],Math.PI,'40°',COLORS[0].hex,16);arc(cx,cy-radii[6],66,Math.PI-angles[6],Math.PI,'42°',COLORS[6].hex,16);
+    }else{const i=state.selected,c=COLORS[i],a=angles[i];arc(obsX,obsY,60,-a,0,c.deg,c.hex,16);arc(obsX,obsY,60,0,a,c.deg,c.hex,16);arc(cx,cy-radii[i],52,Math.PI-a,Math.PI,c.deg,c.hex,16);}
+  }
+  COLORS.forEach((c,i)=>{const hi=(state.selected===-1||state.selected===i),r=radii[i];droplet(cx,cy-r,dropR,c,hi);droplet(cx,cy+r,dropR,c,hi);ctx.font='bold 11.5px system-ui,sans-serif';ctx.fillStyle=hi?c.hex:'rgba(15,23,42,0.35)';ctx.textBaseline='middle';ctx.fillText(c.key,cx+dropR+6,cy-r);ctx.fillText(c.key,cx+dropR+6,cy+r);});
+  if(state.showHorizon){ctx.fillStyle='rgba(22,163,74,0.82)';ctx.fillRect(0,obsY+24,W,H-(obsY+24));ctx.font='bold 13px system-ui,sans-serif';ctx.fillStyle='#fff';ctx.textAlign='center';ctx.fillText('ഭൂമി / ചക്രവാളം (Ground blocks lower half)',W*0.56,obsY+48);ctx.textAlign='left';}
+  ctx.font='44px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';ctx.textAlign='center';ctx.fillText('🧍',obsX-8,obsY+16);ctx.font='bold 12px system-ui,sans-serif';ctx.fillStyle='#0f172a';ctx.fillText('Observer',obsX-8,obsY+48);ctx.textAlign='left';
+}
+let lt=0;function loop(ts){if(!lt)lt=ts;if(state.animate)state.t+=(ts-lt)/1000;lt=ts;draw();requestAnimationFrame(loop);}requestAnimationFrame(loop);
+</script></body></html>
+</template>
+
+<!-- ================= 3. SECONDARY 7 DROPS (2 TIR) ================= -->
+<template id="tpl3">
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<style>
+  *{box-sizing:border-box}html,body{margin:0;padding:0;height:100%;background:#070f1c;color:#e6eefc;overflow:hidden;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Malayalam",sans-serif}
+  #app{display:flex;flex-direction:column;height:100vh}#stage{position:relative;flex:1;min-height:0;overflow:hidden}
+  canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+  #dock{flex:0 0 auto;display:flex;flex-direction:column;gap:8px;padding:10px 16px;background:linear-gradient(180deg,#0e1e33,#0a1526);border-top:1px solid rgba(125,211,252,.2)}
+  .dock-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.stats{display:flex;gap:8px;flex:1}
+  .chip{display:inline-flex;align-items:baseline;gap:8px;padding:5px 11px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(125,211,252,.18);font-size:13px}
+  .chip .lbl{color:#93c5fd;font-weight:700}.chip .val{color:#fff;font-weight:800}
+  .toggle-btn,#resetBtn,#angleBtn{font:inherit;font-weight:700;font-size:12.5px;padding:6px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.05);color:#cbd5e1;cursor:pointer;white-space:nowrap}
+  #angleBtn.active{background:rgba(168,85,247,.25);border-color:#c084fc;color:#f3e8ff}
+  #controlRow{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}.tip{font-size:12.5px;color:#94a3b8}.tip b{color:#fde68a}
+</style></head><body>
+<div id="app"><div id="stage"><canvas id="cv"></canvas></div>
+<footer id="dock">
+  <div class="dock-row" id="controlRow">
+    <button id="showAllBtn" class="toggle-btn" style="border-color:#fde68a;color:#fde68a">Show All</button>
+    <button id="hideAllBtn" class="toggle-btn" style="border-color:#fda4af;color:#fda4af">Hide All</button>
+  </div>
+  <div class="dock-row"><div class="stats" id="stats"></div><button id="angleBtn" class="active">📐 Angles: ON</button><button id="resetBtn">↺ Reset Height</button></div>
+  <div class="dock-row"><div class="tip"><b>Secondary Rainbow (2 Internal Reflections):</b> പ്രകാശം തുള്ളിയുടെ താഴ്ഭാഗത്ത് കൂടെ പ്രവേശിച്ച് 2 തവണ Reflection നടന്ന് പുറത്തുവരുന്നു (മുകൾഭാഗത്ത്  Violet 53°, താഴെ Red 50°).</div></div>
+</footer></div>
+<script>
+(function(){
+const N_AIR=1.0;
+const SPECTRUM=[
+  {name:'Red',color:'#ff4d4d',nWater:1.331,deg:'50.0°'},{name:'Orange',color:'#ff9f43',nWater:1.333,deg:'50.5°'},
+  {name:'Yellow',color:'#ffdd59',nWater:1.335,deg:'51.0°'},{name:'Green',color:'#4ade80',nWater:1.337,deg:'51.5°'},
+  {name:'Blue',color:'#3b82f6',nWater:1.340,deg:'52.0°'},{name:'Indigo',color:'#818cf8',nWater:1.342,deg:'52.5°'},
+  {name:'Violet',color:'#a855f7',nWater:1.344,deg:'53.0°'}
+];
+const state={rainH:0.95,showAngles:true,activeDrops:[true,false,false,false,false,false,true]};
+let W=1,H=1,DPR=1,UI=1,dragging=false;
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),stage=document.getElementById('stage'),statsEl=document.getElementById('stats'),controlRow=document.getElementById('controlRow');
+const clamp=(v,a,b)=>v<a?a:(v>b?b:v);
+function resize(){const r=stage.getBoundingClientRect();DPR=Math.min(window.devicePixelRatio||1,2);W=Math.max(1,Math.round(r.width));H=Math.max(1,Math.round(r.height));cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);UI=clamp(H/700,0.85,1.25);}
+new ResizeObserver(resize).observe(stage);resize();
+const norm=(x,y)=>{const m=Math.hypot(x,y)||1;return{x:x/m,y:y/m};};
+const dot=(a,b)=>a.x*b.x+a.y*b.y;
+function refract(d,n,eta){let N=n;if(dot(d,N)>0)N={x:-n.x,y:-n.y};const cosI=-dot(d,N),sin2=eta*eta*(1-cosI*cosI);if(sin2>1)return null;const f=eta*cosI-Math.sqrt(1-sin2);return norm(eta*d.x+f*N.x,eta*d.y+f*N.y);}
+const reflect=(d,n)=>{const k=2*dot(d,n);return{x:d.x-k*n.x,y:d.y-k*n.y};};
+function circleNext(p,d,c,R){const ux=p.x-c.x,uy=p.y-c.y,b=ux*d.x+uy*d.y,cc=ux*ux+uy*uy-R*R,disc=b*b-cc;if(disc<0)return null;const t1=-b-Math.sqrt(disc),t2=-b+Math.sqrt(disc);return t1>1e-4?t1:(t2>1e-4?t2:null);}
+function lineNoGlow(x1,y1,x2,y2,c,a,w,d){ctx.save();ctx.lineCap='round';ctx.globalAlpha=a;ctx.strokeStyle=c;ctx.lineWidth=w;if(d)ctx.setLineDash(d);ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.restore();}
+function beam(x1,y1,x2,y2,c,a,w){ctx.save();ctx.lineCap='round';ctx.globalAlpha=a;ctx.shadowColor=c;ctx.shadowBlur=10;ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.shadowBlur=0;ctx.globalAlpha=a*0.9;ctx.strokeStyle='rgba(255,255,255,.88)';ctx.lineWidth=Math.max(1,w*0.35);ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.restore();}
+function label(t,x,y,s,c,al){ctx.save();ctx.fillStyle=c;ctx.font='800 '+(s*UI)+'px system-ui,sans-serif';ctx.textAlign=al||'left';ctx.textBaseline='middle';ctx.fillText(t,x,y);ctx.restore();}
+function arrowHead(x,y,dx,dy,c,s){const a=Math.atan2(dy,dx);ctx.save();ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-s*Math.cos(a-0.45),y-s*Math.sin(a-0.45));ctx.lineTo(x-s*Math.cos(a+0.45),y-s*Math.sin(a+0.45));ctx.closePath();ctx.fill();ctx.restore();}
+function drawAngleArc(x,y,r,s,e,t,c,o){ctx.save();ctx.strokeStyle=c;ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(x,y,r,s,e,false);ctx.stroke();const m=(s+e)/2;ctx.font='800 '+(12*UI)+'px system-ui,sans-serif';ctx.fillStyle=c;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,x+Math.cos(m)*(r+(o||18)),y+Math.sin(m)*(r+(o||18)));ctx.restore();}
+function rainGeom(){const sw=Math.min(W,H*1.6),sx=(W-sw)/2,R=Math.min(sw*0.048,H*0.048),drops=[];for(let i=0;i<7;i++)drops.push({cx:sx+sw*0.72,cy:H*0.08+i*H*0.112,targetColor:SPECTRUM[6-i],R});return{drops,obs:{x:sx+sw*0.14,y:H*0.86}};}
+function traceSec(cx,cy,R,h,n){const ex=cx-Math.sqrt(Math.max(0,R*R-h*h)),ey=cy+h,entry={x:ex,y:ey},r1=refract({x:1,y:0},norm(ex-cx,ey-cy),N_AIR/n);if(!r1)return null;const t2=circleNext(entry,r1,{x:cx,y:cy},R);if(!t2)return null;const back1={x:ex+r1.x*t2,y:ey+r1.y*t2},r2=reflect(r1,norm(back1.x-cx,back1.y-cy)),t3=circleNext(back1,r2,{x:cx,y:cy},R);if(!t3)return null;const back2={x:back1.x+r2.x*t3,y:back1.y+r2.y*t3},r3=reflect(r2,norm(back2.x-cx,back2.y-cy)),t4=circleNext(back2,r3,{x:cx,y:cy},R);if(!t4)return null;return{entry,back1,back2,exit:{x:back2.x+r3.x*t4,y:back2.y+r3.y*t4}};}
+function draw(){
+  let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0a1a33');g.addColorStop(1,'#040a14');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  const{drops,obs}=rainGeom(),h=state.rainH*drops[0].R;
+  if(state.showAngles){lineNoGlow(obs.x,obs.y,W-20,obs.y,'rgba(186,230,253,0.55)',1,1.6,[7,6]);label('Horizontal Axis (0°)',obs.x+140*UI,obs.y+14*UI,12,'rgba(186,230,253,0.85)');}
+  const activeIndices=[],hitExits={};
+  drops.forEach((drop,index)=>{
+    if(!state.activeDrops[index])return;activeIndices.push(index);
+    const{cx,cy,R,targetColor}=drop;
+    const dg=ctx.createRadialGradient(cx-R*0.35,cy-R*0.35,R*0.08,cx,cy,R);dg.addColorStop(0,'rgba(125,211,252,.25)');dg.addColorStop(1,'rgba(56,189,248,.05)');
+    ctx.fillStyle=dg;ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.fill();
+    ctx.save();ctx.shadowColor='#38bdf8';ctx.shadowBlur=14;ctx.strokeStyle='rgba(125,211,252,.8)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.stroke();ctx.restore();
+    const tw=traceSec(cx,cy,R,h,1.333);
+    if(tw){beam(0,tw.entry.y,tw.entry.x,tw.entry.y,'#fff7cc',0.65,2);arrowHead(tw.entry.x-4,tw.entry.y,1,0,'#fff7cc',7);}
+    for(let i=0;i<7;i++){
+      const c=SPECTRUM[i],tr=traceSec(cx,cy,R,h,c.nWater);if(!tr)continue;
+      const obsA=Math.atan2(obs.y-tr.exit.y,obs.x-tr.exit.x),hitIdx=6-index;
+      if(i===hitIdx){
+        hitExits[index]={exit:tr.exit,color:c.color,deg:c.deg};
+        lineNoGlow(tr.entry.x,tr.entry.y,tr.back1.x,tr.back1.y,c.color,0.98,2.3);
+        lineNoGlow(tr.back1.x,tr.back1.y,tr.back2.x,tr.back2.y,c.color,0.98,2.3);
+        lineNoGlow(tr.back2.x,tr.back2.y,tr.exit.x,tr.exit.y,c.color,0.98,2.3);
+        beam(tr.exit.x,tr.exit.y,obs.x,obs.y,c.color,1,3.0);
+        arrowHead(obs.x-4,obs.y,obs.x-tr.exit.x,obs.y-tr.exit.y,c.color,8);
+      }else{
+        lineNoGlow(tr.entry.x,tr.entry.y,tr.back1.x,tr.back1.y,c.color,0.28,1.1);
+        lineNoGlow(tr.back1.x,tr.back1.y,tr.back2.x,tr.back2.y,c.color,0.28,1.1);
+        lineNoGlow(tr.back2.x,tr.back2.y,tr.exit.x,tr.exit.y,c.color,0.28,1.1);
+        const ra=obsA+(hitIdx-i)*0.032,len=Math.hypot(W,H)*0.85;
+        lineNoGlow(tr.exit.x,tr.exit.y,tr.exit.x+Math.cos(ra)*len,tr.exit.y+Math.sin(ra)*len,c.color,0.34,1.3,[6,5]);
+      }
+    }
+    label(`${targetColor.name} (${targetColor.deg})`,cx+R+10,cy,11,targetColor.color,'left');
+  });
+  if(state.showAngles&&activeIndices.length>0){
+    const targets=activeIndices.length<=2?activeIndices:[activeIndices[0],activeIndices[activeIndices.length-1]];
+    targets.forEach((dIdx,slot)=>{
+      const info=hitExits[dIdx];if(!info)return;
+      drawAngleArc(obs.x,obs.y,(slot===0?110:64)*UI,Math.atan2(info.exit.y-obs.y,info.exit.x-obs.x),0,info.deg,info.color,19*UI);
+      lineNoGlow(info.exit.x,info.exit.y,info.exit.x-72*UI,info.exit.y,'rgba(255,247,204,0.45)',1,1.2,[4,4]);
+      drawAngleArc(info.exit.x,info.exit.y,42*UI,Math.atan2(obs.y-info.exit.y,obs.x-info.exit.x),Math.PI,info.deg,info.color,17*UI);
+    });
+  }
+  ctx.save();ctx.font=(42*UI)+'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🧍',obs.x-10*UI,obs.y+16*UI);ctx.restore();
+  ctx.fillStyle='#fde68a';ctx.beginPath();ctx.arc(obs.x,obs.y,3.5,0,Math.PI*2);ctx.fill();
+  label('(Observer)',obs.x-10*UI,obs.y+42*UI,12,'rgba(203,213,225,.95)','center');
+  statsEl.innerHTML=`<div class="chip"><span class="lbl">Active Drops</span><span class="val">${activeIndices.length} / 7</span></div><div class="chip"><span class="lbl">h/R (Bottom)</span><span class="val">${state.rainH.toFixed(2)}</span></div>`;
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+const names=['Violet 53°','Indigo','Blue','Green','Yellow','Orange','Red 50°'],cols=['#a855f7','#818cf8','#3b82f6','#4ade80','#ffdd59','#ff9f43','#ff4d4d'];
+for(let i=0;i<7;i++){
+  const on=state.activeDrops[i],b=document.createElement('button');b.className='toggle-btn';b.style.borderColor=cols[i];b.style.color=cols[i];b.style.background=on?'rgba(255,255,255,0.1)':'transparent';b.style.opacity=on?'1':'0.38';b.textContent=`Drop ${i+1} (${names[i]})`;
+  b.onclick=()=>{state.activeDrops[i]=!state.activeDrops[i];b.style.opacity=state.activeDrops[i]?'1':'0.38';b.style.background=state.activeDrops[i]?'rgba(255,255,255,0.1)':'transparent';};
+  controlRow.appendChild(b);
+}
+document.getElementById('showAllBtn').onclick=()=>{state.activeDrops.fill(true);controlRow.querySelectorAll('.toggle-btn').forEach((b,i)=>{if(i>=2){b.style.opacity='1';b.style.background='rgba(255,255,255,0.1)';}});};
+document.getElementById('hideAllBtn').onclick=()=>{state.activeDrops.fill(false);controlRow.querySelectorAll('.toggle-btn').forEach((b,i)=>{if(i>=2){b.style.opacity='0.38';b.style.background='transparent';}});};
+const ab=document.getElementById('angleBtn');ab.onclick=()=>{state.showAngles=!state.showAngles;ab.classList.toggle('active',state.showAngles);ab.textContent=state.showAngles?'📐 Angles: ON':'📐 Angles: OFF';};
+document.getElementById('resetBtn').onclick=()=>{state.rainH=0.95;};
+function applyP(e){const r=cv.getBoundingClientRect(),{drops}=rainGeom(),mid=(drops[0].cy+drops[6].cy)/2;state.rainH=clamp(0.86+((e.clientY-r.top)-mid)/(H*1.2),0.72,0.98);}
+cv.addEventListener('pointerdown',e=>{dragging=true;applyP(e);});cv.addEventListener('pointermove',e=>{if(dragging)applyP(e);});window.addEventListener('pointerup',()=>{dragging=false;});
+})();
+</script></body></html>
+</template>
+
+<!-- ================= 4. SECONDARY FULL CIRCLE (50° - 53°) ================= -->
+<template id="tpl4">
+<!DOCTYPE html><html lang="ml"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#bae6fd;color:#0f172a;overflow:hidden;height:100vh;display:flex;flex-direction:column}
+  .toolbar{background:rgba(255,255,255,.88);border-bottom:1px solid rgba(15,23,42,.12);padding:7px 14px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+  .title{font-size:13.5px;font-weight:700;color:#6d28d9}.controls{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+  .btn{border:1px solid rgba(15,23,42,.18);background:#fff;color:#1e293b;padding:5px 10px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer}
+  .btn.active{background:#6d28d9;color:#fff;border-color:#6d28d9}
+  .color-pills{display:flex;align-items:center;gap:4px;background:rgba(15,23,42,.05);padding:3px 6px;border-radius:8px}
+  .pill{width:23px;height:23px;border-radius:50%;border:2px solid transparent;color:#fff;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .pill.selected{border-color:#0f172a;transform:scale(1.15);box-shadow:0 0 0 2px #fff}
+  .canvas-wrap{flex:1;position:relative;width:100%;height:100%}canvas{display:block;width:100%;height:100%}
+  .legend-note{position:absolute;bottom:10px;left:14px;background:rgba(255,255,255,.85);padding:6px 10px;border-radius:8px;font-size:12px;border:1px solid rgba(15,23,42,.1)}
+</style></head><body>
+<div class="toolbar"><div class="title">🌈 Secondary Rainbow Circle (50° – 53° | Inverted)</div>
+<div class="controls"><div class="color-pills" id="colorPills"><button class="btn active" id="btnAll" style="padding:3px 8px">All</button></div>
+<button class="btn active" id="btnAngles">50° / 53° Angles</button><button class="btn active" id="btnCircles">Circles</button><button class="btn" id="btnHorizon">Horizon (ഭൂമി)</button><button class="btn active" id="btnAnim">Pause</button></div></div>
+<div class="canvas-wrap"><canvas id="sim"></canvas><div class="legend-note"><b>Secondary Rainbow:</b> നിറങ്ങൾ തിരിഞ്ഞ് കാണപ്പെടുന്നു  — അകത്ത്  <b>Red (50°)</b>, പുറത്ത് <b>Violet (53°)</b>.</div></div>
+<script>
+const canvas=document.getElementById('sim'),ctx=canvas.getContext('2d');
+const COLORS=[
+  {key:'R',deg:'50.0°',hex:'#dc2626',rgba:'rgba(220,38,38,0.42)'},{key:'O',deg:'50.5°',hex:'#f97316',rgba:'rgba(249,115,22,0.42)'},
+  {key:'Y',deg:'51.0°',hex:'#eab308',rgba:'rgba(234,179,8,0.45)'},{key:'G',deg:'51.5°',hex:'#16a34a',rgba:'rgba(22,163,74,0.40)'},
+  {key:'B',deg:'52.0°',hex:'#0284c7',rgba:'rgba(2,132,199,0.40)'},{key:'I',deg:'52.5°',hex:'#4f46e5',rgba:'rgba(79,70,229,0.40)'},
+  {key:'V',deg:'53.0°',hex:'#7c3aed',rgba:'rgba(124,58,237,0.42)'}
+];
+const state={selected:-1,showAngles:true,showCircles:true,showHorizon:false,animate:true,t:0};
+const pillsWrap=document.getElementById('colorPills'),btnAll=document.getElementById('btnAll'),pillEls=[];
+COLORS.slice().reverse().forEach((c,rev)=>{const idx=6-rev,b=document.createElement('button');b.className='pill';b.style.background=c.hex;b.textContent=c.key;b.onclick=()=>selectColor(idx);pillsWrap.appendChild(b);pillEls[idx]=b;});
+function selectColor(i){state.selected=i;btnAll.classList.toggle('active',i===-1);pillEls.forEach((el,k)=>el.classList.toggle('selected',k===i));}
+btnAll.onclick=()=>selectColor(-1);
+['btnAngles','btnCircles','btnHorizon'].forEach((id,k)=>{const keys=['showAngles','showCircles','showHorizon'];document.getElementById(id).onclick=function(){state[keys[k]]=!state[keys[k]];this.classList.toggle('active',state[keys[k]]);};});
+document.getElementById('btnAnim').onclick=function(){state.animate=!state.animate;this.textContent=state.animate?'Pause':'Play';this.classList.toggle('active',state.animate);};
+let W=800,H=600,DPR=1;function resize(){const r=canvas.parentElement.getBoundingClientRect();W=r.width;H=r.height;DPR=window.devicePixelRatio||1;canvas.width=W*DPR;canvas.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}window.addEventListener('resize',resize);resize();
+function arrow(x,y,a,c,s=7){ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-s,-s*0.48);ctx.lineTo(-s,s*0.48);ctx.closePath();ctx.fill();ctx.restore();}
+function droplet(x,y,r,c,hi){ctx.save();const g=ctx.createRadialGradient(x-r*0.3,y-r*0.3,r*0.1,x,y,r);g.addColorStop(0,'rgba(255,255,255,0.85)');g.addColorStop(0.5,hi?c.rgba:'rgba(224,242,254,0.32)');g.addColorStop(1,hi?c.hex:'rgba(56,189,248,0.35)');ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();ctx.lineWidth=hi?1.7:1;ctx.strokeStyle=hi?c.hex:'rgba(255,255,255,0.85)';ctx.stroke();ctx.restore();}
+function ray(x1,y1,x2,y2,c,w,a=1,d=false){ctx.save();ctx.globalAlpha=a;ctx.strokeStyle=c;ctx.lineWidth=w;if(d)ctx.setLineDash([6,5]);ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.setLineDash([]);if(!d){const dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy),ang=Math.atan2(dy,dx),sp=55,off=(state.t*75)%sp;for(let p=off;p<len-12;p+=sp)arrow(x1+(dx/len)*p,y1+(dy/len)*p,ang,c,6);}ctx.restore();}
+function arc(x,y,r,s,e,t,c,o=14){ctx.save();ctx.strokeStyle=c;ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(x,y,r,s,e,false);ctx.stroke();const m=(s+e)/2;ctx.font='bold 11.5px system-ui,sans-serif';ctx.fillStyle=c;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,x+Math.cos(m)*(r+o),y+Math.sin(m)*(r+o));ctx.restore();}
+function draw(){
+  const sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,'#7dd3fc');sky.addColorStop(0.55,'#bae6fd');sky.addColorStop(1,'#e0f2fe');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+  const obsX=Math.max(76,W*0.22),obsY=H*0.5,cx=Math.min(W-130,W*0.58),cy=obsY,dx=cx-obsX,maxR=Math.min(H*0.44,W-cx-26,dx*1.25),minR=maxR*0.42,dropR=Math.max(6,Math.min(10,(maxR-minR)/14.5));
+  const radii=COLORS.map((_,i)=>minR+(i/6)*(maxR-minR)),angles=radii.map(r=>Math.atan2(r,dx));
+  if(state.showCircles)COLORS.forEach((c,i)=>{const act=(state.selected===-1||state.selected===i);ctx.save();ctx.beginPath();ctx.arc(cx,cy,radii[i],0,Math.PI*2);ctx.strokeStyle=c.hex;ctx.lineWidth=act?3:1.1;ctx.globalAlpha=act?0.36:0.12;ctx.stroke();ctx.restore();});
+  ctx.save();ctx.strokeStyle='rgba(15,23,42,0.55)';ctx.lineWidth=1.5;ctx.setLineDash([7,6]);ctx.beginPath();ctx.moveTo(obsX,obsY);ctx.lineTo(cx+maxR+16,cy);ctx.stroke();ctx.setLineDash([]);ctx.font='600 11.5px system-ui,sans-serif';ctx.fillStyle='#334155';ctx.fillText('Horizontal Axis (0°)',obsX+dx*0.24,obsY-8);ctx.restore();
+  ctx.font='bold 12px system-ui,sans-serif';ctx.fillStyle='#b45309';ctx.fillText('☀️ Sunlight (2 Reflections)',14,24);
+  const active=state.selected===-1?[0,6]:[state.selected];
+  active.forEach(idx=>{
+    const c=COLORS[idx],r=radii[idx],ty=cy-r,by=cy+r;
+    ray(12,ty+dropR*0.45,cx-dropR,ty+dropR*0.45,'#f59e0b',2.1,0.9);ray(12,by-dropR*0.45,cx-dropR,by-dropR*0.45,'#f59e0b',2.1,0.9);
+    if(state.selected===-1&&idx===6)ray(cx,ty,cx+Math.cos(Math.PI-angles[0])*dx*0.7,ty+Math.sin(Math.PI-angles[0])*dx*0.7,COLORS[0].hex,1.7,0.75,true);
+    ray(cx,ty,obsX,obsY,c.hex,2.6,0.98);ray(cx,by,obsX,obsY,c.hex,2.6,0.98);
+  });
+  if(state.showAngles){
+    if(state.selected===-1){
+      arc(obsX,obsY,42,-angles[0],0,'50°',COLORS[0].hex);arc(obsX,obsY,70,-angles[6],0,'53°',COLORS[6].hex);
+      arc(obsX,obsY,42,0,angles[0],'50°',COLORS[0].hex);arc(obsX,obsY,70,0,angles[6],'53°',COLORS[6].hex);
+      arc(cx,cy-radii[6],40,Math.PI-angles[0],Math.PI,'50°',COLORS[0].hex,16);arc(cx,cy-radii[6],64,Math.PI-angles[6],Math.PI,'53°',COLORS[6].hex,16);
+    }else{const i=state.selected,c=COLORS[i],a=angles[i];arc(obsX,obsY,58,-a,0,c.deg,c.hex,16);arc(obsX,obsY,58,0,a,c.deg,c.hex,16);arc(cx,cy-radii[i],50,Math.PI-a,Math.PI,c.deg,c.hex,16);}
+  }
+  COLORS.forEach((c,i)=>{const hi=(state.selected===-1||state.selected===i),r=radii[i];droplet(cx,cy-r,dropR,c,hi);droplet(cx,cy+r,dropR,c,hi);ctx.font='bold 11.5px system-ui,sans-serif';ctx.fillStyle=hi?c.hex:'rgba(15,23,42,0.35)';ctx.textBaseline='middle';ctx.fillText(c.key,cx+dropR+6,cy-r);ctx.fillText(c.key,cx+dropR+6,cy+r);});
+  if(state.showHorizon){ctx.fillStyle='rgba(22,163,74,0.82)';ctx.fillRect(0,obsY+24,W,H-(obsY+24));ctx.font='bold 13px system-ui,sans-serif';ctx.fillStyle='#fff';ctx.textAlign='center';ctx.fillText('ഭൂമി / ചക്രവാളം (Ground blocks lower half)',W*0.56,obsY+48);ctx.textAlign='left';}
+  ctx.font='44px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';ctx.textAlign='center';ctx.fillText('🧍',obsX-8,obsY+16);ctx.font='bold 12px system-ui,sans-serif';ctx.fillStyle='#0f172a';ctx.fillText('Observer',obsX-8,obsY+48);ctx.textAlign='left';
+}
+let lt=0;function loop(ts){if(!lt)lt=ts;if(state.animate)state.t+=(ts-lt)/1000;lt=ts;draw();requestAnimationFrame(loop);}requestAnimationFrame(loop);
+</script></body></html>
+</template>
+
+<!-- ================= 5. COMBINED PRIMARY + SECONDARY + DARK BAND ================= -->
+<template id="tpl5">
+<!DOCTYPE html><html lang="ml"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#bae6fd;color:#0f172a;overflow:hidden;height:100vh;display:flex;flex-direction:column}
+  .toolbar{background:rgba(255,255,255,.9);border-bottom:1px solid rgba(15,23,42,.12);padding:7px 14px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+  .title{font-size:13.5px;font-weight:700;color:#0369a1}.controls{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+  .group{display:flex;gap:4px;background:rgba(15,23,42,.06);padding:3px;border-radius:7px}
+  .btn{border:1px solid rgba(15,23,42,.15);background:#fff;color:#1e293b;padding:5px 10px;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer}
+  .btn.active{background:#0284c7;color:#fff;border-color:#0284c7}.btn.sec.active{background:#6d28d9;border-color:#6d28d9}
+  .canvas-wrap{flex:1;position:relative;width:100%;height:100%}canvas{display:block;width:100%;height:100%}
+  .legend-note{position:absolute;bottom:10px;left:14px;background:rgba(255,255,255,.88);padding:6px 10px;border-radius:8px;font-size:12px;border:1px solid rgba(15,23,42,.12)}
+</style></head><body>
+<div class="toolbar"><div class="title">🌈 Primary (40°–42°), Secondary (50°–53°), Dark Band</div>
+<div class="controls"><div class="group"><button class="btn active" id="mBoth">Both</button><button class="btn" id="mPri">Primary</button><button class="btn sec" id="mSec">Secondary</button></div>
+<button class="btn active" id="bAng">Angles</button><button class="btn active" id="bDark">Dark Band</button><button class="btn" id="bHor">Horizon</button><button class="btn active" id="bAnim">Pause</button></div></div>
+<div class="canvas-wrap"><canvas id="sim"></canvas><div class="legend-note"><b>Primary (40°–42°):</b> V → R | <b>Alexander's Dark Band (42°–50°)</b> | <b>Secondary (50°–53°):</b> R → V</div></div>
+<script>
+const canvas=document.getElementById('sim'),ctx=canvas.getContext('2d');
+const PRI=[{key:'V',hex:'#7c3aed'},{key:'I',hex:'#4f46e5'},{key:'B',hex:'#0284c7'},{key:'G',hex:'#16a34a'},{key:'Y',hex:'#eab308'},{key:'O',hex:'#f97316'},{key:'R',hex:'#dc2626'}];
+const SEC=PRI.slice().reverse();
+const state={mode:'both',showAngles:true,showDark:true,showHorizon:false,animate:true,t:0};
+function setM(m){state.mode=m;mBoth.classList.toggle('active',m==='both');mPri.classList.toggle('active',m==='pri');mSec.classList.toggle('active',m==='sec');}
+mBoth.onclick=()=>setM('both');mPri.onclick=()=>setM('pri');mSec.onclick=()=>setM('sec');
+bAng.onclick=function(){state.showAngles=!state.showAngles;this.classList.toggle('active',state.showAngles);};
+bDark.onclick=function(){state.showDark=!state.showDark;this.classList.toggle('active',state.showDark);};
+bHor.onclick=function(){state.showHorizon=!state.showHorizon;this.classList.toggle('active',state.showHorizon);};
+bAnim.onclick=function(){state.animate=!state.animate;this.textContent=state.animate?'Pause':'Play';this.classList.toggle('active',state.animate);};
+let W=900,H=600,DPR=1;function resize(){const r=canvas.parentElement.getBoundingClientRect();W=r.width;H=r.height;DPR=window.devicePixelRatio||1;canvas.width=W*DPR;canvas.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}window.addEventListener('resize',resize);resize();
+function arrow(x,y,a,c,s=6){ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-s,-s*0.48);ctx.lineTo(-s,s*0.48);ctx.closePath();ctx.fill();ctx.restore();}
+function ray(x1,y1,x2,y2,c,w,a=1){ctx.save();ctx.globalAlpha=a;ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();const dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy),ang=Math.atan2(dy,dx),sp=58,off=(state.t*70)%sp;for(let p=off;p<len-12;p+=sp)arrow(x1+(dx/len)*p,y1+(dy/len)*p,ang,c,5.5);ctx.restore();}
+function arc(x,y,r,s,e,t,c){ctx.save();ctx.strokeStyle=c;ctx.lineWidth=1.3;ctx.beginPath();ctx.arc(x,y,r,s,e,false);ctx.stroke();const m=(s+e)/2;ctx.font='bold 11px system-ui,sans-serif';ctx.fillStyle=c;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,x+Math.cos(m)*(r+14),y+Math.sin(m)*(r+14));ctx.restore();}
+function draw(){
+  const sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,'#7dd3fc');sky.addColorStop(0.55,'#bae6fd');sky.addColorStop(1,'#e0f2fe');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+  const obsX=Math.max(76,W*0.19),obsY=H*0.5,cx=Math.min(W-120,W*0.61),cy=obsY,dx=cx-obsX;
+  const sMax=Math.min(H*0.45,W-cx-20,dx*1.15),sMin=sMax*0.78,pMax=sMax*0.56,pMin=sMax*0.34;
+  const pR=PRI.map((_,i)=>pMin+(i/6)*(pMax-pMin)),sR=SEC.map((_,i)=>sMin+(i/6)*(sMax-sMin));
+  const pA=pR.map(r=>Math.atan2(r,dx)),sA=sR.map(r=>Math.atan2(r,dx));
+  const showP=state.mode!=='sec',showS=state.mode!=='pri';
+  if(state.showDark&&state.mode==='both'){
+    ctx.save();ctx.beginPath();ctx.arc(cx,cy,pMin,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.22)';ctx.fill();
+    ctx.beginPath();ctx.arc(cx,cy,sMin,0,Math.PI*2,false);ctx.arc(cx,cy,pMax,0,Math.PI*2,true);ctx.fillStyle='rgba(15,23,42,0.14)';ctx.fill();
+    ctx.font='bold 11px system-ui,sans-serif';ctx.fillStyle='rgba(15,23,42,0.68)';ctx.textAlign='center';ctx.fillText("Alexander's Dark Band (42°–50°)",cx+(pMax+sMin)*0.34,cy-(pMax+sMin)*0.37);ctx.restore();
+  }
+  if(showP)PRI.forEach((c,i)=>{ctx.save();ctx.beginPath();ctx.arc(cx,cy,pR[i],0,Math.PI*2);ctx.strokeStyle=c.hex;ctx.lineWidth=3.2;ctx.globalAlpha=0.45;ctx.stroke();ctx.restore();});
+  if(showS)SEC.forEach((c,i)=>{ctx.save();ctx.beginPath();ctx.arc(cx,cy,sR[i],0,Math.PI*2);ctx.strokeStyle=c.hex;ctx.lineWidth=2.5;ctx.globalAlpha=0.30;ctx.stroke();ctx.restore();});
+  ctx.save();ctx.strokeStyle='rgba(15,23,42,0.55)';ctx.lineWidth=1.5;ctx.setLineDash([7,6]);ctx.beginPath();ctx.moveTo(obsX,obsY);ctx.lineTo(cx+sMax+14,cy);ctx.stroke();ctx.setLineDash([]);ctx.restore();
+  if(showP)[0,6].forEach(i=>{ray(12,cy-pR[i],cx,cy-pR[i],'#f59e0b',1.7,0.85);ray(cx,cy-pR[i],obsX,obsY,PRI[i].hex,2.2,0.95);ray(cx,cy+pR[i],obsX,obsY,PRI[i].hex,2.2,0.95);});
+  if(showS)[0,6].forEach(i=>{ray(12,cy-sR[i],cx,cy-sR[i],'#f59e0b',1.7,0.85);ray(cx,cy-sR[i],obsX,obsY,SEC[i].hex,2.0,0.88);ray(cx,cy+sR[i],obsX,obsY,SEC[i].hex,2.0,0.88);});
+  if(state.showAngles){
+    if(showP){arc(obsX,obsY,38,-pA[0],0,'40°',PRI[0].hex);arc(obsX,obsY,64,-pA[6],0,'42°',PRI[6].hex);arc(obsX,obsY,38,0,pA[0],'40°',PRI[0].hex);arc(obsX,obsY,64,0,pA[6],'42°',PRI[6].hex);}
+    if(showS){arc(obsX,obsY,92,-sA[0],0,'50°',SEC[0].hex);arc(obsX,obsY,118,-sA[6],0,'53°',SEC[6].hex);arc(obsX,obsY,92,0,sA[0],'50°',SEC[0].hex);arc(obsX,obsY,118,0,sA[6],'53°',SEC[6].hex);}
+  }
+  if(state.showHorizon){ctx.fillStyle='rgba(22,163,74,0.82)';ctx.fillRect(0,obsY+24,W,H-(obsY+24));ctx.font='bold 13px system-ui,sans-serif';ctx.fillStyle='#fff';ctx.textAlign='center';ctx.fillText('ഭൂമി / ചക്രവാളം (Horizon)',W*0.56,obsY+48);ctx.textAlign='left';}
+  ctx.font='42px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';ctx.textAlign='center';ctx.fillText('🧍',obsX-8,obsY+15);ctx.font='bold 12px system-ui,sans-serif';ctx.fillStyle='#0f172a';ctx.fillText('Observer',obsX-8,obsY+46);ctx.textAlign='left';
+}
+let lt=0;function loop(ts){if(!lt)lt=ts;if(state.animate)state.t+=(ts-lt)/1000;lt=ts;draw();requestAnimationFrame(loop);}requestAnimationFrame(loop);
+</script></body></html>
+</template>
+
+<script>
+const homeView = document.getElementById('homeView');
+const simFrame = document.getElementById('simFrame');
+const navBtns = document.querySelectorAll('.nav-btn');
+
+function openView(target, btnEl) {
+  navBtns.forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+
+  if (target === 'home') {
+    simFrame.style.display = 'none';
+    homeView.style.display = 'flex';
+  } else {
+    const tpl = document.getElementById(target);
+    if (!tpl) return;
+    homeView.style.display = 'none';
+    simFrame.style.display = 'block';
+    simFrame.srcdoc = tpl.innerHTML;
+  }
+}
+
+function openFromCard(tplId, navIndex) {
+  openView(tplId, navBtns[navIndex]);
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen().catch(() => {});
+  }
+}
+</script>
+</body>
+</html>
