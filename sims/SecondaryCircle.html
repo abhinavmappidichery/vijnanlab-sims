@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Secondary Rainbow (50° – 53°) — Full Circle & Alternate Angles</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: #bae6fd;
+      color: #0f172a;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .toolbar {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(15, 23, 42, 0.12);
+      padding: 8px 14px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      z-index: 10;
+    }
+
+    .title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #6d28d9;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn {
+      border: 1px solid rgba(15, 23, 42, 0.18);
+      background: #ffffff;
+      color: #1e293b;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn:hover { background: #f1f5f9; }
+    .btn.active {
+      background: #6d28d9;
+      color: #ffffff;
+      border-color: #6d28d9;
+    }
+
+    .color-pills {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(15, 23, 42, 0.05);
+      padding: 3px 6px;
+      border-radius: 8px;
+    }
+
+    .pill {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.45);
+      transition: transform 0.15s;
+    }
+    .pill:hover { transform: scale(1.12); }
+    .pill.selected {
+      border-color: #0f172a;
+      transform: scale(1.16);
+      box-shadow: 0 0 0 2px #fff;
+    }
+
+    .canvas-wrap {
+      flex: 1;
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .legend-note {
+      position: absolute;
+      bottom: 10px;
+      left: 14px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(6px);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #1e293b;
+      border: 1px solid rgba(15, 23, 42, 0.1);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="toolbar">
+    <div class="title">🌈 Secondary Rainbow (50° – 53° | 2 Reflections)</div>
+
+    <div class="controls">
+      <div class="color-pills" id="colorPills">
+        <button class="btn active" id="btnAll" style="padding:3px 8px;">All</button>
+      </div>
+      <button class="btn active" id="btnAngles">50° / 53° Angles</button>
+      <button class="btn active" id="btnCircles">Circles</button>
+      <button class="btn" id="btnHorizon">Horizon (ഭൂമി)</button>
+      <button class="btn active" id="btnAnim">Pause Light</button>
+    </div>
+  </div>
+
+  <div class="canvas-wrap">
+    <canvas id="sim"></canvas>
+    <div class="legend-note" id="infoBox">
+      <b>Secondary Rainbow (2 Internal Reflections):</b> നിറങ്ങൾ തിരിഞ്ഞ് കാണപ്പെടുന്നു — അകത്ത് <b>Red (50°)</b>, പുറത്ത് <b>Violet (53°)</b>.
+    </div>
+  </div>
+
+<script>
+const canvas = document.getElementById('sim');
+const ctx = canvas.getContext('2d');
+
+// Secondary Rainbow: Inverted order!
+// index 0 = Red (50.0°, innermost), index 6 = Violet (53.0°, outermost)
+const COLORS = [
+  { key: 'R', name: 'Red',    ml: 'ചുവപ്പ്', deg: '50.0°', hex: '#dc2626', rgba: 'rgba(220, 38, 38, 0.42)' },
+  { key: 'O', name: 'Orange', ml: 'ഓറഞ്ച്', deg: '50.5°', hex: '#f97316', rgba: 'rgba(249, 115, 22, 0.42)' },
+  { key: 'Y', name: 'Yellow', ml: 'മഞ്ഞ',   deg: '51.0°', hex: '#eab308', rgba: 'rgba(234, 179, 8, 0.45)' },
+  { key: 'G', name: 'Green',  ml: 'പച്ച',   deg: '51.5°', hex: '#16a34a', rgba: 'rgba(22, 163, 74, 0.40)' },
+  { key: 'B', name: 'Blue',   ml: 'നീല',    deg: '52.0°', hex: '#0284c7', rgba: 'rgba(2, 132, 199, 0.40)' },
+  { key: 'I', name: 'Indigo', ml: 'ഇൻഡിഗോ', deg: '52.5°', hex: '#4f46e5', rgba: 'rgba(79, 70, 229, 0.40)' },
+  { key: 'V', name: 'Violet', ml: 'വയലറ്റ്', deg: '53.0°', hex: '#7c3aed', rgba: 'rgba(124, 58, 237, 0.42)' }
+];
+
+const state = {
+  selected: -1, // -1 = All (highlights R 50° & V 53°)
+  showAngles: true,
+  showCircles: true,
+  showHorizon: false,
+  animate: true,
+  t: 0
+};
+
+// Build color pills (V outer -> R inner)
+const pillsWrap = document.getElementById('colorPills');
+const btnAll = document.getElementById('btnAll');
+const pillEls = [];
+
+COLORS.slice().reverse().forEach((c, revIdx) => {
+  const realIdx = 6 - revIdx;
+  const b = document.createElement('button');
+  b.className = 'pill';
+  b.style.background = c.hex;
+  b.textContent = c.key;
+  b.title = `${c.name} (${c.deg})`;
+  b.onclick = () => selectColor(realIdx);
+  pillsWrap.appendChild(b);
+  pillEls[realIdx] = b;
+});
+
+function selectColor(idx) {
+  state.selected = idx;
+  btnAll.classList.toggle('active', idx === -1);
+  pillEls.forEach((el, i) => el.classList.toggle('selected', i === idx));
+
+  const info = document.getElementById('infoBox');
+  if (idx === -1) {
+    info.innerHTML = '<b>Secondary Rainbow (2 Internal Reflections):</b> നിറങ്ങൾ തിരിഞ്ഞ് കാണപ്പെടുന്നു  — അകത്ത് <b>Red (50°)</b>, പുറത്ത് <b>Violet (53°)</b>.';
+  } else {
+    const c = COLORS[idx];
+    info.innerHTML = `<b>${c.name} (${c.ml}) — ${c.deg}:</b> 2 ആന്തരിക പ്രതിപതനങ്ങൾക്ക് ശേഷം ഏകദേശം <b>${c.deg}</b> കോണിൽ വരുന്ന ${c.name} കിരണം മാത്രം കണ്ണിൽ എത്തുന്നു.`;
+  }
+}
+
+btnAll.onclick = () => selectColor(-1);
+document.getElementById('btnAngles').onclick = function() {
+  state.showAngles = !state.showAngles;
+  this.classList.toggle('active', state.showAngles);
+};
+document.getElementById('btnCircles').onclick = function() {
+  state.showCircles = !state.showCircles;
+  this.classList.toggle('active', state.showCircles);
+};
+document.getElementById('btnHorizon').onclick = function() {
+  state.showHorizon = !state.showHorizon;
+  this.classList.toggle('active', state.showHorizon);
+};
+document.getElementById('btnAnim').onclick = function() {
+  state.animate = !state.animate;
+  this.textContent = state.animate ? 'Pause Light' : 'Play Light';
+  this.classList.toggle('active', state.animate);
+};
+
+// Resize
+let W = 800, H = 600, DPR = 1;
+function resize() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  W = rect.width;
+  H = rect.height;
+  DPR = window.devicePixelRatio || 1;
+  canvas.width = W * DPR;
+  canvas.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+function drawArrowHead(x, y, angle, color, size = 8) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(-size, -size * 0.48);
+  ctx.lineTo(-size, size * 0.48);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawDroplet(x, y, radius, colorObj, isHighlighted) {
+  ctx.save();
+  if (isHighlighted) {
+    ctx.shadowColor = colorObj.hex;
+    ctx.shadowBlur = 10;
+  }
+
+  const grad = ctx.createRadialGradient(
+    x - radius * 0.3, y - radius * 0.3, radius * 0.1,
+    x, y, radius
+  );
+  if (isHighlighted) {
+    grad.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
+    grad.addColorStop(0.45, colorObj.rgba);
+    grad.addColorStop(1, colorObj.hex);
+  } else {
+    grad.addColorStop(0, 'rgba(255, 255, 255, 0.72)');
+    grad.addColorStop(0.55, 'rgba(224, 242, 254, 0.32)');
+    grad.addColorStop(1, 'rgba(56, 189, 248, 0.35)');
+  }
+
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  ctx.lineWidth = isHighlighted ? 1.8 : 1.1;
+  ctx.strokeStyle = isHighlighted ? colorObj.hex : 'rgba(255, 255, 255, 0.85)';
+  ctx.stroke();
+
+  ctx.shadowBlur = 0;
+  ctx.beginPath();
+  ctx.arc(x - radius * 0.32, y - radius * 0.32, radius * 0.22, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.78)';
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawAnimatedRay(x1, y1, x2, y2, color, width, alpha = 1, dashed = false) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  if (dashed) ctx.setLineDash([6, 5]);
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  if (!dashed) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len = Math.hypot(dx, dy);
+    const ang = Math.atan2(dy, dx);
+    const spacing = 55;
+    const offset = (state.t * 75) % spacing;
+
+    for (let d = offset; d < len - 12; d += spacing) {
+      const px = x1 + (dx / len) * d;
+      const py = y1 + (dy / len) * d;
+      drawArrowHead(px, py, ang, color, 6.5);
+    }
+  }
+  ctx.restore();
+}
+
+function drawAngleArc(x, y, r, startAng, endAng, labelText, color, labelOffset = 15) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.arc(x, y, r, startAng, endAng, false);
+  ctx.stroke();
+
+  const mid = (startAng + endAng) / 2;
+  const lx = x + Math.cos(mid) * (r + labelOffset);
+  const ly = y + Math.sin(mid) * (r + labelOffset);
+
+  ctx.font = 'bold 11.5px system-ui, sans-serif';
+  ctx.fillStyle = color;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(labelText, lx, ly);
+  ctx.restore();
+}
+
+function draw() {
+  // 1. Sky Blue Background
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#7dd3fc');
+  sky.addColorStop(0.55, '#bae6fd');
+  sky.addColorStop(1, '#e0f2fe');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+
+  // Geometry: steeper angles (50° - 53°) than primary (40° - 42°)
+  const obsX = Math.max(78, W * 0.22);
+  const obsY = H * 0.50;
+  const cx = Math.min(W - 140, W * 0.58);
+  const cy = obsY;
+  const dx = cx - obsX;
+
+  const maxR = Math.min(H * 0.44, W - cx - 28, dx * 1.25);
+  const minR = maxR * 0.42;
+  const dropR = Math.max(6.5, Math.min(10.5, (maxR - minR) / 14.5));
+
+  const radii = COLORS.map((_, i) => minR + (i / 6) * (maxR - minR));
+  const angles = radii.map(r => Math.atan2(r, dx)); // Exact alternate interior angle
+
+  // 2. Concentric Full-Circle Secondary Rainbow Rings (fainter than primary in nature)
+  if (state.showCircles) {
+    COLORS.forEach((c, i) => {
+      const isActive = (state.selected === -1 || state.selected === i);
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, radii[i], 0, Math.PI * 2);
+      ctx.strokeStyle = c.hex;
+      ctx.lineWidth = isActive ? (state.selected === i ? 5 : 3.0) : 1.1;
+      ctx.globalAlpha = isActive ? (state.selected === i ? 0.65 : 0.34) : 0.12;
+      ctx.stroke();
+      ctx.restore();
+    });
+  }
+
+  // 3. Horizontal Axis from Observer's Eye (0°)
+  ctx.save();
+  ctx.strokeStyle = 'rgba(15, 23, 42, 0.55)';
+  ctx.lineWidth = 1.6;
+  ctx.setLineDash([7, 6]);
+  ctx.beginPath();
+  ctx.moveTo(obsX, obsY);
+  ctx.lineTo(cx + maxR + 18, cy);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.font = '600 11.5px system-ui, sans-serif';
+  ctx.fillStyle = '#334155';
+  ctx.textAlign = 'left';
+  ctx.fillText('Horizontal Axis (0°)', obsX + dx * 0.25, obsY - 8);
+  ctx.restore();
+
+  // 4. Parallel Sunlight Rays
+  const activeIndices = state.selected === -1 ? [0, 6] : [state.selected];
+
+  ctx.save();
+  for (let y = 36; y < H - 30; y += 64) {
+    drawAnimatedRay(12, y, obsX - 24, y, 'rgba(255, 250, 205, 0.55)', 1.5, 0.55, false);
+  }
+  ctx.font = 'bold 12px system-ui, sans-serif';
+  ctx.fillStyle = '#b45309';
+  ctx.textAlign = 'left';
+  ctx.fillText('☀️Sunlight (2 Internal Reflections)', 14, 24);
+  ctx.restore();
+
+  activeIndices.forEach(idx => {
+    const c = COLORS[idx];
+    const r = radii[idx];
+    const topY = cy - r;
+    const botY = cy + r;
+
+    // --- TOP DROPLET ---
+    // Sunlight enters from the lower side of the droplet (characteristic of Secondary Rainbow)
+    drawAnimatedRay(12, topY + dropR * 0.45, cx - dropR, topY + dropR * 0.45, '#f59e0b', 2.2, 0.92, false);
+    drawArrowHead(cx - dropR - 2, topY + dropR * 0.45, 0, '#d97706', 7.5);
+
+    if (state.selected !== -1) {
+      COLORS.forEach((otherC, k) => {
+        if (k === idx) return;
+        const rayAng = Math.PI - angles[k];
+        const len = Math.hypot(dx, r) * 1.12;
+        drawAnimatedRay(
+          cx, topY,
+          cx + Math.cos(rayAng) * len,
+          topY + Math.sin(rayAng) * len,
+          otherC.hex, 1.5, 0.48, true
+        );
+      });
+    } else if (idx === 6) {
+      // From top Violet (53°) droplet, show 50° Red ray passing ABOVE observer's head
+      const rAng = Math.PI - angles[0];
+      const len = dx * 0.72;
+      drawAnimatedRay(
+        cx, topY,
+        cx + Math.cos(rAng) * len,
+        topY + Math.sin(rAng) * len,
+        COLORS[0].hex, 1.8, 0.75, true
+      );
+    }
+
+    // Main ray from Top Droplet -> Observer Eye
+    drawAnimatedRay(cx, topY, obsX, obsY, c.hex, 2.8, 0.98, false);
+    drawArrowHead(obsX + 10 * Math.cos(-angles[idx]), obsY + 10 * Math.sin(-angles[idx]), Math.PI - angles[idx], c.hex, 8);
+
+    // --- BOTTOM DROPLET (Mirror Symmetry) ---
+    drawAnimatedRay(12, botY - dropR * 0.45, cx - dropR, botY - dropR * 0.45, '#f59e0b', 2.2, 0.92, false);
+    drawArrowHead(cx - dropR - 2, botY - dropR * 0.45, 0, '#d97706', 7.5);
+
+    if (state.selected !== -1) {
+      COLORS.forEach((otherC, k) => {
+        if (k === idx) return;
+        const rayAng = Math.PI + angles[k];
+        const len = Math.hypot(dx, r) * 1.12;
+        drawAnimatedRay(
+          cx, botY,
+          cx + Math.cos(rayAng) * len,
+          botY + Math.sin(rayAng) * len,
+          otherC.hex, 1.5, 0.45, true
+        );
+      });
+    }
+
+    // Main ray from Bottom Droplet -> Observer Eye
+    drawAnimatedRay(cx, botY, obsX, obsY, c.hex, 2.8, 0.98, false);
+    drawArrowHead(obsX + 10 * Math.cos(angles[idx]), obsY + 10 * Math.sin(angles[idx]), Math.PI + angles[idx], c.hex, 8);
+  });
+
+  // 5. Angle Arcs (Alternate Interior Angles: 50° Red & 53° Violet)
+  if (state.showAngles) {
+    if (state.selected === -1) {
+      // Observer eye angles: Top 50° (R) & 53° (V)
+      drawAngleArc(obsX, obsY, 44, -angles[0], 0, '50°', COLORS[0].hex, 15);
+      drawAngleArc(obsX, obsY, 72, -angles[6], 0, '53°', COLORS[6].hex, 15);
+
+      // Observer eye angles: Bottom 50° (R) & 53° (V)
+      drawAngleArc(obsX, obsY, 44, 0, angles[0], '50°', COLORS[0].hex, 15);
+      drawAngleArc(obsX, obsY, 72, 0, angles[6], '53°', COLORS[6].hex, 15);
+
+      // Top Violet Droplet alternate angles with Sunlight (50° Red above, 53° Violet below)
+      const topVioletY = cy - radii[6];
+      drawAngleArc(cx, topVioletY, 40, Math.PI - angles[0], Math.PI, '50°', COLORS[0].hex, 16);
+      drawAngleArc(cx, topVioletY, 66, Math.PI - angles[6], Math.PI, '53°', COLORS[6].hex, 16);
+
+      // Bottom Violet Droplet alternate angle (53°)
+      const botVioletY = cy + radii[6];
+      drawAngleArc(cx, botVioletY, 54, Math.PI, Math.PI + angles[6], '53°', COLORS[6].hex, 16);
+    } else {
+      const idx = state.selected;
+      const c = COLORS[idx];
+      const ang = angles[idx];
+
+      drawAngleArc(obsX, obsY, 60, -ang, 0, c.deg, c.hex, 18);
+      drawAngleArc(obsX, obsY, 60, 0, ang, c.deg, c.hex, 18);
+
+      drawAngleArc(cx, cy - radii[idx], 54, Math.PI - ang, Math.PI, c.deg, c.hex, 18);
+      drawAngleArc(cx, cy + radii[idx], 54, Math.PI, Math.PI + ang, c.deg, c.hex, 18);
+    }
+  }
+
+  // 6. Draw 7 Top & 7 Bottom Droplets + Labels (V outer -> R inner)
+  COLORS.forEach((c, i) => {
+    const isHighlighted = (state.selected === -1 || state.selected === i);
+    const r = radii[i];
+
+    drawDroplet(cx, cy - r, dropR, c, isHighlighted);
+    drawDroplet(cx, cy + r, dropR, c, isHighlighted);
+
+    ctx.save();
+    ctx.font = `bold ${Math.max(11, dropR * 1.25)}px system-ui, sans-serif`;
+    ctx.fillStyle = isHighlighted ? c.hex : 'rgba(15, 23, 42, 0.35)';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(c.key, cx + dropR + 7, cy - r);
+    ctx.fillText(c.key, cx + dropR + 7, cy + r);
+    ctx.restore();
+  });
+
+  // Center dot
+  ctx.save();
+  ctx.fillStyle = '#0f172a';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // 7. Horizon Overlay
+  if (state.showHorizon) {
+    ctx.save();
+    const gGrad = ctx.createLinearGradient(0, obsY + 18, 0, H);
+    gGrad.addColorStop(0, 'rgba(34, 197, 94, 0.72)');
+    gGrad.addColorStop(1, 'rgba(21, 128, 61, 0.88)');
+    ctx.fillStyle = gGrad;
+    ctx.fillRect(0, obsY + 26, W, H - (obsY + 26));
+
+    ctx.strokeStyle = '#15803d';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, obsY + 26);
+    ctx.lineTo(W, obsY + 26);
+    ctx.stroke();
+
+    ctx.font = 'bold 13px system-ui, sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.fillText('ഭൂമി / ചക്രവാളം (Ground blocks the lower half)', W * 0.56, obsY + 52);
+    ctx.restore();
+  }
+
+  // 8. Observer (🧍)
+  ctx.save();
+  ctx.font = '46px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🧍', obsX - 8, obsY + 16);
+
+  ctx.fillStyle = '#0f172a';
+  ctx.beginPath();
+  ctx.arc(obsX, obsY, 3.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.font = 'bold 12.5px system-ui, sans-serif';
+  ctx.fillStyle = '#0f172a';
+  ctx.fillText('Observer', obsX - 8, obsY + 50);
+  ctx.restore();
+}
+
+let lastTime = 0;
+function loop(ts) {
+  if (!lastTime) lastTime = ts;
+  const dt = (ts - lastTime) / 1000;
+  lastTime = ts;
+
+  if (state.animate) {
+    state.t += dt;
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
