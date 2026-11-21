@@ -53,7 +53,7 @@
   {
     "id": "vibgyor-all",
     "titleML": "VIBGYOR & Light Spectrum",
-    "titleEN": "",
+    "titleEN": "മഴവില്ല് ഉണ്ടാകുന്നതും പ്രകാശം വർണ്ണഘടകങ്ങളായി മാറുന്നതും ",
     "category": "physics",
     "badge": "OPTICS", 
     "icon": "fa-rainbow",
@@ -62,13 +62,12 @@
                       "Primary Circle/ Primary (Circle) click ചെയ്ത ശേഷം ഓരോ തുള്ളിയിലൂടെയും ലൈറ്റ് കടന്നു വന്നു Primary rainbow Circle എങ്ങനെ ആവുന്നു എന്നു മനസിലാക്കുക",
                       "Secondary Rainbow(2 TIR)/ Secondary (Angle) click ചെയ്ത ശേഷം ഓരോ തുള്ളിയിലൂടെയും ലൈറ്റ് എങ്ങനെ കടന്നു വരുന്നു എന്ന് മനസിലാക്കുക",
                       "Secondary Circle/ Secondary (Circle) click ചെയ്ത ശേഷം ഓരോ തുള്ളിയിലൂടെയും ലൈറ്റ് കടന്നു വന്നു Secondary rainbow Circle ആവുന്നു എന്നു മനസിലാക്കുക",
-                      "Primary + Secondary +Dark Band / Primary and Secondary (Circle) click ചെയ്ത ശേഷം ഓരോ തുള്ളിയിലൂടെയും ലൈറ്റ് കടന്നു വന്നു Secondary rainbow Circle ആവുന്നു എന്നു മനസിലാക്കുക",
-                      
+                      "Primary + Secondary +Dark Band / Primary and Secondary (Circle) click ചെയ്ത ശേഷം ഓരോ തുള്ളിയിലൂടെയും ലൈറ്റ് കടന്നു വന്നു Secondary rainbow Circle ആവുന്നു എന്നു മനസിലാക്കുക"                
     ],
     "principle": "ധവളപ്രകാശം ഏഴ് ഘടകവർണ്ണങ്ങൾ (Violet, Indigo, Blue, Green, Yellow, Orange, Red) ചേർന്നതാണ്. ഇവയ്ക്ക് വ്യത്യസ്ത തരംഗദൈർഘ്യമാണ് ഉള്ളത്. അതുകൊണ്ടാണ് ആകാശത്ത് മഴവില്ല് ഉണ്ടാകാൻ കാരണം ആവുന്നത്",
     "quiz": [
       { "q": "ഏറ്റവും കൂടുതൽ വ്യതിയാനം സംഭവിക്കുന്ന നിറം ഏത്?", "a": "വയലറ്റ് (Violet)" },
-       { "q": "ഏറ്റവും കുറവ് വ്യതിയാനം സംഭവിക്കുന്ന നിറം ഏത്?", "a": "ചുവപ്പ് (Red)" }
+      { "q": "ഏറ്റവും കുറവ് വ്യതിയാനം സംഭവിക്കുന്ന നിറം ഏത്?", "a": "ചുവപ്പ് (Red)" }
     ],
     "htmlPath": "sims/VibgyorAll.html",
     "classRange": "Class 1-12"
