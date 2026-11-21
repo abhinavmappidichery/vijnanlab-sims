@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Light Lab — Refraction & Critical Angle</title>
+<title>Light Lab — Refraction, Critical Angle & Apparent Depth</title>
 <style>
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;height:100%}
@@ -17,9 +17,12 @@
   @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.45}}
   #hint.gone{opacity:0}
   #dock{flex:0 0 auto;display:flex;flex-direction:column;gap:10px;padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,#0e1e33,#0a1526);border-top:1px solid rgba(125,211,252,.20);box-shadow:0 -12px 30px rgba(0,0,0,.5)}
-  .dock-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .swap-btn{font:inherit;font-weight:800;font-size:15px;padding:11px 18px;border-radius:12px;border:1px solid rgba(251,191,36,.4);background:rgba(251,191,36,.12);color:#fde68a;cursor:pointer;white-space:nowrap}
+  .dock-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .swap-btn,.fish-btn{font:inherit;font-weight:800;font-size:15px;padding:11px 16px;border-radius:12px;cursor:pointer;white-space:nowrap;transition:background .2s}
+  .swap-btn{border:1px solid rgba(251,191,36,.4);background:rgba(251,191,36,.12);color:#fde68a}
   .swap-btn:hover{background:rgba(251,191,36,.22)}
+  .fish-btn{border:1px solid rgba(56,189,248,.4);background:rgba(56,189,248,.12);color:#7dd3fc}
+  .fish-btn.active{border-color:rgba(34,197,94,.65);background:rgba(34,197,94,.22);color:#86efac}
   .stats{display:flex;gap:8px;flex-wrap:wrap;flex:1;min-width:0}
   .chip{display:inline-flex;align-items:baseline;gap:8px;padding:9px 14px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(125,211,252,.18);font-size:15px;white-space:nowrap}
   .chip .lbl{color:#93c5fd;font-weight:700}
@@ -33,7 +36,7 @@
   #resetBtn:hover{background:rgba(255,255,255,.1)}
   .tip{font-size:14px;color:#94a3b8;line-height:1.45}
   .tip b{color:#fde68a}
-  @media(max-width:720px){.chip{font-size:13px;padding:8px 11px}.chip .val{font-size:15px}#resetBtn,.swap-btn{font-size:13px;padding:9px 14px}.tip{font-size:12px}}
+  @media(max-width:720px){.chip{font-size:13px;padding:8px 11px}.chip .val{font-size:15px}#resetBtn,.swap-btn,.fish-btn{font-size:13px;padding:9px 12px}.tip{font-size:12px}}
 </style>
 </head>
 <body>
@@ -44,7 +47,8 @@
   </div>
   <footer id="dock">
     <div class="dock-row">
-      <button id="swapBtn" class="swap-btn">⇅ Air → Water</button>
+      <button id="swapBtn" class="swap-btn">⇅ Switch to Water → Air</button>
+      <button id="fishBtn" class="fish-btn">🐟 Fish Mode: OFF</button>
       <div class="stats" id="stats"></div>
       <button id="resetBtn">↺ Reset</button>
     </div>
@@ -59,10 +63,18 @@ const R2D = 180 / Math.PI;
 const N_AIR = 1.000;
 const N_WATER = 1.333;
 const THETA_C = Math.asin(N_AIR / N_WATER);
-const state = { theta:30*D2R, side:1, dir:'water-air' };
+const state = { theta:30*D2R, side:1, dir:'air-water', fishMode:false };
 let W=1,H=1,DPR=1,UI=1,dragging=false,hasDragged=false,lastT=0;
 const cv=document.getElementById('cv'), ctx=cv.getContext('2d'), stage=document.getElementById('stage');
-const statsEl=document.getElementById('stats'), tipEl=document.getElementById('tip'), hintEl=document.getElementById('hint'), hintTxt=document.getElementById('hintText'), swapBtn=document.getElementById('swapBtn');
+const statsEl=document.getElementById('stats'), tipEl=document.getElementById('tip'), hintEl=document.getElementById('hint'), hintTxt=document.getElementById('hintText'), swapBtn=document.getElementById('swapBtn'), fishBtn=document.getElementById('fishBtn');
+
+// Bubbles data for realistic water
+const bubbles = Array.from({length: 18}, (_, i) => ({
+  rx: (i * 0.173 + 0.05) % 1,
+  ry: (i * 0.291) % 1,
+  r: 2 + (i % 4) * 1.4,
+  spd: 0.025 + (i % 5) * 0.008
+}));
 
 function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
 
@@ -85,27 +97,241 @@ function reflect(d,n){ const k=2*dot(d,n); return {x:d.x-k*n.x, y:d.y-k*n.y}; }
 
 function refrGeom(){ return { ox:W*0.50, oy:H*0.52, L:Math.min(W*0.32,H*0.42) }; }
 
-function beam(x1,y1,x2,y2,color,alpha,width){ if(alpha<0.02) return; ctx.save(); ctx.lineCap='round'; ctx.globalAlpha=alpha; ctx.shadowColor=color; ctx.shadowBlur=16; ctx.strokeStyle=color; ctx.lineWidth=width; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.shadowBlur=0; ctx.globalAlpha=alpha*0.9; ctx.strokeStyle='rgba(255,255,255,.88)'; ctx.lineWidth=Math.max(1,width*0.35); ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); ctx.restore(); }
-function label(txt,x,y,size,color,align){ ctx.save(); ctx.fillStyle=color; ctx.font='800 '+(size*UI)+'px system-ui, sans-serif'; ctx.textAlign=align||'left'; ctx.textBaseline='middle'; ctx.fillText(txt,x,y); ctx.restore(); }
-function puck(x,y,t){ const p=1+0.08*Math.sin(t*4); ctx.save(); ctx.shadowColor='#fde68a'; ctx.shadowBlur=26; ctx.fillStyle='rgba(253,230,138,.97)'; ctx.beginPath(); ctx.arc(x,y,14*p,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0; ctx.strokeStyle='rgba(253,230,138,.40)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(x,y,22*p,0,Math.PI*2); ctx.stroke(); ctx.restore(); }
+function beam(x1,y1,x2,y2,color,alpha,width){
+  if(alpha<0.02) return;
+  ctx.save();
+  ctx.lineCap='round';
+  ctx.globalAlpha=alpha;
+  ctx.shadowColor=color;
+  ctx.shadowBlur=12;
+  ctx.strokeStyle=color;
+  ctx.lineWidth=width+1;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  ctx.shadowBlur=0;
+  ctx.globalAlpha=alpha*0.92;
+  ctx.strokeStyle='rgba(255,255,255,.92)';
+  ctx.lineWidth=Math.max(1.2,width*0.38);
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  ctx.restore();
+}
+
+function label(txt,x,y,size,color,align,outline){
+  ctx.save();
+  ctx.font='800 '+(size*UI)+'px system-ui, sans-serif';
+  ctx.textAlign=align||'left';
+  ctx.textBaseline='middle';
+  if(outline){
+    ctx.lineWidth=4;
+    ctx.lineJoin='round';
+    ctx.strokeStyle=outline;
+    ctx.strokeText(txt,x,y);
+  }
+  ctx.fillStyle=color;
+  ctx.fillText(txt,x,y);
+  ctx.restore();
+}
+
+function puck(x,y,t){
+  const p=1+0.08*Math.sin(t*4);
+  ctx.save();
+  ctx.shadowColor='#f59e0b';
+  ctx.shadowBlur=22;
+  ctx.fillStyle='#f59e0b';
+  ctx.beginPath(); ctx.arc(x,y,14*p,0,Math.PI*2); ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.fillStyle='#fef08a';
+  ctx.beginPath(); ctx.arc(x,y,9*p,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(217,119,6,.55)';
+  ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.arc(x,y,21*p,0,Math.PI*2); ctx.stroke();
+  ctx.restore();
+}
+
+// Soft white cloud helper
+function drawCloud(cx, cy, sc, alpha){
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(sc * UI, sc * UI);
+  ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+  ctx.beginPath();
+  ctx.arc(0, 0, 28, 0, Math.PI * 2);
+  ctx.arc(26, -8, 34, 0, Math.PI * 2);
+  ctx.arc(58, -4, 28, 0, Math.PI * 2);
+  ctx.arc(78, 6, 20, 0, Math.PI * 2);
+  ctx.arc(-22, 8, 20, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawFish(x, y, faceDir, isApparent){
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(faceDir * UI, UI);
+  ctx.globalAlpha = isApparent ? 0.55 : 1.0;
+
+  ctx.fillStyle = isApparent ? '#e2e8f0' : '#0284c7';
+  ctx.beginPath();
+  ctx.moveTo(-18, 0);
+  ctx.lineTo(-32, -13);
+  ctx.lineTo(-27, 0);
+  ctx.lineTo(-32, 13);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = isApparent ? '#f1f5f9' : '#f59e0b';
+  ctx.strokeStyle = isApparent ? 'rgba(239,68,68,.9)' : '#fef3c7';
+  ctx.lineWidth = isApparent ? 2 : 1.5;
+  if(isApparent) ctx.setLineDash([4,3]);
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 22, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = isApparent ? '#cbd5e1' : '#fbbf24';
+  ctx.beginPath();
+  ctx.moveTo(-4, -10);
+  ctx.quadraticCurveTo(2, -20, 8, -9);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#0f172a';
+  ctx.beginPath();
+  ctx.arc(11, -3, 2.8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(12, -3.8, 1, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawEye(x, y, angle){
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.scale(UI, UI);
+  ctx.fillStyle = '#ffffff';
+  ctx.strokeStyle = '#0369a1';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(-16, 0);
+  ctx.quadraticCurveTo(0, -11, 16, 0);
+  ctx.quadraticCurveTo(0, 11, -16, 0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#0284c7';
+  ctx.beginPath();
+  ctx.arc(-3, 0, 5.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#0f172a';
+  ctx.beginPath();
+  ctx.arc(-3, 0, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
 
 function drawRefraction(t){
   const {ox,oy,L}=refrGeom();
-  // Backgrounds
-  let g=ctx.createLinearGradient(0,0,0,oy); g.addColorStop(0,'#0a1930'); g.addColorStop(1,'#0d2340'); ctx.fillStyle=g; ctx.fillRect(0,0,W,oy);
-  g=ctx.createLinearGradient(0,oy,0,H); g.addColorStop(0,'#0e2a4a'); g.addColorStop(1,'#071626'); ctx.fillStyle=g; ctx.fillRect(0,oy,W,H-oy);
-  // Water ripple
-  ctx.save(); ctx.strokeStyle='rgba(56,189,248,.28)'; ctx.lineWidth=1; for(let x=0;x<W;x+=14){ const yy=oy+Math.sin(x*0.05+t*2)*2; ctx.beginPath(); ctx.moveTo(x,yy); ctx.lineTo(x+8,yy); ctx.stroke(); } ctx.restore();
-  // Surface
-  ctx.save(); ctx.shadowColor='#38bdf8'; ctx.shadowBlur=18; ctx.strokeStyle='rgba(125,211,252,.95)'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(0,oy); ctx.lineTo(W,oy); ctx.stroke(); ctx.restore();
-  // Medium labels
-  label('AIR   n = 1.00',20,oy-24,15,'rgba(186,230,253,.85)');
-  label('WATER   n = 1.333',20,oy+30,15,'rgba(147,197,253,.95)');
-  // Normal line
-  ctx.save(); ctx.setLineDash([7,9]); ctx.strokeStyle='rgba(148,197,255,.45)'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(ox,oy-L*1.15); ctx.lineTo(ox,oy+L*1.25); ctx.stroke(); ctx.restore();
-  label('normal',ox+10,oy-L*1.1,12,'rgba(148,163,184,.8)');
 
-  // Physics
+  // 1. REALISTIC SKY (Air)
+  let skyGrad = ctx.createLinearGradient(0, 0, 0, oy);
+  skyGrad.addColorStop(0, '#5bb9f0');
+  skyGrad.addColorStop(0.55, '#a8defa');
+  skyGrad.addColorStop(1, '#e8f6fe');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, W, oy);
+
+  // Drifting white clouds
+  const c1x = ((W * 0.16 + t * 8) % (W + 240)) - 120;
+  const c2x = ((W * 0.62 + t * 5) % (W + 280)) - 140;
+  const c3x = ((W * 0.88 + t * 6.5) % (W + 220)) - 110;
+  drawCloud(c1x, oy * 0.28, 1.05, 0.82);
+  drawCloud(c2x, oy * 0.20, 1.25, 0.72);
+  drawCloud(c3x, oy * 0.44, 0.85, 0.65);
+
+  // 2. REALISTIC WATER
+  let waterGrad = ctx.createLinearGradient(0, oy, 0, H);
+  waterGrad.addColorStop(0, '#1ba3dc');
+  waterGrad.addColorStop(0.28, '#0c7bb3');
+  waterGrad.addColorStop(0.70, '#074c78');
+  waterGrad.addColorStop(1, '#042a47');
+  ctx.fillStyle = waterGrad;
+
+  // Wavy water body
+  ctx.beginPath();
+  ctx.moveTo(0, oy);
+  for(let x = 0; x <= W; x += 12){
+    const wy = oy + Math.sin(x * 0.025 + t * 2.2) * 3.2 + Math.cos(x * 0.055 - t * 1.6) * 1.4;
+    ctx.lineTo(x, wy);
+  }
+  ctx.lineTo(W, H);
+  ctx.lineTo(0, H);
+  ctx.closePath();
+  ctx.fill();
+
+  // Subtle underwater sunbeams (caustics)
+  ctx.save();
+  for(let i = 0; i < 5; i++){
+    const sx = W * (0.12 + i * 0.2) + Math.sin(t * 0.5 + i) * 18;
+    const shaftGrad = ctx.createLinearGradient(sx, oy, sx + 55, H);
+    shaftGrad.addColorStop(0, 'rgba(186, 230, 253, 0.14)');
+    shaftGrad.addColorStop(1, 'rgba(186, 230, 253, 0)');
+    ctx.fillStyle = shaftGrad;
+    ctx.beginPath();
+    ctx.moveTo(sx - 18, oy);
+    ctx.lineTo(sx + 22, oy);
+    ctx.lineTo(sx + 95, H);
+    ctx.lineTo(sx + 15, H);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Subtle rising water bubbles
+  ctx.save();
+  for(const b of bubbles){
+    const bx = b.rx * W + Math.sin(t * 1.5 + b.ry * 10) * 6;
+    const by = oy + 14 + (((b.ry - t * b.spd) % 1 + 1) % 1) * (H - oy - 18);
+    ctx.strokeStyle = 'rgba(224, 242, 254, 0.38)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(bx, by, b.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Bright wavy surface highlight
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.78)';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for(let x = 0; x <= W; x += 12){
+    const wy = oy + Math.sin(x * 0.025 + t * 2.2) * 3.2 + Math.cos(x * 0.055 - t * 1.6) * 1.4;
+    if(x === 0) ctx.moveTo(x, wy); else ctx.lineTo(x, wy);
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  // Medium labels
+  label('AIR   n = 1.00', 20, oy - 24, 15, '#0c4a6e', 'left', 'rgba(255,255,255,0.75)');
+  label('WATER   n = 1.333', 20, oy + 32, 15, '#e0f2fe', 'left', 'rgba(4,42,71,0.65)');
+
+  // Normal line (dark in air, light in water)
+  ctx.save();
+  ctx.setLineDash([7, 8]);
+  ctx.lineWidth = 1.6;
+  ctx.strokeStyle = 'rgba(15, 23, 42, 0.42)';
+  ctx.beginPath(); ctx.moveTo(ox, oy - L * 1.15); ctx.lineTo(ox, oy); ctx.stroke();
+  ctx.strokeStyle = 'rgba(224, 242, 254, 0.55)';
+  ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox, oy + L * 1.25); ctx.stroke();
+  ctx.restore();
+  label('normal', ox + 10, oy - L * 1.08, 12, '#1e293b', 'left', 'rgba(255,255,255,0.7)');
+
   const th=state.theta, s=state.side, isWaterAir=state.dir==='water-air';
   const dirSign=isWaterAir?-1:1;
   const n1=isWaterAir?N_WATER:N_AIR, n2=isWaterAir?N_AIR:N_WATER;
@@ -120,81 +346,129 @@ function drawRefraction(t){
   const distToCrit=isWaterAir?Math.abs(th-THETA_C):999;
   const nearCrit=isWaterAir && distToCrit<6*D2R;
 
-  // Angles for arcs
-  const nSrcAngle = isWaterAir ? Math.PI/2 : -Math.PI/2;   // normal toward source side
-  const nRefAngle = isWaterAir ? -Math.PI/2 : Math.PI/2;   // normal away from source
+  const nSrcAngle = isWaterAir ? Math.PI/2 : -Math.PI/2;
+  const nRefAngle = isWaterAir ? -Math.PI/2 : Math.PI/2;
   const incBackAngle = Math.atan2(-d.y, -d.x);
   const reflAngle = Math.atan2(reflected.y, reflected.x);
   const refrAngle = refracted ? Math.atan2(refracted.y, refracted.x) : null;
   const ar = L*0.32;
 
-
-
-  // Arc drawing helper
   function drawAngleArc(a1,a2,color,radius){
     let diff=a2-a1;
     while(diff>Math.PI) diff-=2*Math.PI;
     while(diff<-Math.PI) diff+=2*Math.PI;
     const endAngle=a1+diff;
-    ctx.save(); ctx.strokeStyle=color; ctx.lineWidth=2.5; ctx.shadowColor=color; ctx.shadowBlur=6;
+    ctx.save(); ctx.strokeStyle=color; ctx.lineWidth=2.8;
     ctx.beginPath(); ctx.arc(ox,oy,radius,a1,endAngle,diff<0); ctx.stroke(); ctx.restore();
     const midAngle=a1+diff/2;
     return { x: ox+Math.cos(midAngle)*(radius+36), y: oy+Math.sin(midAngle)*(radius+36) };
   }
 
-  // θ₁ arc (incident)
-  const p1=drawAngleArc(nSrcAngle, incBackAngle, 'rgba(253,230,138,.95)', ar);
-  label('θ₁='+(th*R2D).toFixed(1)+'°', p1.x, p1.y, 16, '#fde68a', 'center');
+  const skyOutline = 'rgba(255,255,255,0.88)';
+  const waterOutline = 'rgba(4,42,71,0.85)';
 
-  // θr arc (reflected)
-  const pr=drawAngleArc(nSrcAngle, reflAngle, 'rgba(251,191,36,.85)', ar*1.05);
-  label('θr='+(th*R2D).toFixed(1)+'°', pr.x, pr.y, 14, '#fbbf24', 'center');
+  // θ₁ arc
+  const p1=drawAngleArc(nSrcAngle, incBackAngle, isWaterAir ? '#fde047' : '#d97706', ar);
+  label('θ₁='+(th*R2D).toFixed(1)+'°', p1.x, p1.y, 15, isWaterAir ? '#fef08a' : '#92400e', 'center', isWaterAir ? waterOutline : skyOutline);
 
-  // θ₂ arc (refracted)
-  if(refracted && refrAngle!==null){
-    const th2=Math.acos(Math.min(1,Math.abs(refracted.y)))*R2D;
-    const p2=drawAngleArc(nRefAngle, refrAngle, 'rgba(125,211,252,.95)', ar);
-    label('θ₂='+th2.toFixed(1)+'°', p2.x, p2.y, 14, '#7dd3fc', 'center');
+  // θr arc
+  if(!state.fishMode){
+    const pr=drawAngleArc(nSrcAngle, reflAngle, isWaterAir ? '#fbbf24' : '#ea580c', ar*1.05);
+    label('θr='+(th*R2D).toFixed(1)+'°', pr.x, pr.y, 14, isWaterAir ? '#fde68a' : '#9a3412', 'center', isWaterAir ? waterOutline : skyOutline);
   }
 
-  // Rays
-  const reflAlpha=isWaterAir ? clamp(0.35+0.65*Math.pow(Rf,0.5),0.35,1) : clamp(0.15+0.5*Rf,0.15,0.65);
-  beam(ox,oy, ox+reflected.x*L*1.08, oy+reflected.y*L*1.08, '#fbbf24', reflAlpha, 4);
+  // θ₂ arc
+  if(refracted && refrAngle!==null){
+    const th2=Math.acos(Math.min(1,Math.abs(refracted.y)))*R2D;
+    const p2=drawAngleArc(nRefAngle, refrAngle, isWaterAir ? '#0284c7' : '#7dd3fc', ar);
+    label('θ₂='+th2.toFixed(1)+'°', p2.x, p2.y, 14, isWaterAir ? '#075985' : '#e0f2fe', 'center', isWaterAir ? skyOutline : waterOutline);
+  }
 
+  // Reflected ray
+  const reflAlpha=isWaterAir ? clamp(0.35+0.65*Math.pow(Rf,0.5),0.35,1) : clamp(0.22+0.55*Rf,0.22,0.75);
+  beam(ox,oy, ox+reflected.x*L*1.08, oy+reflected.y*L*1.08, '#f59e0b', state.fishMode && refracted ? reflAlpha*0.35 : reflAlpha, 4);
+
+  // Refracted ray + Fish Apparent Position
+  let realDepthRatio = 0, appDepthRatio = 0;
   if(refracted){
-    let alpha = nearCrit ? 0.92 : clamp(Tf*1.05,0.25,1);
-    const len = nearCrit ? L*1.45 : L*1.18;
-    beam(ox,oy, ox+refracted.x*len, oy+refracted.y*len, '#7dd3fc', alpha, 4.5);
-    if(nearCrit) label('θ₂ → 90°  (Critical Ray)', ox+s*L*0.55, oy-18, 16, '#7dd3fc', 'center');
+    let alpha = nearCrit ? 0.95 : clamp(Tf*1.05,0.35,1);
+    const len = nearCrit ? L*1.35 : L*1.12;
+    const eyeX = ox + refracted.x * len;
+    const eyeY = oy + refracted.y * len;
+    beam(ox,oy, eyeX, eyeY, isWaterAir ? '#0284c7' : '#38bdf8', alpha, 4.5);
+
+    if(state.fishMode && isWaterAir){
+      const backDist = L / N_WATER;
+      const appX = ox - refracted.x * backDist;
+      const appY = oy - refracted.y * backDist;
+
+      ctx.save();
+      ctx.setLineDash([8, 6]);
+      ctx.strokeStyle = 'rgba(239, 68, 68, 0.92)';
+      ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      ctx.moveTo(eyeX, eyeY);
+      ctx.lineTo(appX, appY);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.save();
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = 'rgba(254, 240, 138, 0.70)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(src.x, src.y - 16);
+      ctx.lineTo(appX, appY + 16);
+      ctx.stroke();
+      ctx.restore();
+
+      drawFish(appX, appY, s, true);
+      label('Apparent Position', appX, appY - 22*UI, 13, '#fecaca', 'center', waterOutline);
+      drawEye(eyeX, eyeY, Math.atan2(-refracted.y, -refracted.x));
+
+      realDepthRatio = (src.y - oy) / L;
+      appDepthRatio = (appY - oy) / L;
+    }
+
+    if(nearCrit) label('θ₂ → 90°  (Critical Ray)', ox+s*L*0.55, oy-22, 14, '#075985', 'center', skyOutline);
   } else if(isWaterAir && th>THETA_C && th<THETA_C+7*D2R){
     const fade=1-(th-THETA_C)/(7*D2R);
-    ctx.save(); ctx.setLineDash([8,7]); ctx.strokeStyle='rgba(125,211,252,'+(0.55*fade).toFixed(2)+')'; ctx.lineWidth=3;
+    ctx.save(); ctx.setLineDash([8,7]); ctx.strokeStyle='rgba(2,132,199,'+(0.65*fade).toFixed(2)+')'; ctx.lineWidth=3;
     ctx.beginPath(); ctx.moveTo(ox,oy); ctx.lineTo(ox+s*L*1.35, oy); ctx.stroke(); ctx.restore();
   }
 
-  beam(src.x,src.y,ox,oy,'#fde68a',1,5);
-  puck(src.x,src.y,t);
+  // Incident ray + Real Fish or Puck
+  beam(src.x,src.y,ox,oy,'#f59e0b',1,5);
+  if(state.fishMode && isWaterAir){
+    drawFish(src.x, src.y, s, false);
+    label('Real Fish (Drag me)', src.x, src.y + 24*UI, 13, '#fef08a', 'center', waterOutline);
+    if(!refracted){
+      label('TIR: This ray cannot escape into air!', ox, oy - 48*UI, 16, '#be123c', 'center', skyOutline);
+    }
+  } else {
+    puck(src.x,src.y,t);
+  }
 
-  // NOTE: Blinking TIR circle REMOVED as requested
-
-  // Status + tips
   const thDeg=th*R2D; let status,cls,tip;
   if(isWaterAir){
-    if(refracted===null){ status='TIR'; cls='tir'; tip=''; }
-    else if(Math.abs(th-THETA_C)<0.6*D2R){ status='CRITICAL ANGLE'; cls='critical'; tip='At exactly θc the refracted ray grazes the surface at 90°. Keep dragging a little — you will see it fade, not disappear suddenly.'; }
-    else if(nearCrit){ status='NEAR CRITICAL'; cls='critical'; tip=''; }
-    else { status='REFRACTION'; cls='refraction'; tip=''; }
-  } else { status='REFRACTION (into water)'; cls='refraction'; tip=''; }
+    if(refracted===null){ status='TIR'; cls='tir'; tip=state.fishMode ? 'Total Internal Reflection! This light ray cannot escape into air and reflects back into the water, though the fish remains visible from above via other rays at smaller angles.' : 'Total Internal Reflection (TIR).'; }
+    else if(Math.abs(th-THETA_C)<0.6*D2R){ status='CRITICAL ANGLE'; cls='critical'; tip='At θc (48.6°), the refracted ray grazes the surface at 90°.'; }
+    else if(nearCrit){ status='NEAR CRITICAL'; cls='critical'; tip=state.fishMode ? 'Notice how the apparent fish rises closer to the surface as the angle increases!' : ''; }
+    else { status='REFRACTION'; cls='refraction'; tip=state.fishMode ? 'Drag the fish to see its apparent position shift higher than its real position. To spear it, aim BELOW the apparent fish!' : 'Drag the yellow puck to change the angle of incidence.'; }
+  } else { status='REFRACTION (into water)'; cls='refraction'; tip='Light bends toward the normal when entering water from air.'; }
 
   const th2=refracted?Math.acos(Math.min(1,Math.abs(refracted.y)))*R2D:null;
   let chips=`<div class="chip"><span class="lbl">θ₁</span><span class="val">${thDeg.toFixed(1)}°</span></div>`;
-  chips+=`<div class="chip"><span class="lbl">θr</span><span class="val">${thDeg.toFixed(1)}°</span></div>`;
-  chips+=`<div class="chip"><span class="lbl">θ₂</span><span class="val">${th2===null?'— (not Refracted)':th2.toFixed(1)+'°'}</span></div>`;
-  if(isWaterAir) chips+=`<div class="chip"><span class="lbl">θc</span><span class="val">${(THETA_C*R2D).toFixed(1)}°</span></div>`;
-  chips+=`<div class="chip"><span class="lbl">Reflected</span><span class="val">${Math.round(Rf*100)}%</span></div>`;
+  chips+=`<div class="chip"><span class="lbl">θ₂</span><span class="val">${th2===null?'— (TIR)':th2.toFixed(1)+'°'}</span></div>`;
+  if(state.fishMode && isWaterAir && refracted){
+    const pct = Math.round((appDepthRatio / realDepthRatio) * 100);
+    chips+=`<div class="chip"><span class="lbl">Apparent Depth</span><span class="val">${pct}% of Real</span></div>`;
+  } else if(isWaterAir){
+    chips+=`<div class="chip"><span class="lbl">θc</span><span class="val">${(THETA_C*R2D).toFixed(1)}°</span></div>`;
+  }
   chips+=`<div class="chip status ${cls}">${status}</div>`;
   statsEl.innerHTML=chips;
-  tipEl.innerHTML='<b>Tip:</b> '+tip+'';
+  tipEl.innerHTML='<b>Tip:</b> '+tip;
 }
 
 function frame(now){ if(!lastT) lastT=now; const t=(now-lastT)/1000; ctx.clearRect(0,0,W,H); drawRefraction(t); requestAnimationFrame(frame); }
@@ -216,18 +490,24 @@ function endDrag(e){ if(!dragging) return; dragging=false; cv.classList.remove('
 cv.addEventListener('pointerup',endDrag); cv.addEventListener('pointercancel',endDrag); cv.addEventListener('pointerleave',function(e){ if(dragging) endDrag(e); });
 
 function updateDock(){
-  swapBtn.textContent = state.dir==='water-air' ? '⇅ Air → Water' : '⇅ Water → Air';
-  hintTxt.textContent = state.dir==='water-air'
-    ? ''
-    : '';
+  swapBtn.textContent = state.dir === 'water-air' ? '⇅ Switch to Air → Water' : '⇅ Switch to Water → Air';
+  fishBtn.textContent = state.fishMode ? '🐟 Fish Mode: ON' : '🐟 Fish Mode: OFF';
+  fishBtn.classList.toggle('active', state.fishMode);
+  hintTxt.textContent = state.fishMode ? 'Drag the fish to see apparent position shift' : 'Drag to move the light ray';
 }
 swapBtn.addEventListener('click',function(){
   state.dir = state.dir==='water-air' ? 'air-water' : 'water-air';
+  if(state.dir === 'air-water') state.fishMode = false;
   state.theta=30*D2R; state.side=1;
   updateDock();
 });
+fishBtn.addEventListener('click',function(){
+  state.fishMode = !state.fishMode;
+  if(state.fishMode) state.dir = 'water-air';
+  updateDock();
+});
 document.getElementById('resetBtn').addEventListener('click',function(){
-  state.theta=30*D2R; state.side=1; state.dir='water-air';
+  state.theta=30*D2R; state.side=1; state.dir='air-water'; state.fishMode=false;
   updateDock();
 });
 updateDock();
