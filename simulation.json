@@ -1,20 +1,4 @@
 [
-  {
-    "id": "gh-test-001",
-    "titleML": "ടെസ്റ്റ് സിമുലേഷൻ",
-    "titleEN": "Test Simulation",
-    "category": "physics",
-    "badge": "Physics • Test", 
-    "icon": "fa-flask",
-    "objective": "GitHub-ൽ നിന്ന് simulation load ആകുന്നുണ്ടോ എന്ന് check ചെയ്യുക",
-    "instructions": ["Button click ചെയ്യുക", "Color change കാണുക"],
-    "principle": "Simple test — GitHub integration verify",
-    "quiz": [
-      { "q": "ഇത് GitHub-ൽ നിന്നാണോ load ആകുന്നത്?", "a": "അതെ ✅" }
-    ],
-    "htmlPath": "sims/test-001.html",
-    "classRange": "Class 1-12"
-  },
   
     {
     "id": "Refraction",
@@ -280,6 +264,72 @@
         }
       ],
     "htmlPath": "sims/VoltagePowerResistanceCurrent.html",
+    "classRange": "Class 1-12"
+  },
+
+  {
+    "id": "AC-DC-Difference",
+    "titleML": "AC vs DC Current & Electron Flow",
+    "titleEN": "AC-യും DC-യും തമ്മിലുള്ള വ്യത്യാസം",
+    "category": "physics",
+    "badge": "ELECTRICITY", 
+    "icon": "fa-bolt",
+    "objective": "ഒരു ചാലകത്തിലൂടെ AC-യും DC-യും കടന്നുപോകുന്ന വിധം, ഇലക്ട്രോണുകളുടെ ചലനം, 2 വയറുകളുടെ ആവശ്യകത, സ്ലോ-മോഷനിൽ ബൾബ് മിന്നുന്നത് എന്നിവ കുട്ടികൾ മനസ്സിലാക്കുന്നു.",
+    "instructions": ["മുകളിലെ DC, AC ബട്ടണുകൾ മാറിമാറി ക്ലിക്ക് ചെയ്ത് കമ്പിയിലൂടെയുള്ള മഞ്ഞ ഇലക്ട്രോണുകളുടെ ചലനം നിരീക്ഷിക്കുക.",
+      "'സ്ലോ-മോഷൻ: ON' ആക്കി നടുവിലുള്ള ഗ്രാഫിലെ ബിന്ദു 0 (പൂജ്യം) എത്തുമ്പോൾ AC-യിൽ ബൾബ് OFF ആകുന്നതും DC-യിൽ മിന്നാതെ കത്തുന്നതും താരതമ്യം ചെയ്യുക.",
+      "താഴെയുള്ള മരം മുറിക്കുന്ന വാൾ താരതമ്യം (ചെയിൻസോ vs ഈർച്ചവാൾ) ശ്രദ്ധിച്ച് AC-യിലും DC-യിലും ഊർജം കൈമാറുന്നത് എങ്ങനെയെന്ന് മനസ്സിലാക്കുക.",
+      "'2-ാം വയർ മുറിക്കുക' എന്ന ബട്ടൺ അമർത്തി 1 വയർ മാത്രം ഉപയോഗിച്ചാൽ എന്തുകൊണ്ട് ബൾബ് കത്തുന്നില്ല എന്ന് പരിശോധിക്കുക."
+    ],
+    "principle": "ഒരേ ദിശയിൽ മാത്രം തുടർച്ചയായി പ്രവഹിക്കുന്ന വൈദ്യുതിയാണ് DC (Direct Current). ക്രമമായ സമയ ഇടവേളകളിൽ ദിശ മാറിക്കൊണ്ടിരിക്കുന്ന വൈദ്യുതിയാണ് AC (Alternating Current). ഇന്ത്യയിൽ AC-യുടെ ആവൃത്തി 50 Hz ആണ് (സെക്കന്റിൽ 100 തവണ ദിശ മാറുന്നു). AC ആയാലും DC ആയാലും വൈദ്യുതി പ്രവഹിക്കാൻ അടഞ്ഞ പാത (2 വയറുകൾ) നിർബന്ധമാണ്.",
+    "quiz": [
+      {
+        "q": "ഒരേ ദിശയിൽ മാത്രം പ്രവഹിക്കുന്ന വൈദ്യുതി ഏതാണ്?",
+        "a": "DC (Direct Current)"
+      },
+      {
+        "q": "ക്രമമായ ഇടവേളകളിൽ ദിശ മാറിക്കൊണ്ടിരിക്കുന്ന വൈദ്യുതി ഏതാണ്?",
+        "a": "AC (Alternating Current)"
+      },
+      {
+        "q": "ഇന്ത്യയിൽ വിതരണം ചെയ്യുന്ന AC വൈദ്യുതിയുടെ ആവൃത്തി (Frequency) എത്രയാണ്?",
+        "a": "50 Hz"
+      },
+      {
+        "q": "50 Hz AC വൈദ്യുതിയിൽ ഒരു സെക്കന്റിൽ എത്ര തവണ കറന്റിന്റെ ദിശ മാറുന്നു?",
+        "a": "100 തവണ"
+      },
+      {
+        "q": "DC-യിൽ പ്രവർത്തിക്കാൻ 1 വയർ മാത്രം മതിയോ?",
+        "a": "അല്ല, അടഞ്ഞ സെർക്കീട്ട് പൂർത്തിയാക്കാൻ 2 വയറുകൾ (+, -) നിർബന്ധമാണ്"
+      },
+      {
+        "q": "AC-യിലെ ഇലക്ട്രോൺ ചലനത്തോട് സാമ്യമുള്ള വാൾ ഏതാണ്?",
+        "a": "സാധാരണ ഈർച്ചവാൾ (മുന്നോട്ടും പിന്നോട്ടും ചലിക്കുന്നു)"
+      },
+      {
+        "q": "AC-യിൽ ബൾബ് സെക്കന്റിൽ 100 തവണ മിന്നുന്നത് നമ്മുടെ കണ്ണിന് അറിയാൻ കഴിയാത്തത് എന്തുകൊണ്ട്?",
+        "a": "വീക്ഷണസ്ഥിരത (Persistence of Vision) കാരണം"
+      }
+    
+    ],
+    "htmlPath": "sims/AcVsDcDifference.html",
+    "classRange": "Class 1-12"
+  },
+
+  {
+    "id": "gh-test-001",
+    "titleML": "ടെസ്റ്റ് സിമുലേഷൻ",
+    "titleEN": "Test Simulation",
+    "category": "physics",
+    "badge": "Physics • Test", 
+    "icon": "fa-flask",
+    "objective": "GitHub-ൽ നിന്ന് simulation load ആകുന്നുണ്ടോ എന്ന് check ചെയ്യുക",
+    "instructions": ["Button click ചെയ്യുക", "Color change കാണുക"],
+    "principle": "Simple test — GitHub integration verify",
+    "quiz": [
+      { "q": "ഇത് GitHub-ൽ നിന്നാണോ load ആകുന്നത്?", "a": "അതെ ✅" }
+    ],
+    "htmlPath": "sims/test-001.html",
     "classRange": "Class 1-12"
   }
 
