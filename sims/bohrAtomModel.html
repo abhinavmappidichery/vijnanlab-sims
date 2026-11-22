@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bohr Atom Model — ബോർ ആറ്റം മോഡൽ | H to Kr</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Noto+Sans+Malayalam:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ============ BASE ============ */
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:#05050a; color:#f8fafc; font-family:"Baloo 2","Noto Sans Malayalam",system-ui,sans-serif; }
+  button,select,input{ font-family:inherit; }
+  button{ cursor:pointer; border:none; }
+  .wrap{ max-width:1440px; margin:0 auto; padding:18px; }
+
+  /* ============ HEADER ============ */
+  header{ text-align:center; margin-bottom:14px; }
+  header h1{ margin:0; font-size:clamp(1.6rem,3.5vw,2.6rem); line-height:1.05; }
+  header h1 span{ color:#facc15; }
+  header p{ margin:6px 0 0; color:#a5b4c8; font-weight:600; }
+
+  /* ============ LAYOUT ============ */
+  main{ display:grid; grid-template-columns:300px 1fr 300px; gap:16px; align-items:start; }
+  @media(max-width:1080px){ main{ grid-template-columns:1fr 1fr; } .center{ grid-column:1 / -1; order:-1; } }
+  @media(max-width:640px){ main{ grid-template-columns:1fr; } .center{ order:-1; } }
+
+  .card{ background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:22px; padding:16px; }
+  .card h2{ margin:0 0 10px; font-size:18px; display:flex; align-items:center; gap:8px; }
+  .muted{ color:#a5b4c8; font-size:13px; font-weight:600; }
+
+  /* ============ LEFT : ELEMENT CHART - MUKALIL ============ */
+  .big-num{ font-size:44px; line-height:1; font-weight:800; text-align:center; margin:6px 0 10px; }
+  .big-num small{ font-size:15px; color:#a5b4c8; display:block; margin-top:4px; }
+  .el-search{ width:100%; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.15); background:#0d0d1a; color:white; font-weight:700; outline:none; }
+  .el-grid{ display:grid; grid-template-columns:repeat(6,1fr); gap:6px; margin-top:10px; }
+  .el-grid button{ padding:8px 2px; border-radius:10px; background:rgba(255,255,255,.08); color:white; font-weight:800; font-size:13px; border:1px solid transparent; }
+  .el-grid button small{ display:block; font-size:10px; color:#a5b4c8; font-weight:700; }
+  .el-grid button.sel{ background:#facc15; color:black; border-color:#facc15; }
+  .el-grid button.sel small{ color:#333; }
+  .shell-row{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+  .shell-row button{ padding:8px 12px; border-radius:999px; background:rgba(255,255,255,.10); color:white; font-weight:800; font-size:13px; }
+  .shell-row button.sel{ background:white; color:black; }
+
+  /* ============ CENTER : ATOM + BELOW CONTROLS ============ */
+  .stage{
+    position:relative; border-radius:28px; overflow:hidden;
+    border:1px solid rgba(255,255,255,.15);
+    background:radial-gradient(circle at 50% 35%, #1a1a35, #05050a 70%);
+    min-height:540px;
+  }
+  @media(max-width:640px){ .stage{ min-height:460px; } }
+  canvas{ position:absolute; inset:0; width:100%; height:100%; touch-action:none; cursor:grab; }
+  canvas:active{ cursor:grabbing; }
+  .badge-row{ position:absolute; top:12px; left:12px; right:12px; z-index:5; display:flex; gap:8px; flex-wrap:wrap; pointer-events:none; }
+  .badge{ background:rgba(0,0,0,.65); padding:6px 12px; border-radius:999px; font-size:13px; font-weight:800; }
+  .badge.yellow{ background:#facc15; color:black; }
+  .legend{ position:absolute; bottom:12px; left:12px; right:12px; z-index:5; display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; pointer-events:none; }
+  .legend div{ background:rgba(0,0,0,.70); border-radius:14px; padding:8px 12px; font-size:12px; font-weight:700; }
+  .dot{ display:inline-block; width:11px; height:11px; border-radius:50%; vertical-align:middle; margin-right:4px; }
+
+  /* --- ATOM-INTE THAZHE : Proton / Electron / Neutron controls --- */
+  .below-controls{ margin-top:14px; }
+  .pen-row{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+  @media(max-width:640px){ .pen-row{ grid-template-columns:1fr; } }
+  .pen-box{ background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:18px; padding:12px; text-align:center; }
+  .pen-box b{ font-size:15px; }
+  .pen-box span{ display:block; color:#a5b4c8; font-size:12px; font-weight:700; margin-top:2px; }
+  .ctrl{ display:flex; gap:8px; align-items:center; justify-content:center; margin-top:8px; }
+  .ctrl button{ width:40px; height:40px; border-radius:12px; background:white; color:black; font-size:22px; font-weight:800; line-height:1; }
+  .ctrl button:active{ transform:scale(.94); }
+  .ctrl strong{ min-width:36px; text-align:center; font-size:22px; }
+  .ctrl.p button{ background:#ef4444; color:white; }
+  .ctrl.e button{ background:#facc15; color:black; }
+  .ctrl.n button{ background:#94a3b8; color:black; }
+
+  .action-row{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .btn{ flex:1; min-width:110px; padding:11px 8px; border-radius:12px; font-weight:800; font-size:13px; background:white; color:black; }
+  .btn.yellow{ background:#facc15; }
+  .btn.ghost{ background:rgba(255,255,255,.10); color:white; border:1px solid rgba(255,255,255,.15); }
+  .btn.active{ background:#38bdf8; color:black; }
+  .btn.on{ background:#38bdf8; color:black; }
+  .note{ margin-top:12px; text-align:center; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.10); border-radius:16px; padding:12px 14px; font-size:14px; color:#cbd5e1; line-height:1.6; }
+  .note b{ color:white; }
+
+  /* ============ RIGHT ============ */
+  .config{ font-size:22px; font-weight:800; color:#fef9c3; line-height:1.5; word-break:break-word; }
+  .bar{ height:8px; background:rgba(255,255,255,.10); border-radius:99px; overflow:hidden; margin-top:6px; }
+  .bar i{ display:block; height:100%; border-radius:99px; }
+  .tip{ background:#facc15; color:black; border-radius:20px; padding:14px; margin-top:16px; }
+  .tip b{ font-size:15px; }
+  .tip p{ margin:6px 0 0; font-size:13px; font-weight:600; line-height:1.6; }
+
+  /* ============ CLASS MODE ============ */
+  .class-mode{ position:fixed; inset:0; z-index:50; background:radial-gradient(circle at 50% 40%, #15152e, #05050a 72%); display:none; }
+  .class-mode.show{ display:block; }
+  .class-mode canvas{ position:absolute; inset:0; width:100%; height:100%; }
+  .class-top{ position:absolute; top:12px; left:0; right:0; text-align:center; z-index:10; pointer-events:none; text-shadow:0 2px 10px rgba(0,0,0,.9); }
+  .class-top h2{ margin:0; font-size:clamp(1.8rem,5vw,3.2rem); line-height:1; }
+  .class-top p{ margin:4px 0 0; font-weight:700; color:#e2e8f0; }
+  .class-bottom{ position:absolute; bottom:16px; left:50%; transform:translateX(-50%); z-index:10; display:flex; gap:8px; flex-wrap:wrap; justify-content:center; max-width:96vw; background:rgba(0,0,0,.70); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.20); padding:8px; border-radius:999px; }
+  .class-bottom button, .class-bottom select{ padding:9px 14px; border-radius:999px; font-weight:800; font-size:13px; background:rgba(255,255,255,.15); color:white; border:none; }
+  .class-bottom button.white{ background:white; color:black; }
+  .class-bottom select{ background:white; color:black; max-width:130px; }
+  footer{ text-align:center; color:#64748b; font-size:12px; padding:18px 0 6px; }
+</style>
+</head>
+<body>
+
+<div class="wrap" id="mainWrap">
+  <header>
+    <h1>Bohr Atom Model <span>• ബോർ ആറ്റം മോഡൽ</span></h1>
+    <p>H (Z=1) ---- Kr (Z=36)</p>
+  </header>
+
+  <main>
+    <!-- ================= LEFT : ELEMENT CHART MUKALIL ================= -->
+    <aside>
+      <div class="card">
+        <h2>⚛️ Element തിരഞ്ഞെടുക്കുക</h2>
+        <div class="big-num" id="bigSym">H <small id="bigName">ഹൈഡ്രജൻ • Hydrogen • Z = 1</small></div>
+        <input class="el-search" id="elSearch" placeholder="Hydrogen / Ca / കാൽസ്യം..." oninput="filterElements()">
+        <div class="el-grid" id="elGrid"></div>
+        <p class="muted" style="margin:10px 0 0;">Select the Element</p>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <h2>🟢 Shell മാത്രം കാണാം</h2>
+        <div class="shell-row" id="shellBtns">
+          <button class="sel" data-shell="0" onclick="chooseShell(0)">All Shells</button>
+          <button data-shell="1" onclick="chooseShell(1)">K • n=1</button>
+          <button data-shell="2" onclick="chooseShell(2)">L • n=2</button>
+          <button data-shell="3" onclick="chooseShell(3)">M • n=3</button>
+          <button data-shell="4" onclick="chooseShell(4)">N • n=4</button>
+        </div>
+      </div>
+
+     
+    </aside>
+
+    <!-- ================= CENTER : ATOM + THAZHE CONTROLS ================= -->
+    <section class="center">
+      <div class="stage" id="stage">
+        <div class="badge-row">
+          <span class="badge" id="badgeEl">H — ഹൈഡ്രജൻ</span>
+          <span class="badge yellow">Bohr Shell View</span>
+          <span class="badge" id="badgeShell" style="display:none;"></span>
+        </div>
+        <canvas id="atomCanvas"></canvas>
+        <div class="legend">
+          <div><span class="dot" style="background:#ef4444;"></span>Proton &nbsp; <span class="dot" style="background:#94a3b8;"></span>Neutron &nbsp; <span class="dot" style="background:#facc15;"></span>Electron</div>
+          <div id="legendShells">Shells: <b>1</b> • Valence: <b style="color:#facc15;">1</b></div>
+        </div>
+      </div>
+
+      <!-- ATOM-INTE THAZHE : Proton / Electron / Neutron -->
+      <div class="below-controls">
+        <div class="pen-row">
+          <div class="pen-box">
+            <b>🔴 Protons • പ്രോട്ടോൺ</b><span>Atomic Number Z • Nucleus-ൽ +ve  charge</span>
+            <div class="ctrl p"><button onclick="changeProton(-1)">−</button><strong id="pVal">1</strong><button onclick="changeProton(1)">+</button></div>
+          </div>
+          <div class="pen-box">
+            <b>🟡 Electrons • ഇലക്ട്രോൺ</b><span>Shell-ൽ • −ve  charge</span>
+            <div class="ctrl e"><button onclick="changeElectron(-1)">−</button><strong id="eVal">1</strong><button onclick="changeElectron(1)">+</button></div>
+          </div>
+          <div class="pen-box">
+            <b>⚪ Neutrons • ന്യൂട്രോൺ</b><span>Nucleus-ൽ •  Nuetral</span>
+            <div class="ctrl n"><button onclick="changeNeutron(-1)">−</button><strong id="nVal">0</strong><button onclick="changeNeutron(1)">+</button></div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;">
+          <label style="display:flex;gap:8px;align-items:center;font-size:13px;font-weight:800;">
+            <input type="checkbox" id="keepNeutral" checked onchange="toggleNeutral()"> Keep Neutral • Proton = Electron
+          </label>
+          <span class="muted" id="nucleusInfo" style="margin-left:auto;">Nucleus: 1 proton + 0 neutron • Solid ball</span>
+        </div>
+
+        <div class="action-row">
+          <button class="btn yellow" onclick="doStep()">▶ Step • Otta-ottayaayi</button>
+          <button class="btn ghost" onclick="resetAll()">↺ Reset • Hydrogen-lekku</button>
+          <button class="btn" id="btnLabels" onclick="toggleLabels()">🏷️ Labels ON</button>
+          <button class="btn" id="btnRotate" onclick="toggleRotate()">🔄 Rotate ON</button>
+          <button class="btn" id="btnMotion" onclick="toggleMotion()">⚡ Motion ON</button>
+          <button class="btn yellow" onclick="enterClassMode()">📺 Class Mode</button>
+        </div>
+        <p class="muted" style="margin:8px 0 0;">zoom</p>
+      </div>
+
+      <div class="note">
+        <b>Bohr Model-il:</b> Electrons - K-max 2, L-max 8, M-max 18, N-max 32. &nbsp;•&nbsp; <span id="noteLine">Hydrogen: K=1</span><br>
+      </div>
+    </section>
+
+    <!-- ================= RIGHT ================= -->
+    <aside>
+      <div class="card">
+        <h2>✨ Electron Configuration</h2>
+        <div class="config" id="configStr">1s¹</div>
+        <p style="margin:10px 0 0; color:#cbd5e1; font-size:14px;">Shell distribution: <b id="shellDist">1</b> &nbsp;•&nbsp; Valence: <b style="color:#facc15;" id="valenceVal">1</b> &nbsp;•&nbsp; Electrons: <span id="electronCount">1</span></p>
+        <p id="stepMsg" style="color:#6ee7b7; font-weight:800; font-size:13px; margin:8px 0 0;"></p>
+        <p id="exceptionMsg" style="color:#fde68a; font-size:13px; margin:6px 0 0;"></p>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <h2>📊 Shell-wise Fill</h2>
+        <div id="shellBars"></div>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <h2>ℹBohr Atom Model</h2>
+        <p id="whyText" style="color:#e2e8f0; line-height:1.7; margin:0;"></p>
+        <p style="font-size:13px; color:#cbd5e1; margin:10px 0 0;"><b>Bohr Rule:</b> K → L → M → N.</p>
+        <p style="font-size:13px; font-weight:800; margin:10px 0 0;"><span style="color:#22d3ee;">● K Cyan</span> &nbsp; <span style="color:#f472b6;">● L Pink</span> &nbsp; <span style="color:#facc15;">● M Yellow</span> &nbsp; <span style="color:#a78bfa;">● N Violet</span></p>
+      </div>
+
+      <div class="tip">
+        <p id="msgLine" style="opacity:.8; margin-top:8px;">ഹൈഡ്രജൻ (H) തിരഞ്ഞെടുത്തു</p>
+      </div>
+    </aside>
+  </main>
+
+</div>
+
+<!-- ================= CLASS MODE ================= -->
+<div class="class-mode" id="classMode">
+  <div class="class-top">
+    <h2 id="classTitle">ഹൈഡ്രജൻ (H)</h2>
+    <p id="classSub">Hydrogen • Bohr Model • Shells: 1</p>
+  </div>
+  <canvas id="classCanvas"></canvas>
+  <div class="class-bottom">
+    <button class="white" onclick="exitClassMode()">✕ Exit Class Mode</button>
+    <button id="classRotateBtn" onclick="toggleRotate()">Rotate Pause</button>
+    <label style="display:flex;align-items:center;gap:6px;color:white;font-weight:800;font-size:13px;">Shell:
+      <select id="classShell" onchange="chooseShell(Number(this.value))">
+        <option value="0">All</option><option value="1">K • n=1</option><option value="2">L • n=2</option><option value="3">M • n=3</option><option value="4">N • n=4</option>
+      </select>
+    </label>
+    <select id="classEl" onchange="setElement(Number(this.value))"></select>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   BOHR ATOM MODEL - ONLY BOHR - FIXED VERSION
+   - Default : Hydrogen (not Calcium)
+   - Nucleus : Solid ball, volume-filled, mixed p/n
+   - Shell distance : Equal gap 2.2 (old subshell-radius bug fixed)
+   - Layout : Element chart left-top, P/E/N below atom
+   ============================================================ */
+
+// ---------- 1. DATA : Elements H to Kr ----------
+const ELEMENTS = [
+  {z:1,sym:'H',en:'Hydrogen',ml:'ഹൈഡ്രജൻ',n:0},{z:2,sym:'He',en:'Helium',ml:'ഹീലിയം',n:2},
+  {z:3,sym:'Li',en:'Lithium',ml:'ലിഥിയം',n:4},{z:4,sym:'Be',en:'Beryllium',ml:'ബെറിലിയം',n:5},
+  {z:5,sym:'B',en:'Boron',ml:'ബോറോൺ',n:6},{z:6,sym:'C',en:'Carbon',ml:'കാർബൺ',n:6},
+  {z:7,sym:'N',en:'Nitrogen',ml:'നൈട്രജൻ',n:7},{z:8,sym:'O',en:'Oxygen',ml:'ഓക്സിജൻ',n:8},
+  {z:9,sym:'F',en:'Fluorine',ml:'ഫ്ലൂറിൻ',n:10},{z:10,sym:'Ne',en:'Neon',ml:'നിയോൺ',n:10},
+  {z:11,sym:'Na',en:'Sodium',ml:'സോഡിയം',n:12},{z:12,sym:'Mg',en:'Magnesium',ml:'മഗ്നീഷ്യം',n:12},
+  {z:13,sym:'Al',en:'Aluminium',ml:'അലുമിനിയം',n:14},{z:14,sym:'Si',en:'Silicon',ml:'സിലിക്കൺ',n:14},
+  {z:15,sym:'P',en:'Phosphorus',ml:'ഫോസ്ഫറസ്',n:16},{z:16,sym:'S',en:'Sulfur',ml:'സൾഫർ',n:16},
+  {z:17,sym:'Cl',en:'Chlorine',ml:'ക്ലോറിൻ',n:18},{z:18,sym:'Ar',en:'Argon',ml:'ആർഗോൺ',n:22},
+  {z:19,sym:'K',en:'Potassium',ml:'പൊട്ടാസ്യം',n:20},{z:20,sym:'Ca',en:'Calcium',ml:'കാൽസ്യം',n:20},
+  {z:21,sym:'Sc',en:'Scandium',ml:'സ്കാൻഡിയം',n:24},{z:22,sym:'Ti',en:'Titanium',ml:'ടൈറ്റാനിയം',n:26},
+  {z:23,sym:'V',en:'Vanadium',ml:'വനേഡിയം',n:28},{z:24,sym:'Cr',en:'Chromium',ml:'ക്രോമിയം',n:28},
+  {z:25,sym:'Mn',en:'Manganese',ml:'മാംഗനീസ്',n:30},{z:26,sym:'Fe',en:'Iron',ml:'അയൺ',n:30},
+  {z:27,sym:'Co',en:'Cobalt',ml:'കൊബാൾട്ട്',n:32},{z:28,sym:'Ni',en:'Nickel',ml:'നിക്കൽ',n:33},
+  {z:29,sym:'Cu',en:'Copper',ml:'ചെമ്പ്',n:34},{z:30,sym:'Zn',en:'Zinc',ml:'സിങ്ക്',n:35},
+  {z:31,sym:'Ga',en:'Gallium',ml:'ഗാലിയം',n:39},{z:32,sym:'Ge',en:'Germanium',ml:'ജെർമേനിയം',n:41},
+  {z:33,sym:'As',en:'Arsenic',ml:'ആർസെനിക്',n:42},{z:34,sym:'Se',en:'Selenium',ml:'സെലീനിയം',n:45},
+  {z:35,sym:'Br',en:'Bromine',ml:'ബ്രോമിൻ',n:45},{z:36,sym:'Kr',en:'Krypton',ml:'ക്രിപ്റ്റോൺ',n:48},
+];
+
+// Aufbau order - ithu vachu thanne Bohr shell distribution kittum
+const ORDER = [
+  {n:1,t:'s',cap:2},{n:2,t:'s',cap:2},{n:2,t:'p',cap:6},{n:3,t:'s',cap:2},{n:3,t:'p',cap:6},
+  {n:4,t:'s',cap:2},{n:3,t:'d',cap:10},{n:4,t:'p',cap:6},
+];
+
+// Shell colours - K Cyan, L Pink, M Yellow, N Violet
+const SHELL_COLOR = {1:'#22d3ee',2:'#f472b6',3:'#facc15',4:'#a78bfa'};
+const SHELL_NAME  = {1:'K',2:'L',3:'M',4:'N'};
+const SHELL_MAX   = {1:2,2:8,3:18,4:32};
+
+// Superscript - 1s2 ennu kanikkan
+const SUPER = {'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+function sup(n){ return String(n).split('').map(c=>SUPER[c]).join(''); }
+
+// ---------- 2. CONFIG : electrons -> subshells -> shells ----------
+function configFor(e){
+  if(e===24) return [{n:1,t:'s',cap:2,count:2,label:'1s'},{n:2,t:'s',cap:2,count:2,label:'2s'},{n:2,t:'p',cap:6,count:6,label:'2p'},{n:3,t:'s',cap:2,count:2,label:'3s'},{n:3,t:'p',cap:6,count:6,label:'3p'},{n:4,t:'s',cap:2,count:1,label:'4s'},{n:3,t:'d',cap:10,count:5,label:'3d'}];
+  if(e===29) return [{n:1,t:'s',cap:2,count:2,label:'1s'},{n:2,t:'s',cap:2,count:2,label:'2s'},{n:2,t:'p',cap:6,count:6,label:'2p'},{n:3,t:'s',cap:2,count:2,label:'3s'},{n:3,t:'p',cap:6,count:6,label:'3p'},{n:4,t:'s',cap:2,count:1,label:'4s'},{n:3,t:'d',cap:10,count:10,label:'3d'}];
+  let left=e, out=[];
+  for(const o of ORDER){
+    if(left<=0) break;
+    const c=Math.min(o.cap,left);
+    out.push({...o,count:c,label:`${o.n}${o.t}`});
+    left-=c;
+  }
+  return out;
+}
+function shellDist(subs){
+  const d=[0,0,0,0];
+  subs.forEach(s=> d[s.n-1]+=s.count);
+  while(d.length>1 && d[d.length-1]===0) d.pop();
+  return d;
+}
+
+// ---------- 2b. NUCLEUS RADIUS + SHELL DISTANCE - FIXED ----------
+// Nucleus radius : R = 0.65 + 0.32 * cubert(A)
+// H cheruthu, Kr valuthu - pakshe K-ring-inullil othungum
+function nucleusRadius(total){ return 0.65 + 0.32 * Math.cbrt(Math.max(1,total)); }
+
+// SHELL DISTANCE - FIXED : K-shell nucleus-il muttilla
+// PAZHAYA BUG: K = 2.2 fixed aayirunnu, nucleus valuthayappol (Ca/Kr) gap 0.25 aayi, muttunna pole thonni.
+// FIX: K = Nucleus + 1.6 gap, pinne ella shell-um equal gap 2.2
+// Eg: H -> K=2.57, Ca -> K=3.35, Kr -> K=3.65 - gap eppozhum 1.6
+function ringRadiusFor(n, totalNucleons){
+  const R = nucleusRadius(totalNucleons);
+  return (R + 1.6) + (n-1)*2.2;
+}
+
+// ---------- 2c. NUCLEUS - FIXED : Proton-Proton aduth illa ----------
+// PAZHAYA BUG: Shuffle cheythittum proton-proton aduthu vannu, ellam chernnu / ottip pidichu ninnu.
+// FIX: Farthest-point sampling
+//  - Proton positions thiranjedukkunnathu oronnum ettavum doorathu ulla point-il ninnu
+//  - Bakki positions ellam Neutron - athu kondu Proton-Proton idayil eppozhum Neutron varum
+//  - Nucleon size kurachu, gap undakki - ottip pidikkilla
+let _nucCache = { key:'', data:null };
+function buildNucleus(total, protons){
+  const key = total + ':' + protons;
+  if(_nucCache.key === key && _nucCache.data) return _nucCache.data;
+
+  const R = nucleusRadius(total);
+
+  // 1. Positions - volume fill, ullil niraye, solid ball pole
+  const pos = [];
+  for(let i=0;i<total;i++){
+    const tt = (i+0.5)/Math.max(1,total);
+    const rad = R * Math.cbrt(tt) * 0.92; // 0.92 = ullil cheriya margin, purathu ball-inullil
+    const y = (1 - 2*tt) * rad;
+    const r = Math.sqrt(Math.max(0, rad*rad - y*y));
+    const th = 2.399963 * i; // golden angle
+    pos.push({ x: Math.cos(th)*r, y: y, z: Math.sin(th)*r, isP:false });
+  }
+
+  // 2. Proton positions - Farthest-point sampling
+  //    Aadyam centre-il ulla point, pinne eppozhum ettavum doorathu ulla point
+  if(protons>0 && protons<total){
+    const chosen = new Set();
+    // Start: centre-inodu ettavum aduthu ulla point (i=0)
+    chosen.add(0);
+    while(chosen.size < protons){
+      let bestIdx = -1, bestDist = -1;
+      for(let i=0;i<total;i++){
+        if(chosen.has(i)) continue;
+        // Ithinte ettavum aduthu ulla proton-ilekku ulla distance
+        let minD = Infinity;
+        chosen.forEach(ci=>{
+          const dx = pos[i].x-pos[ci].x, dy = pos[i].y-pos[ci].y, dz = pos[i].z-pos[ci].z;
+          const d = dx*dx+dy*dy+dz*dz;
+          if(d<minD) minD=d;
+        });
+        if(minD>bestDist){ bestDist=minD; bestIdx=i; }
+      }
+      if(bestIdx===-1) break;
+      chosen.add(bestIdx);
+    }
+    chosen.forEach(idx=> pos[idx].isP = true);
+  } else if(protons>=total){
+    pos.forEach(q=> q.isP=true);
+  } else {
+    pos.forEach(q=> q.isP=false);
+  }
+
+  const data = { list: pos, R };
+  _nucCache = { key, data };
+  return data;
+}
+
+// ---------- 3. STATE : Default = Hydrogen ----------
+let protons = 1, electrons = 1, neutrons = 0;
+let keepNeutral = true;
+let showLabels = true, autoRotate = true, motion = true; // Axis illa
+let isolatedShell = 0;
+let stepping = false, lastFilled = '';
+let msg = 'ഹൈഡ്രജൻ (H) തിരഞ്ഞെടുത്തു';
+
+const rot = { yaw:0.7, pitch:0.55, zoom:1 };
+let drag = null;
+
+// ---------- 4. ACTIONS ----------
+function setElement(z){
+  const e = ELEMENTS[z-1];
+  protons = z; neutrons = e.n;
+  if(keepNeutral) electrons = z;
+  msg = `${e.ml} (${e.sym}) തിരഞ്ഞെടുത്തു — Z = ${z}`;
+  updateUI();
+}
+function changeProton(d){ const z = Math.max(1, Math.min(36, protons+d)); setElement(z); }
+function changeElectron(d){
+  electrons = Math.max(0, Math.min(38, electrons+d));
+  msg = electrons===protons ? 'Ippol Neutral atom aanu.' : '⚠️ Ithu ion aanu — proton-um electron-um thulyamalla.';
+  updateUI();
+}
+function changeNeutron(d){ neutrons = Math.max(0, Math.min(60, neutrons+d)); updateUI(); }
+function toggleNeutral(){
+  keepNeutral = document.getElementById('keepNeutral').checked;
+  if(keepNeutral) electrons = protons;
+  updateUI();
+}
+function doStep(){
+  if(stepping) return;
+  stepping = true; electrons = 0;
+  msg = 'Otta-ottayaayi nirayunnu… Shell kramam sradhikkuka!';
+  updateUI();
+  let i = 0; const target = protons;
+  const id = setInterval(()=>{
+    i++; electrons = i;
+    const s = configFor(i);
+    lastFilled = s[s.length-1]?.label || '';
+    document.getElementById('stepMsg').textContent = 'Ippol nirayunnu: ' + lastFilled;
+    updateUI();
+    if(i>=target){ clearInterval(id); stepping=false; msg='Fill poorthiyaayi! Oru shell-il engane nirayunnu ennu nokkuka.'; updateUI(); }
+  },600);
+}
+function resetAll(){
+  setElement(1); isolatedShell=0; rot.yaw=0.7; rot.pitch=0.55; rot.zoom=1;
+  msg='Reset cheythu — Hydrogen-lekku thirichu poyi.';
+  updateUI();
+}
+function chooseShell(n){
+  isolatedShell = (isolatedShell===n && n!==0) ? 0 : n;
+  if(n===0) isolatedShell=0;
+  msg = isolatedShell===0 ? 'Ella shell-kalum kanikkunnu.' : `${SHELL_NAME[isolatedShell]} shell mathram — athile ella electrons.`;
+  updateUI();
+}
+function toggleLabels(){ showLabels=!showLabels; updateUI(); }
+function toggleRotate(){ autoRotate=!autoRotate; updateUI(); }
+function toggleMotion(){ motion=!motion; updateUI(); }
+// ---------- 5. UI UPDATE ----------
+function updateUI(){
+  const el = ELEMENTS[protons-1];
+  const subs = configFor(electrons);
+  const shells = shellDist(subs);
+  const maxN = subs.length ? Math.max(...subs.map(s=>s.n)) : 1;
+  const valence = subs.filter(s=>s.n===maxN).reduce((a,s)=>a+s.count,0);
+  const configStr = subs.map(s=>`${s.label}${sup(s.count)}`).join(' ') || '—';
+
+  document.getElementById('pVal').textContent = protons;
+  document.getElementById('eVal').textContent = electrons;
+  document.getElementById('nVal').textContent = neutrons;
+  document.getElementById('bigSym').firstChild.textContent = el.sym + ' ';
+  document.getElementById('bigName').textContent = `${el.ml} • ${el.en} • Z = ${protons}`;
+  document.getElementById('badgeEl').textContent = `${el.sym} — ${el.ml}`;
+  document.getElementById('configStr').textContent = configStr;
+  document.getElementById('shellDist').textContent = shells.join(', ');
+  document.getElementById('valenceVal').textContent = valence;
+  document.getElementById('electronCount').textContent = electrons;
+  document.getElementById('legendShells').innerHTML = `Shells: <b>${shells.join(', ')}</b> • Valence: <b style="color:#facc15;">${valence}</b>`;
+  document.getElementById('msgLine').textContent = msg;
+  document.getElementById('noteLine').textContent = `${el.en}: ` + shells.map((c,i)=>`${SHELL_NAME[i+1]}=${c}`).join(', ');
+  document.getElementById('nucleusInfo').textContent = `Nucleus: ${protons} proton + ${neutrons} neutron`;
+  document.getElementById('classTitle').textContent = `${el.ml} (${el.sym})`;
+  document.getElementById('classSub').textContent = `${el.en} • Bohr Model • Shells: ${shells.join(', ')}`;
+
+  document.getElementById('whyText').textContent =
+    protons>=19 ? ''
+    : subs.some(s=>s.t==='p') ? ''
+    : '';
+  document.getElementById('exceptionMsg').textContent =
+    protons===24 ? '⭐ Chromium exception: [Ar] 3d⁵ 4s¹ — half-filled d stable aanu.'
+    : protons===29 ? '⭐ Copper exception: [Ar] 3d¹⁰ 4s¹ — full d stable aanu.' : '';
+  if(!stepping) document.getElementById('stepMsg').textContent = '';
+
+  document.getElementById('btnLabels').textContent = `🏷️ Labels ${showLabels?'ON':'OFF'}`;
+  document.getElementById('btnLabels').className = 'btn ' + (showLabels ? 'on' : '');
+  document.getElementById('btnRotate').textContent = `🔄 Rotate ${autoRotate?'ON':'OFF'}`;
+  document.getElementById('btnRotate').className = 'btn ' + (autoRotate ? 'on' : '');
+  document.getElementById('btnMotion').textContent = `⚡ Motion ${motion?'ON':'OFF'}`;
+  document.getElementById('btnMotion').className = 'btn ' + (motion ? 'on' : '');
+  document.getElementById('classRotateBtn').textContent = autoRotate ? 'Rotate Pause' : 'Rotate Resume';
+
+  document.querySelectorAll('#shellBtns button').forEach(b=>{
+    b.classList.toggle('sel', Number(b.dataset.shell)===isolatedShell);
+  });
+  document.getElementById('classShell').value = String(isolatedShell);
+  const badge = document.getElementById('badgeShell');
+  if(isolatedShell){ badge.style.display='inline-block'; badge.textContent = `Only ${SHELL_NAME[isolatedShell]} • n=${isolatedShell}`; }
+  else badge.style.display='none';
+
+  document.querySelectorAll('#elGrid button').forEach(b=>{
+    b.classList.toggle('sel', Number(b.dataset.z)===protons);
+  });
+  document.getElementById('classEl').value = String(protons);
+
+  const bars = document.getElementById('shellBars');
+  bars.innerHTML = shells.map((c,i)=>{
+    const n=i+1, max=SHELL_MAX[n], pct=Math.round(c/max*100), col=SHELL_COLOR[n];
+    return `<div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:800;"><span style="color:${col}">${SHELL_NAME[n]} • n=${n} — ${c}/${max}</span><span style="color:#94a3b8;">${pct}%</span></div>
+      <div class="bar"><i style="width:${pct}%;background:${col};"></i></div>
+    </div>`;
+  }).join('');
+}
+
+function buildElements(){
+  const grid = document.getElementById('elGrid');
+  grid.innerHTML = ELEMENTS.map(e=>`<button data-z="${e.z}" onclick="setElement(${e.z})">${e.sym}<small>${e.z}</small></button>`).join('');
+  const sel = document.getElementById('classEl');
+  sel.innerHTML = ELEMENTS.map(e=>`<option value="${e.z}">${e.sym} — ${e.en}</option>`).join('');
+}
+function filterElements(){
+  const q = document.getElementById('elSearch').value.toLowerCase().trim();
+  document.querySelectorAll('#elGrid button').forEach(b=>{
+    const z = Number(b.dataset.z), e = ELEMENTS[z-1];
+    const hay = `${e.sym} ${e.en} ${e.ml} ${e.z}`.toLowerCase();
+    b.style.display = !q || hay.includes(q) ? '' : 'none';
+  });
+}
+
+// ---------- 6. CANVAS DRAWING : Bohr only ----------
+function makeAtom(canvas){
+  const ctx = canvas.getContext('2d');
+  let raf = 0; const start = performance.now();
+
+  function proj(x,y,z,cx,cy,scale){
+    const x1 = x*Math.cos(rot.yaw) + z*Math.sin(rot.yaw);
+    const z1 = -x*Math.sin(rot.yaw) + z*Math.cos(rot.yaw);
+    const y1 = y*Math.cos(rot.pitch) - z1*Math.sin(rot.pitch);
+    const z2 = y*Math.sin(rot.pitch) + z1*Math.cos(rot.pitch);
+    return { x: cx + x1*scale, y: cy - y1*scale, depth: z2 };
+  }
+
+
+  function draw(){
+    const t = (performance.now()-start)/1000;
+    const w = canvas.clientWidth, h = canvas.clientHeight, dpr = Math.min(2, window.devicePixelRatio||1);
+    if(!w || !h){ raf=requestAnimationFrame(draw); return; }
+    if(canvas.width!==w*dpr){ canvas.width=w*dpr; canvas.height=h*dpr; }
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,w,h);
+    if(autoRotate) rot.yaw += 0.0022;
+
+    const isClass = canvas.id==='classCanvas';
+    const cx = w/2, cy = h/2 + 6;
+    const time = motion ? t : 1.2;
+
+    const subs = configFor(electrons);
+    const shells = shellDist(subs);
+    const totalNuc = protons + neutrons;
+    // Dynamic scale : K-shell nucleus-il muttilla, N-shell screen-il othungum
+    const maxRadius = shells.length ? ringRadiusFor(shells.length, totalNuc) : 2.6;
+    const scale = Math.min(w,h) / (maxRadius*2 + 2.5) * rot.zoom * (isClass?1.1:1);
+
+    // Nucleus glow - ippo nucleus radius-nu anusarichu cheruthu
+    const nucData = buildNucleus(protons+neutrons, protons);
+    const g = ctx.createRadialGradient(cx,cy,0,cx,cy,scale*(nucData.R+0.7));
+    g.addColorStop(0,'rgba(250,204,21,.28)'); g.addColorStop(1,'rgba(250,204,21,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(cx,cy,scale*(nucData.R+0.7),0,Math.PI*2); ctx.fill();
+
+    // ---- BOHR RINGS + ELECTRONS : Equal gap ----
+    for(let n=1; n<=shells.length; n++){
+      if(isolatedShell && isolatedShell!==n) continue;
+      const cnt = shells[n-1]; if(cnt===0) continue;
+      const ringR = ringRadiusFor(n, totalNuc); // Nucleus+1.6 gap + (n-1)*2.2
+      const col = SHELL_COLOR[n] || '#facc15';
+      ctx.strokeStyle=col; ctx.globalAlpha=.55; ctx.lineWidth=1.6;
+      ctx.beginPath();
+      for(let a=0;a<=64;a++){
+        const p = proj(Math.cos(a/64*Math.PI*2)*ringR, Math.sin(a/64*Math.PI*2)*ringR, 0, cx,cy,scale);
+        a===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y);
+      }
+      ctx.stroke(); ctx.globalAlpha=1;
+      if(showLabels){
+        const p = proj(ringR,0,0,cx,cy,scale);
+        ctx.fillStyle=col; ctx.font='700 12px sans-serif';
+        ctx.fillText(`${SHELL_NAME[n]} • n=${n} • ${cnt}e⁻`, p.x+6, p.y-6);
+      }
+      for(let i=0;i<cnt;i++){
+        const ang = time*0.45 + i/Math.max(1,cnt)*Math.PI*2;
+        const p = proj(Math.cos(ang)*ringR, Math.sin(ang)*ringR, 0, cx,cy,scale);
+        ctx.fillStyle=col; ctx.shadowColor=col; ctx.shadowBlur=11;
+        ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(5,scale*.18),0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
+      }
+    }
+
+
+    // ---- NUCLEUS : Solid ball ----
+    // Nucleus-inte pinnil oru faint ball - nucleons ullil aanennu kanikkan
+    const nucCenter = proj(0,0,0,cx,cy,scale);
+    ctx.beginPath(); ctx.arc(nucCenter.x,nucCenter.y, nucData.R*scale, 0, Math.PI*2);
+    ctx.fillStyle='rgba(15,15,30,.55)'; ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=1; ctx.stroke();
+
+    // Nucleons - depth sort cheythu, pinnil ullathu aadyam varakkum
+    const sorted = [...nucData.list].sort((a,b)=> proj(a.x,a.y,a.z,cx,cy,scale).depth - proj(b.x,b.y,b.z,cx,cy,scale).depth);
+    // Nucleon size - total koodumbol cheruthakum, illenkil overlap aakum
+    // Nucleon cheruthakki - 0.42 -> 0.30, idayil gap undakum, ottip pidikkilla
+    const nucleonR = Math.max(5, scale * (0.30 / Math.pow(Math.max(1, protons+neutrons), 0.16)));
+    sorted.forEach(nu=>{
+      const p = proj(nu.x,nu.y,nu.z,cx,cy,scale);
+      ctx.beginPath(); ctx.arc(p.x,p.y, nucleonR, 0, Math.PI*2);
+      ctx.fillStyle = nu.isP ? '#ef4444' : '#94a3b8'; ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,.7)'; ctx.lineWidth=1; ctx.stroke();
+      if(nu.isP){
+        ctx.fillStyle='#fff'; ctx.font='700 9px sans-serif'; ctx.textAlign='center';
+        ctx.fillText('+',p.x,p.y+3); ctx.textAlign='left';
+      }
+    });
+
+    raf = requestAnimationFrame(draw);
+  }
+  raf = requestAnimationFrame(draw);
+  return ()=> cancelAnimationFrame(raf);
+}
+
+// ---------- 7. DRAG + ZOOM ----------
+function attachDrag(canvas){
+  canvas.addEventListener('pointerdown', e=>{
+    canvas.setPointerCapture(e.pointerId);
+    drag = {x:e.clientX, y:e.clientY};
+  });
+  canvas.addEventListener('pointermove', e=>{
+    if(!drag) return;
+    rot.yaw += (e.clientX-drag.x)*0.008;
+    rot.pitch = Math.max(-1.2, Math.min(1.2, rot.pitch - (e.clientY-drag.y)*0.008));
+    drag = {x:e.clientX, y:e.clientY};
+  });
+  const end = ()=> drag=null;
+  canvas.addEventListener('pointerup', end);
+  canvas.addEventListener('pointerleave', end);
+  canvas.addEventListener('wheel', e=>{
+    e.preventDefault();
+    rot.zoom = Math.max(.6, Math.min(1.6, rot.zoom - e.deltaY*0.001));
+  }, {passive:false});
+}
+
+// ---------- 8. CLASS MODE ----------
+function enterClassMode(){
+  document.getElementById('classMode').classList.add('show');
+  rot.zoom = Math.max(rot.zoom, 1.22);
+  msg = 'Class Mode — Full Screen Atom Only';
+  updateUI();
+  try{ const p=document.documentElement.requestFullscreen?.(); if(p && p.catch) p.catch(()=>{}); }catch(e){}
+}
+function exitClassMode(){
+  document.getElementById('classMode').classList.remove('show');
+  rot.zoom = 1;
+  msg = '.';
+  updateUI();
+  try{ if(document.fullscreenElement) document.exitFullscreen?.(); }catch(e){}
+}
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape' && document.getElementById('classMode').classList.contains('show')) exitClassMode();
+});
+
+// ---------- 9. START : Hydrogen ----------
+buildElements();
+attachDrag(document.getElementById('atomCanvas'));
+attachDrag(document.getElementById('classCanvas'));
+makeAtom(document.getElementById('atomCanvas'));
+makeAtom(document.getElementById('classCanvas'));
+updateUI();
+</script>
+</body>
+</html>
