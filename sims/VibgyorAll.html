@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rainbow Lab — Complete Classroom Presentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans+Malayalam:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; overflow: hidden; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Malayalam", sans-serif; background: #0b1324; color: #f8fafc; }
@@ -562,6 +565,11 @@ const homeView = document.getElementById('homeView');
 const simFrame = document.getElementById('simFrame');
 const navBtns = document.querySelectorAll('.nav-btn');
 
+const fontInject = `
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans+Malayalam:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>body, button { font-family: "Google Sans", "Noto Sans Malayalam", system-ui, sans-serif !important; }</style>
+`;
+
 function openView(target, btnEl) {
   navBtns.forEach(b => b.classList.remove('active'));
   if (btnEl) btnEl.classList.add('active');
@@ -574,7 +582,7 @@ function openView(target, btnEl) {
     if (!tpl) return;
     homeView.style.display = 'none';
     simFrame.style.display = 'block';
-    simFrame.srcdoc = tpl.innerHTML;
+    simFrame.srcdoc = tpl.innerHTML.replace('</head>', fontInject + '</head>');
   }
 }
 
