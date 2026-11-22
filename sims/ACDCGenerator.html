@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AC & DC ജനറേറ്റർ പ്രവർത്തനം | Class 10 Physics Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --ac: #ea580c;
+      --dc: #2563eb;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body, button, input, label, span, div, h1, p, svg, text {
+      font-family: 'Google Sans', 'Noto Sans Malayalam', sans-serif !important;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: 14px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 840px;
+      width: 100%;
+      background: var(--card);
+      border-radius: 18px;
+      box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    header {
+      background: linear-gradient(135deg, #0f172a, #1d4ed8);
+      color: #fff;
+      padding: 16px 20px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 1.22rem;
+      margin-bottom: 4px;
+    }
+
+    header p {
+      font-size: 0.84rem;
+      opacity: 0.9;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px 18px;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 4px;
+      background: #e2e8f0;
+      padding: 4px;
+      border-radius: 10px;
+    }
+
+    .mode-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 7px;
+      font-weight: 700;
+      font-size: 0.84rem;
+      cursor: pointer;
+      background: transparent;
+      color: #475569;
+      transition: 0.2s;
+    }
+
+    .mode-btn.active-ac {
+      background: #ffffff;
+      color: var(--ac);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .mode-btn.active-dc {
+      background: #ffffff;
+      color: var(--dc);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .play-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 2px solid #cbd5e1;
+      background: #ffffff;
+      color: #0f172a;
+      font-weight: 700;
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+
+    .play-btn.running {
+      background: #eff6ff;
+      border-color: var(--dc);
+      color: var(--dc);
+    }
+
+    .stage {
+      background: #0f172a;
+      padding: 12px 10px;
+      display: flex;
+      justify-content: center;
+    }
+
+    svg {
+      width: 100%;
+      max-width: 740px;
+      height: auto;
+    }
+
+    .controls {
+      padding: 14px 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      background: #f8fafc;
+      border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 580px) {
+      .controls {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .slider-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .slider-group label {
+      font-size: 0.84rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--dc);
+      cursor: pointer;
+    }
+
+    .tip-box {
+      margin: 14px 18px 18px;
+      padding: 12px 15px;
+      background: #eff6ff;
+      border-left: 4px solid var(--dc);
+      border-radius: 10px;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: #1e3a8a;
+    }
+
+    .tip-box.ac-tip {
+      background: #fff7ed;
+      border-left-color: var(--ac);
+      color: #9a3412;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>AC &amp; DC ജനറേറ്റർ പ്രവർത്തനം </h1>
+    <p>(Generator Lab)</p>
+  </header>
+
+  <div class="toolbar">
+    <div class="btn-group">
+      <button class="mode-btn active-ac" id="btnAC" onclick="setMode('AC')">⚡ AC ജനറേറ്റർ (സ്ലിപ് റിങ്)</button>
+      <button class="mode-btn" id="btnDC" onclick="setMode('DC')">🔋 DC ജനറേറ്റർ (സ്പ്ലിറ്റ് റിങ്)</button>
+    </div>
+
+    <button class="play-btn running" id="btnPlay" onclick="togglePlay()">⏸️ നിർത്തുക (Pause)</button>
+  </div>
+
+  <!-- MAIN GENERATOR SVG -->
+  <div class="stage">
+    <svg viewBox="0 0 720 320">
+      <defs>
+        <marker id="arrowYellow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M 0 1 L 10 5 L 0 9 z" fill="#fde047" />
+        </marker>
+      </defs>
+
+      <!-- Magnetic Field Lines (N to S) -->
+      <g stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="5 5" opacity="0.35">
+        <line x1="125" y1="80" x2="355" y2="80" />
+        <line x1="125" y1="115" x2="355" y2="115" />
+        <line x1="125" y1="150" x2="355" y2="150" />
+      </g>
+
+      <!-- Field Magnet: North Pole (Left) -->
+      <rect x="45" y="60" width="80" height="110" rx="8" fill="#dc2626" stroke="#f87171" stroke-width="2" />
+      <text x="85" y="124" fill="#ffffff" font-size="32" font-weight="800" text-anchor="middle">N</text>
+      <text x="85" y="48" fill="#fca5a5" font-size="11" font-weight="700" text-anchor="middle">ഫീൽഡ് കാന്തം</text>
+
+      <!-- Field Magnet: South Pole (Right) -->
+      <rect x="355" y="60" width="80" height="110" rx="8" fill="#2563eb" stroke="#60a5fa" stroke-width="2" />
+      <text x="395" y="124" fill="#ffffff" font-size="32" font-weight="800" text-anchor="middle">S</text>
+      <text x="395" y="48" fill="#93c5fd" font-size="11" font-weight="700" text-anchor="middle">ഫീൽഡ് കാന്തം</text>
+
+      <!-- Rotation Axis Line -->
+      <line x1="240" y1="35" x2="240" y2="275" stroke="#475569" stroke-width="2" stroke-dasharray="4 4" />
+
+      <!-- ARMATURE COIL (ABCD) - Dynamic -->
+      <g id="armatureGroup">
+        <line id="armBC" x1="180" y1="65" x2="300" y2="65" stroke="#f59e0b" stroke-width="5" stroke-linecap="round" />
+        <line id="armAB" x1="180" y1="65" x2="180" y2="175" stroke="#fbbf24" stroke-width="6" stroke-linecap="round" />
+        <line id="armCD" x1="300" y1="65" x2="300" y2="175" stroke="#fb923c" stroke-width="6" stroke-linecap="round" />
+
+        <!-- Coil leads bending 90° and fixed to opposite points on rings -->
+        <polyline id="leadA" points="180,175 262,175 262,215" fill="none" stroke="#fbbf24" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" />
+        <polyline id="leadD" points="300,175 218,175 218,248" fill="none" stroke="#fb923c" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" />
+
+        <!-- Current Direction Arrows on AB and CD -->
+        <line id="arrowAB" x1="180" y1="145" x2="180" y2="95" stroke="#fde047" stroke-width="3" marker-end="url(#arrowYellow)" />
+        <line id="arrowCD" x1="300" y1="95" x2="300" y2="145" stroke="#fde047" stroke-width="3" marker-end="url(#arrowYellow)" />
+
+        <!-- Vertex Labels A, B, C, D -->
+        <text id="lblA" x="165" y="180" fill="#fef08a" font-size="13" font-weight="800">A</text>
+        <text id="lblB" x="165" y="65" fill="#fef08a" font-size="13" font-weight="800">B</text>
+        <text id="lblC" x="310" y="65" fill="#fed7aa" font-size="13" font-weight="800">C</text>
+        <text id="lblD" x="310" y="180" fill="#fed7aa" font-size="13" font-weight="800">D</text>
+      </g>
+      <text x="240" y="26" fill="#fde047" font-size="12" font-weight="700" text-anchor="middle">ആർമെച്ചർ (ABCD)</text>
+
+      <!-- AC ROTATING SLIP RINGS (R1, R2) WITH OPPOSITE ATTACHMENT POINTS -->
+      <g id="acRingsGroup">
+        <ellipse cx="240" cy="215" rx="22" ry="8" fill="none" stroke="#f59e0b" stroke-width="5" />
+        <circle id="ptR1" cx="262" cy="215" r="4.5" fill="#fef08a" stroke="#0f172a" stroke-width="1.2" />
+
+        <ellipse cx="240" cy="248" rx="22" ry="8" fill="none" stroke="#fb923c" stroke-width="5" />
+        <circle id="ptR2" cx="218" cy="248" r="4.5" fill="#fed7aa" stroke="#0f172a" stroke-width="1.2" />
+
+        <text x="240" y="280" fill="#fdba74" font-size="11.5" font-weight="700" text-anchor="middle">കറങ്ങുന്ന സ്ലിപ് റിങ്ങുകൾ (R1, R2)</text>
+      </g>
+
+      <!-- DC ROTATING SPLIT RING COMMUTATOR WITH OPPOSITE ATTACHMENT POINTS -->
+      <g id="dcRingsGroup" style="display: none;">
+        <g id="splitRingRotate" transform="translate(240, 232)">
+          <!-- Left Half -->
+          <path d="M -3 -20 A 20 20 0 0 0 -3 20" fill="none" stroke="#fbbf24" stroke-width="7" stroke-linecap="round" />
+          <!-- Right Half -->
+          <path d="M 3 -20 A 20 20 0 0 1 3 20" fill="none" stroke="#fb923c" stroke-width="7" stroke-linecap="round" />
+          <circle cx="-20" cy="0" r="4.5" fill="#fef08a" stroke="#0f172a" stroke-width="1.2" />
+          <circle cx="20" cy="0" r="4.5" fill="#fed7aa" stroke="#0f172a" stroke-width="1.2" />
+        </g>
+        <text x="240" y="280" fill="#93c5fd" font-size="11.5" font-weight="700" text-anchor="middle">കറങ്ങുന്ന സ്പ്ലിറ്റ് റിങ് (R1, R2)</text>
+      </g>
+
+      <!-- STATIONARY CARBON BRUSHES (B1, B2) -->
+      <rect id="brushB1" x="202" y="209" width="16" height="12" rx="2" fill="#94a3b8" stroke="#e2e8f0" stroke-width="1.5" />
+      <text id="lblB1" x="190" y="219" fill="#e2e8f0" font-size="11" font-weight="700" text-anchor="end">B1</text>
+
+      <rect id="brushB2" x="262" y="242" width="16" height="12" rx="2" fill="#94a3b8" stroke="#e2e8f0" stroke-width="1.5" />
+      <text id="lblB2" x="288" y="252" fill="#e2e8f0" font-size="11" font-weight="700" text-anchor="start">B2</text>
+
+      <!-- EXTERNAL CIRCUIT WIRES TO GALVANOMETER -->
+      <path id="extWireTop" d="M 202 215 L 145 215 L 145 298 L 580 298 L 580 250" fill="none" stroke="#64748b" stroke-width="3" />
+      <path id="extWireBot" d="M 278 248 L 510 248" fill="none" stroke="#64748b" stroke-width="3" />
+
+      <!-- Animated Current Dots in External Circuit -->
+      <path id="extFlow" d="M 202 215 L 145 215 L 145 298 L 580 298 L 580 248 L 278 248"
+            fill="none" stroke="#fde047" stroke-width="3.5" stroke-dasharray="6 16" />
+
+      <!-- GALVANOMETER (Right Bottom) -->
+      <g transform="translate(545, 248)">
+        <circle cx="0" cy="0" r="30" fill="#1e293b" stroke="#94a3b8" stroke-width="2.5" />
+        <path d="M -18 -8 A 20 20 0 0 1 18 -8" fill="none" stroke="#475569" stroke-width="2" />
+        <line id="galvNeedle" x1="0" y1="8" x2="0" y2="-20" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
+        <circle cx="0" cy="8" r="4" fill="#e2e8f0" />
+        <text x="0" y="22" fill="#cbd5e1" font-size="11" font-weight="800" text-anchor="middle">G</text>
+      </g>
+      <text x="545" y="292" fill="#94a3b8" font-size="10.5" font-weight="700" text-anchor="middle">ഗാൽവനോമീറ്റർ</text>
+
+      <!-- LIVE OUTPUT WAVEFORM GRAPH (Right Top) -->
+      <g transform="translate(465, 45)">
+        <rect x="0" y="0" width="230" height="135" rx="10" fill="#1e293b" stroke="#475569" stroke-width="1.5" />
+        <text x="115" y="20" fill="#e2e8f0" font-size="11" font-weight="700" text-anchor="middle" id="graphTitle">AC ഔട്ട്പുട്ട് ഗ്രാഫ്</text>
+
+        <line x1="25" y1="75" x2="215" y2="75" stroke="#64748b" stroke-width="1.2" stroke-dasharray="3 3" />
+        <text x="14" y="45" fill="#4ade80" font-size="9.5" font-weight="700" text-anchor="middle">+</text>
+        <text x="14" y="78" fill="#94a3b8" font-size="9.5" font-weight="700" text-anchor="middle">0</text>
+        <text x="14" y="110" fill="#f87171" font-size="9.5" font-weight="700" text-anchor="middle">-</text>
+
+        <path id="wavePath" fill="none" stroke="#fb923c" stroke-width="2.5" />
+        <circle id="waveDot" cx="25" cy="75" r="5" fill="#fde047" stroke="#0f172a" stroke-width="1.5" />
+
+        <text x="115" y="126" fill="#94a3b8" font-size="9.5" font-weight="700" text-anchor="middle" id="angleReadout">കോൺ (Angle): 0°</text>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Sliders -->
+  <div class="controls">
+    <div class="slider-group">
+      <label>
+        <span>🔄 ആർമെച്ചർ കോൺ (Manual Angle)</span>
+        <span id="lblAngle">0°</span>
+      </label>
+      <input type="range" id="sliderAngle" min="0" max="360" step="1" value="0" />
+    </div>
+
+    <div class="slider-group">
+      <label>
+        <span>⚡ കറങ്ങുന്ന വേഗത (Speed)</span>
+        <span id="lblSpeed">സാധാരണ</span>
+      </label>
+      <input type="range" id="sliderSpeed" min="0.5" max="4" step="0.5" value="1.5" />
+    </div>
+  </div>
+
+  <div class="tip-box ac-tip" id="tipBox"></div>
+</div>
+
+<script>
+  let mode = 'AC';
+  let isPlaying = true;
+  let angleDeg = 0;
+  let flowOffset = 0;
+
+  const sliderAngle = document.getElementById('sliderAngle');
+  const sliderSpeed = document.getElementById('sliderSpeed');
+
+  function setMode(newMode) {
+    mode = newMode;
+    document.getElementById('btnAC').className = `mode-btn ${mode === 'AC' ? 'active-ac' : ''}`;
+    document.getElementById('btnDC').className = `mode-btn ${mode === 'DC' ? 'active-dc' : ''}`;
+
+    const isAC = mode === 'AC';
+    document.getElementById('acRingsGroup').style.display = isAC ? 'block' : 'none';
+    document.getElementById('dcRingsGroup').style.display = isAC ? 'none' : 'block';
+
+    if (isAC) {
+      document.getElementById('brushB1').setAttribute('y', '209');
+      document.getElementById('lblB1').setAttribute('y', '219');
+      document.getElementById('brushB2').setAttribute('y', '242');
+      document.getElementById('lblB2').setAttribute('y', '252');
+    } else {
+      document.getElementById('brushB1').setAttribute('y', '226');
+      document.getElementById('lblB1').setAttribute('y', '236');
+      document.getElementById('brushB2').setAttribute('y', '226');
+      document.getElementById('lblB2').setAttribute('y', '236');
+    }
+
+    drawStaticWave();
+    updateTip();
+    renderFrame();
+  }
+
+  function togglePlay() {
+    isPlaying = !isPlaying;
+    const btn = document.getElementById('btnPlay');
+    if (isPlaying) {
+      btn.className = 'play-btn running';
+      btn.textContent = '⏸️ നിർത്തുക (Pause)';
+    } else {
+      btn.className = 'play-btn';
+      btn.textContent = '▶️ തുടങ്ങുക (Play)';
+    }
+  }
+
+  function drawStaticWave() {
+    const wavePath = document.getElementById('wavePath');
+    const isAC = mode === 'AC';
+    let d = 'M 25 75';
+    for (let px = 0; px <= 190; px += 4) {
+      const rad = (px / 190) * Math.PI * 2;
+      const val = isAC ? Math.sin(rad) : Math.abs(Math.sin(rad));
+      const py = 75 - val * 35;
+      d += ` L ${25 + px} ${py.toFixed(1)}`;
+    }
+    wavePath.setAttribute('d', d);
+    wavePath.setAttribute('stroke', isAC ? '#fb923c' : '#38bdf8');
+    document.getElementById('graphTitle').textContent = isAC
+      ? 'AC ഔട്ട്പുട്ട് ഗ്രാഫ് (ദിശ മാറുന്നു)'
+      : 'DC ഔട്ട്പുട്ട് ഗ്രാഫ് (ഒരേ ദിശയിൽ)';
+  }
+
+  function updateTip() {
+    const tipBox = document.getElementById('tipBox');
+    if (mode === 'AC') {
+      tipBox.className = 'tip-box ac-tip';
+      tipBox.innerHTML = `
+        <strong>⚡ AC ജനറേറ്റർ (സ്ലിപ് റിങ്ങുകൾ R1, R2):</strong><br>       `;
+    } else {
+      tipBox.className = 'tip-box';
+      tipBox.innerHTML = `
+        <strong>🔋 DC ജനറേറ്റർ (സ്പ്ലിറ്റ് റിങ് കമ്മ്യൂട്ടേറ്റർ):</strong><br>
+      `;
+    }
+  }
+
+  function renderFrame() {
+    const rad = (angleDeg * Math.PI) / 180;
+    const cosA = Math.cos(rad);
+    const sinA = Math.sin(rad);
+
+    // 2.5D projection of Armature Coil ABCD
+    const cx = 240;
+    const halfW = 62;
+    const xAB = cx - halfW * cosA;
+    const xCD = cx + halfW * cosA;
+    const yTilt = sinA * 14;
+
+    const yTopAB = 68 - yTilt;
+    const yBotAB = 172 - yTilt;
+    const yTopCD = 68 + yTilt;
+    const yBotCD = 172 + yTilt;
+
+    document.getElementById('armAB').setAttribute('x1', xAB);
+    document.getElementById('armAB').setAttribute('y1', yTopAB);
+    document.getElementById('armAB').setAttribute('x2', xAB);
+    document.getElementById('armAB').setAttribute('y2', yBotAB);
+
+    document.getElementById('armCD').setAttribute('x1', xCD);
+    document.getElementById('armCD').setAttribute('y1', yTopCD);
+    document.getElementById('armCD').setAttribute('x2', xCD);
+    document.getElementById('armCD').setAttribute('y2', yBotCD);
+
+    document.getElementById('armBC').setAttribute('x1', xAB);
+    document.getElementById('armBC').setAttribute('y1', yTopAB);
+    document.getElementById('armBC').setAttribute('x2', xCD);
+    document.getElementById('armBC').setAttribute('y2', yTopCD);
+
+    // Opposite attachment points on rotating rings
+    const r1Cx = 240, r1Cy = 215;
+    const r2Cx = 240, r2Cy = 248;
+    const dcCx = 240, dcCy = 232;
+
+    // A's point on opposite side of R1
+    const pt1X = r1Cx - 22 * Math.cos(rad);
+    const pt1Y = r1Cy - 8 * Math.sin(rad);
+    document.getElementById('ptR1').setAttribute('cx', pt1X.toFixed(1));
+    document.getElementById('ptR1').setAttribute('cy', pt1Y.toFixed(1));
+
+    // D's point on opposite side of R2
+    const pt2X = r2Cx + 22 * Math.cos(rad);
+    const pt2Y = r2Cy + 8 * Math.sin(rad);
+    document.getElementById('ptR2').setAttribute('cx', pt2X.toFixed(1));
+    document.getElementById('ptR2').setAttribute('cy', pt2Y.toFixed(1));
+
+    // Rotate DC Split Ring with Armature
+    document.getElementById('splitRingRotate').setAttribute('transform', `translate(${dcCx}, ${dcCy}) rotate(${angleDeg})`);
+
+    // Opposite points on DC split ring halves
+    const dcPtAX = dcCx - 20 * Math.cos(rad);
+    const dcPtAY = dcCy - 20 * Math.sin(rad);
+    const dcPtDX = dcCx + 20 * Math.cos(rad);
+    const dcPtDY = dcCy + 20 * Math.sin(rad);
+
+    // 90° Bend Leads from A and D to the opposite ring points
+    if (mode === 'AC') {
+      document.getElementById('leadA').setAttribute(
+        'points',
+        `${xAB},${yBotAB} ${pt1X.toFixed(1)},${yBotAB} ${pt1X.toFixed(1)},${pt1Y.toFixed(1)}`
+      );
+      document.getElementById('leadD').setAttribute(
+        'points',
+        `${xCD},${yBotCD} ${pt2X.toFixed(1)},${yBotCD} ${pt2X.toFixed(1)},${pt2Y.toFixed(1)}`
+      );
+    } else {
+      document.getElementById('leadA').setAttribute(
+        'points',
+        `${xAB},${yBotAB} ${dcPtAX.toFixed(1)},${yBotAB} ${dcPtAX.toFixed(1)},${dcPtAY.toFixed(1)}`
+      );
+      document.getElementById('leadD').setAttribute(
+        'points',
+        `${xCD},${yBotCD} ${dcPtDX.toFixed(1)},${yBotCD} ${dcPtDX.toFixed(1)},${dcPtDY.toFixed(1)}`
+      );
+    }
+
+    // Labels A, B, C, D
+    document.getElementById('lblA').setAttribute('x', xAB - 14);
+    document.getElementById('lblA').setAttribute('y', yBotAB + 6);
+    document.getElementById('lblB').setAttribute('x', xAB - 14);
+    document.getElementById('lblB').setAttribute('y', yTopAB);
+    document.getElementById('lblC').setAttribute('x', xCD + 8);
+    document.getElementById('lblC').setAttribute('y', yTopCD);
+    document.getElementById('lblD').setAttribute('x', xCD + 8);
+    document.getElementById('lblD').setAttribute('y', yBotCD + 6);
+
+    // Induced EMF magnitude & direction
+    const emf = sinA;
+    const absEmf = Math.abs(emf);
+
+    // Current Arrows inside Armature
+    const arrowAB = document.getElementById('arrowAB');
+    const arrowCD = document.getElementById('arrowCD');
+    if (absEmf < 0.12) {
+      arrowAB.setAttribute('opacity', '0');
+      arrowCD.setAttribute('opacity', '0');
+    } else {
+      arrowAB.setAttribute('opacity', '1');
+      arrowCD.setAttribute('opacity', '1');
+      const midAB = (yTopAB + yBotAB) / 2;
+      const midCD = (yTopCD + yBotCD) / 2;
+      if (emf > 0) {
+        arrowAB.setAttribute('x1', xAB); arrowAB.setAttribute('y1', midAB + 22);
+        arrowAB.setAttribute('x2', xAB); arrowAB.setAttribute('y2', midAB - 22);
+        arrowCD.setAttribute('x1', xCD); arrowCD.setAttribute('y1', midCD - 22);
+        arrowCD.setAttribute('x2', xCD); arrowCD.setAttribute('y2', midCD + 22);
+      } else {
+        arrowAB.setAttribute('x1', xAB); arrowAB.setAttribute('y1', midAB - 22);
+        arrowAB.setAttribute('x2', xAB); arrowAB.setAttribute('y2', midAB + 22);
+        arrowCD.setAttribute('x1', xCD); arrowCD.setAttribute('y1', midCD + 22);
+        arrowCD.setAttribute('x2', xCD); arrowCD.setAttribute('y2', midCD - 22);
+      }
+    }
+
+    // External Circuit Output (AC alternates, DC stays positive)
+    const extOutput = mode === 'AC' ? emf : absEmf;
+
+    // Galvanometer Needle
+    const needleAngle = extOutput * 48;
+    document.getElementById('galvNeedle').setAttribute('transform', `rotate(${needleAngle.toFixed(1)}, 0, 8)`);
+
+    // External Current Flow Animation
+    flowOffset -= extOutput * 3.5;
+    document.getElementById('extFlow').setAttribute('stroke-dashoffset', flowOffset.toFixed(1));
+    document.getElementById('extFlow').setAttribute('opacity', (0.2 + absEmf * 0.8).toFixed(2));
+
+    // Wave Dot Position
+    const dotX = 25 + (angleDeg / 360) * 190;
+    const dotY = 75 - extOutput * 35;
+    document.getElementById('waveDot').setAttribute('cx', dotX.toFixed(1));
+    document.getElementById('waveDot').setAttribute('cy', dotY.toFixed(1));
+
+    // Readouts
+    document.getElementById('lblAngle').textContent = `${Math.round(angleDeg)}°`;
+    document.getElementById('angleReadout').textContent = `കോൺ (Angle): ${Math.round(angleDeg)}°`;
+    sliderAngle.value = Math.round(angleDeg);
+  }
+
+  function animate() {
+    if (isPlaying) {
+      const spd = parseFloat(sliderSpeed.value);
+      angleDeg = (angleDeg + spd) % 360;
+      renderFrame();
+    }
+    requestAnimationFrame(animate);
+  }
+
+  sliderAngle.addEventListener('input', () => {
+    isPlaying = false;
+    document.getElementById('btnPlay').className = 'play-btn';
+    document.getElementById('btnPlay').textContent = '▶️ തുടങ്ങുക (Play)';
+    angleDeg = parseFloat(sliderAngle.value);
+    renderFrame();
+  });
+
+  sliderSpeed.addEventListener('input', () => {
+    const v = parseFloat(sliderSpeed.value);
+    document.getElementById('lblSpeed').textContent = v <= 1 ? 'സ്ലോ' : v <= 2 ? 'സാധാരണ' : 'വേഗത്തിൽ';
+  });
+
+  drawStaticWave();
+  updateTip();
+  renderFrame();
+  animate();
+</script>
+</body>
+</html>
