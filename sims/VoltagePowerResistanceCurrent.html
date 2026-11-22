@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>വോൾട്ടേജ്, കറന്റ്, പവർ | Water vs Electricity Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --primary: #2563eb;
+      --water: #0284c7;
+      --elec: #d97706;
+      --power: #16a34a;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body, button, input, select, textarea, label, span, div, h1, h2, p, svg, text {
+      font-family: 'Google Sans', 'Noto Sans Malayalam', sans-serif !important;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: 14px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 860px;
+      width: 100%;
+      background: var(--card);
+      border-radius: 18px;
+      box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    header {
+      background: linear-gradient(135deg, #0369a1, #1d4ed8);
+      color: #fff;
+      padding: 16px 20px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 1.25rem;
+      margin-bottom: 4px;
+      font-weight: 700;
+    }
+
+    header p {
+      font-size: 0.85rem;
+      opacity: 0.92;
+    }
+
+    .dual-stage {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      background: #cbd5e1;
+    }
+
+    @media (max-width: 640px) {
+      .dual-stage {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: #0f172a;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .panel-title {
+      color: #e2e8f0;
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    svg {
+      width: 100%;
+      max-width: 380px;
+      height: auto;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      padding: 14px 18px;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border);
+    }
+
+    @media (max-width: 580px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .stat-box {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 8px;
+      text-align: center;
+    }
+
+    .stat-box.v { border-top: 3px solid #2563eb; }
+    .stat-box.r { border-top: 3px solid #dc2626; }
+    .stat-box.i { border-top: 3px solid #0284c7; }
+    .stat-box.p { border-top: 3px solid #16a34a; background: #f0fdf4; }
+
+    .stat-label {
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+
+    .stat-val {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .stat-sub {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .controls {
+      padding: 16px 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    @media (max-width: 580px) {
+      .controls {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .slider-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .slider-group label {
+      font-size: 0.86rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .tip-box {
+      margin: 0 18px 18px;
+      padding: 12px 15px;
+      background: #eff6ff;
+      border-left: 4px solid var(--primary);
+      border-radius: 10px;
+      font-size: 0.86rem;
+      line-height: 1.6;
+      color: #1e3a8a;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>Voltage, Current, Resistance, Power</h1>
+    <p>ജലടാങ്കിലെ വെള്ളത്തിന്റെ ഒഴുക്കും വൈദ്യുത സെർക്കീട്ടും താരതമ്യം ചെയ്യുക</p>
+  </header>
+
+  <div class="dual-stage">
+    <!-- LEFT: WATER TANK ANALOGY -->
+    <div class="panel">
+      <div class="panel-title">💧 ജലടാങ്ക് മാതൃക (Water Analogy)</div>
+      <svg viewBox="0 0 360 260">
+        <line x1="55" y1="160" x2="55" y2="235" stroke="#475569" stroke-width="4" />
+        <line x1="125" y1="160" x2="125" y2="235" stroke="#475569" stroke-width="4" />
+
+        <rect x="45" y="40" width="90" height="120" rx="6" fill="#1e293b" stroke="#94a3b8" stroke-width="3" />
+        <rect id="waterLevel" x="48" y="80" width="84" height="77" rx="3" fill="#38bdf8" opacity="0.85" />
+        <text x="90" y="30" fill="#38bdf8" font-size="11" font-weight="700" text-anchor="middle">മർദ്ദം (Voltage)</text>
+
+        <rect x="135" y="132" width="130" height="22" fill="#334155" stroke="#94a3b8" stroke-width="2" />
+
+        <rect id="valveTop" x="180" y="132" width="34" height="4" fill="#ef4444" />
+        <rect id="valveBot" x="180" y="150" width="34" height="4" fill="#ef4444" />
+        <text x="197" y="122" fill="#f87171" font-size="10.5" font-weight="700" text-anchor="middle">തടസ്സം (R)</text>
+
+        <line id="waterFlowLine" x1="135" y1="143" x2="275" y2="143"
+              stroke="#7dd3fc" stroke-width="10" stroke-dasharray="10 10" stroke-linecap="round" />
+
+        <path id="waterFall" d="M 265 143 Q 290 143 290 185" fill="none" stroke="#38bdf8" stroke-width="8" stroke-dasharray="8 8" />
+
+        <g id="turbineGroup" transform="translate(290, 200)">
+          <circle cx="0" cy="0" r="28" fill="none" stroke="#22c55e" stroke-width="3" />
+          <line x1="-28" y1="0" x2="28" y2="0" stroke="#4ade80" stroke-width="4" />
+          <line x1="0" y1="-28" x2="0" y2="28" stroke="#4ade80" stroke-width="4" />
+          <line x1="-20" y1="-20" x2="20" y2="20" stroke="#4ade80" stroke-width="4" />
+          <line x1="-20" y1="20" x2="20" y2="-20" stroke="#4ade80" stroke-width="4" />
+          <circle cx="0" cy="0" r="7" fill="#16a34a" stroke="#ffffff" stroke-width="2" />
+        </g>
+        <text x="290" y="248" fill="#4ade80" font-size="11" font-weight="700" text-anchor="middle">ടർബൈൻ (Power)</text>
+      </svg>
+    </div>
+
+    <!-- RIGHT: ELECTRIC CIRCUIT -->
+    <div class="panel">
+      <div class="panel-title">⚡ വൈദ്യുത സെർക്കീട്ട് (Electric Circuit)</div>
+      <svg viewBox="0 0 360 260">
+        <defs>
+          <filter id="glowBulb" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="8" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+        </defs>
+
+        <rect x="65" y="65" width="230" height="145" rx="14" fill="none" stroke="#475569" stroke-width="4" />
+        <rect id="elecFlowLine" x="65" y="65" width="230" height="145" rx="14"
+              fill="none" stroke="#facc15" stroke-width="4" stroke-dasharray="8 16" stroke-linecap="round" />
+
+        <g transform="translate(38, 105)">
+          <rect x="0" y="0" width="54" height="65" rx="8" fill="#1e3a8a" stroke="#60a5fa" stroke-width="2.5" />
+          <text x="27" y="24" fill="#93c5fd" font-size="10" font-weight="700" text-anchor="middle">BATTERY</text>
+          <text x="27" y="46" fill="#ffffff" font-size="15" font-weight="700" text-anchor="middle" id="svgBatV">12 V</text>
+        </g>
+
+        <g transform="translate(145, 50)">
+          <rect x="0" y="0" width="70" height="30" rx="6" fill="#7f1d1d" stroke="#f87171" stroke-width="2" />
+          <path d="M 8 15 L 16 6 L 26 24 L 36 6 L 46 24 L 56 6 L 62 15" fill="none" stroke="#fca5a5" stroke-width="2.5" />
+          <text x="35" y="-8" fill="#f87171" font-size="11" font-weight="700" text-anchor="middle" id="svgRes">R = 4 Ω</text>
+        </g>
+
+        <g transform="translate(295, 138)">
+          <circle id="bulbAura" cx="0" cy="0" r="36" fill="#fde047" opacity="0.5" filter="url(#glowBulb)" />
+          <circle id="bulbBody" cx="0" cy="0" r="22" fill="#fef08a" stroke="#f59e0b" stroke-width="2.5" />
+          <text x="0" y="4" fill="#0f172a" font-size="11" font-weight="700" text-anchor="middle" id="svgPower">36 W</text>
+        </g>
+        <text x="295" y="182" fill="#4ade80" font-size="11" font-weight="700" text-anchor="middle">ബൾബ് (Power)</text>
+
+        <rect x="132" y="196" width="96" height="26" rx="6" fill="#1e293b" stroke="#facc15" stroke-width="1.5" />
+        <text x="180" y="213" fill="#fde047" font-size="11.5" font-weight="700" text-anchor="middle" id="svgCurr">I = 3.0 A</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-box v">
+      <div class="stat-label">വോൾട്ടേജ് (V)</div>
+      <div class="stat-val" id="valV">12 V</div>
+      <div class="stat-sub">ടാങ്കിന്റെ ഉയരം / മർദ്ദം</div>
+    </div>
+    <div class="stat-box r">
+      <div class="stat-label">പ്രതിരോധം (R)</div>
+      <div class="stat-val" id="valR">4 Ω</div>
+      <div class="stat-sub">പൈപ്പിലെ തടസ്സം (Pipe Restriction)</div>
+    </div>
+    <div class="stat-box i">
+      <div class="stat-label">കറന്റ് (I = V / R)</div>
+      <div class="stat-val" id="valI">3.0 A</div>
+      <div class="stat-sub">വെള്ളത്തിന്റെ ഒഴുക്ക്</div>
+    </div>
+    <div class="stat-box p">
+      <div class="stat-label">പവർ (P = V × I)</div>
+      <div class="stat-val" id="valP">36 W</div>
+      <div class="stat-sub">ടർബൈൻ വേഗത / പ്രകാശം</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="slider-group">
+      <label>
+        <span>⬆️ വോൾട്ടേജ് / ടാങ്കിലെ വെള്ളം (V)</span>
+        <span id="lblV">12 V</span>
+      </label>
+      <input type="range" id="sliderV" min="3" max="24" step="3" value="12" />
+    </div>
+
+    <div class="slider-group">
+      <label>
+        <span>🚧 പ്രതിരോധം / Pipe Restriction (R)</span>
+        <span id="lblR">4 Ω</span>
+      </label>
+      <input type="range" id="sliderR" min="2" max="12" step="2" value="4" />
+    </div>
+  </div>
+
+  <div class="tip-box" id="tipBox"></div>
+</div>
+
+<script>
+  const sliderV = document.getElementById('sliderV');
+  const sliderR = document.getElementById('sliderR');
+
+  let flowOffset = 0;
+  let turbineAngle = 0;
+  let currentI = 3;
+  let powerP = 36;
+
+  function update() {
+    const V = parseFloat(sliderV.value);
+    const R = parseFloat(sliderR.value);
+    currentI = V / R;
+    powerP = V * currentI;
+
+    document.getElementById('lblV').textContent = `${V} V`;
+    document.getElementById('lblR').textContent = `${R} Ω`;
+    document.getElementById('valV').textContent = `${V} V`;
+    document.getElementById('valR').textContent = `${R} Ω`;
+    document.getElementById('valI').textContent = `${currentI.toFixed(1)} A`;
+    document.getElementById('valP').textContent = `${Math.round(powerP)} W`;
+
+    document.getElementById('svgBatV').textContent = `${V} V`;
+    document.getElementById('svgRes').textContent = `R = ${R} Ω`;
+    document.getElementById('svgCurr').textContent = `I = ${currentI.toFixed(1)} A`;
+    document.getElementById('svgPower').textContent = `${Math.round(powerP)} W`;
+
+    const waterH = 16 + (V / 24) * 96;
+    const waterRect = document.getElementById('waterLevel');
+    waterRect.setAttribute('y', 157 - waterH);
+    waterRect.setAttribute('height', waterH);
+
+    const valveH = 1 + ((R - 2) / 10) * 7.5;
+    document.getElementById('valveTop').setAttribute('height', valveH);
+    document.getElementById('valveBot').setAttribute('y', 154 - valveH);
+    document.getElementById('valveBot').setAttribute('height', valveH);
+
+    const streamW = Math.min(14, Math.max(3, currentI * 2.2));
+    document.getElementById('waterFlowLine').setAttribute('stroke-width', streamW);
+    document.getElementById('waterFall').setAttribute('stroke-width', streamW * 0.85);
+
+    const glow = Math.min(1, Math.max(0.1, powerP / 120));
+    document.getElementById('bulbAura').setAttribute('opacity', glow.toFixed(2));
+    document.getElementById('bulbBody').setAttribute('fill', powerP > 15 ? '#fef08a' : '#cbd5e1');
+
+    document.getElementById('tipBox').innerHTML = `
+      <strong>ഇപ്പോൾ സംഭവിക്കുന്നത്:</strong><br>
+      • <strong>${V} V മർദ്ദത്തിൽ (Voltage)</strong>, <strong>${R} Ω തടസ്സത്തിലൂടെ (Resistance)</strong> ഒഴുകുന്ന കറന്റ് <strong>${currentI.toFixed(1)} A</strong> ആണ്.<br>
+      • മർദ്ദവും ഒഴുക്കും ചേർന്ന് ഉണ്ടാക്കുന്ന ആകെ ശക്തിയാണ് (<strong>Power = ${V} × ${currentI.toFixed(1)} = ${Math.round(powerP)} W</strong>) ടർബൈനിനെ കറക്കുന്നതും ബൾബിനെ പ്രകാശിപ്പിക്കുന്നതും!
+    `;
+  }
+
+  function animate() {
+    const flowSpeed = Math.min(6, Math.max(0.4, currentI * 0.85));
+    const spinSpeed = Math.min(14, Math.max(0.8, powerP * 0.12));
+
+    flowOffset -= flowSpeed;
+    turbineAngle = (turbineAngle + spinSpeed) % 360;
+
+    document.getElementById('waterFlowLine').setAttribute('stroke-dashoffset', flowOffset);
+    document.getElementById('waterFall').setAttribute('stroke-dashoffset', flowOffset);
+    document.getElementById('elecFlowLine').setAttribute('stroke-dashoffset', flowOffset);
+    document.getElementById('turbineGroup').setAttribute('transform', `translate(290, 200) rotate(${turbineAngle})`);
+
+    requestAnimationFrame(animate);
+  }
+
+  sliderV.addEventListener('input', update);
+  sliderR.addEventListener('input', update);
+
+  update();
+  animate();
+</script>
+</body>
+</html>
