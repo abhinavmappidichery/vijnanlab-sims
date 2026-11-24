@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gold Foil Experiment — Rutherford Scattering Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f1f5f9;--card:#ffffff;--gold:#d97706;--blue:#2563eb;--text:#0f172a;--muted:#64748b;--border:#e2e8f0}
+*{box-sizing:border-box;margin:0;padding:0}
+body, button, input, select, textarea, label, span, div, h1, h2, h3, p {
+  font-family: 'Google Sans', 'Noto Sans Malayalam', sans-serif !important;
+}
+body{background:var(--bg);color:var(--text);display:flex;justify-content:center;padding:0;min-height:100vh;min-height:100dvh;width:100%}
+.container{max-width:100%;width:100%;min-height:100vh;min-height:100dvh;background:var(--card);border-radius:0;box-shadow:none;border:none;overflow:hidden;display:flex;flex-direction:column}
+header{background:linear-gradient(135deg,#0f172a,#78350f);color:#fff;padding:15px 20px;text-align:center;flex:none}
+header h1{font-size:1.22rem;margin-bottom:4px}
+header p{font-size:.83rem;opacity:.92}
+.toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;padding:11px 16px;background:#f8fafc;border-bottom:1px solid var(--border);flex:none}
+.btn-group{display:flex;gap:4px;background:#e2e8f0;padding:4px;border-radius:10px}
+.view-btn{padding:7px 13px;border:none;border-radius:7px;font-weight:700;font-size:.8rem;cursor:pointer;background:transparent;color:#475569}
+.view-btn.active{background:#fff;color:#b45309;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.action-group{display:flex;gap:7px;flex-wrap:wrap}
+.btn{padding:7px 12px;border-radius:8px;border:2px solid #cbd5e1;background:#fff;color:#0f172a;font-weight:700;font-size:.79rem;cursor:pointer}
+.btn.next-btn{background:#fef3c7;border-color:#f59e0b;color:#92400e}
+.btn.next-btn:hover{background:#fde68a}
+.btn.unlimited-btn{background:#fff7ed;border-color:#ea580c;color:#9a3412}
+.btn.unlimited-btn.active{background:#ea580c;color:#fff}
+.btn.auto-btn.active{background:#dbeafe;border-color:#2563eb;color:#1e40af}
+.stage{background:#090d16;display:flex;justify-content:center;flex:none;width:100%;position:relative}
+canvas{width:100%;max-width:100%;height:auto;aspect-ratio:900/410;display:block}
+/* 3D നിയന്ത്രണ ബാർ - കാൻവാസിന് താഴെ, മുട്ടാതെ, വൃത്തിയായി */
+.rotate3d{display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap;justify-content:center;background:#0f172a;color:#fff;padding:10px 14px;font-size:.78rem;font-weight:700;flex:none;line-height:1.4}
+.rotate3d .grp{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.rotate3d .grp input{width:130px;accent-color:#f59e0b;flex:none}
+.rotate3d .deg{min-width:78px;text-align:center;background:rgba(255,255,255,.14);padding:3px 8px;border-radius:6px;white-space:nowrap}
+.rotate3d button{padding:5px 10px;border:none;border-radius:6px;font-weight:700;cursor:pointer;background:#fff;color:#0f172a;white-space:nowrap;flex:none}
+.rotate3d .hint{opacity:.85;white-space:nowrap}
+@media(max-width:640px){.rotate3d .grp input{width:90px}.rotate3d{justify-content:flex-start}}
+.status-banner{padding:11px 18px;background:#fffbeb;border-top:1px solid #fde68a;border-bottom:1px solid #e2e8f0;font-size:.84rem;line-height:1.55;color:#78350f}
+.controls{padding:12px 18px;display:grid;grid-template-columns:1fr 1fr;gap:18px;background:#f8fafc}
+@media(max-width:580px){.controls{grid-template-columns:1fr}}
+.slider-group{display:flex;flex-direction:column;gap:4px}
+.slider-group label{font-size:.82rem;font-weight:700;display:flex;justify-content:space-between}
+input[type=range]{width:100%;accent-color:#d97706;cursor:pointer}
+.legend-bar{display:flex;flex-wrap:wrap;gap:14px;padding:10px 18px;background:#fff;border-bottom:1px solid var(--border);font-size:.78rem;color:#334155;font-weight:600}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.conclusions-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:14px 18px 18px;background:#f8fafc}
+@media(max-width:680px){.conclusions-grid{grid-template-columns:1fr}header h1{font-size:1.02rem}header p{font-size:.76rem}.toolbar{padding:8px 10px}}
+@media(min-width:1100px){header{padding:12px 20px}header h1{font-size:1.35rem}}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>Gold Foil Experiment — Rutherford Scattering Lab</h1>
+</header>
+<div class="toolbar">
+<div class="btn-group">
+<button class="view-btn active" id="btnLab" onclick="setView('lab')">Lab Setup</button>
+<button class="view-btn" id="btnAtomic" onclick="setView('atomic')">Atomic Zoom</button>
+</div>
+<div class="action-group">
+<button class="btn next-btn" id="btnNext" onclick="fireNextParticle()">▶ Next α-Particle</button>
+<button class="btn unlimited-btn" id="btnUnlimited" onclick="toggleUnlimited()">🌊 Unlimited Beam: OFF</button>
+<button class="btn auto-btn" id="btnAuto" onclick="toggleAuto()">🔁 Auto Slow: OFF</button>
+<button class="btn" onclick="clearTrails()">🧹 Clear Trails </button>
+</div>
+</div>
+<div class="stage"><canvas id="simCanvas" width="900" height="410"></canvas></div>
+<div class="rotate3d">
+<span class="grp">3D View:</span>
+<span class="grp">Side<input type="range" id="sliderYaw" min="-60" max="60" step="1" value="0"></span>
+<span class="grp">Tilt<input type="range" id="sliderPitch" min="-45" max="45" step="1" value="0"></span>
+<span class="deg" id="lbl3d">0° / 0°</span>
+<button onclick="reset3d()">↩ Reset View </button>
+<span class="hint">Drag / Swipe to Rotate (Drag)</span>
+</div>
+<div class="status-banner" id="statusBanner"><strong>പരീക്ഷണ സജ്ജീകരണം (Lab Setup) — 3D സ്ലിറ്റ് (Slit):</strong> സ്ലിറ്റ് വരെ കണം നേരെ പോകും. സ്ലിറ്റിന്റെ വിടവിൽ കൊള്ളാത്തവ തടയപ്പെടും. വളവ് ഉണ്ടാകുന്നത് സ്വർണ്ണത്തകിടിലെ ന്യൂക്ലിയസിന് (+Ze) അടുത്ത് മാത്രം.</div>
+<div class="controls">
+<div class="slider-group"><label><span>🐢 Speed Control</span><span id="lblSpeed">Slow (0.6x)</span></label><input type="range" id="sliderSpeed" min="0.2" max="2.5" step="0.2" value="0.6" /></div>
+<div class="slider-group"><label><span>🎯 Path Mode </span><span id="lblPathMode">Auto</span></label><input type="range" id="sliderPathMode" min="0" max="3" step="1" value="0" /></div>
+</div>
+<div class="legend-bar">
+  <span><i class="dot" style="background:#fde047;"></i>Alpha Particle (He²⁺, +2)</span>
+  <span><i class="dot" style="background:#ef4444;"></i>Nucleus (+Ze)</span>
+  <span><i class="dot" style="background:#38bdf8;"></i>Electrons (e⁻) — No Repulsion</span>
+  <span><i class="dot" style="background:#4ade80;"></i>Straight Path (Most)</span>
+  <span><i class="dot" style="background:#fb923c;"></i>Deflection / Return (Few)</span>
+</div>
+<div class="conclusions-grid">
+<div class="conc-card"><strong>ആറ്റത്തിന്റെ ഭൂരിഭാഗവും ശൂന്യമാണ് (Most of the atom is empty space)</strong>ആൽഫാ കണികകളിൽ ഭൂരിഭാഗവും ഒരു വ്യതിയാനവുമില്ലാതെ നേർത്ത സ്വർണ്ണത്തകിടിലൂടെ കടന്നുപോയി. ആറ്റത്തിനുള്ളിൽ ധാരാളം ശൂന്യസ്ഥലമുണ്ടെന്ന് ഇത് തെളിയിക്കുന്നു.</div>
+<div class="conc-card"><strong>ചെറുതും സാന്ദ്രതയേറിയതുമായ ന്യൂക്ലിയസ് (Small, dense nucleus)</strong>വളരെ കുറച്ച് α-Particles മാത്രം വലിയ കോണിൽ വ്യതിചലിക്കുകയോ തിരിച്ചുതെറിക്കുകയോ ചെയ്തു. ആറ്റത്തിന്റെ മിക്കവാറും എല്ലാ പിണ്ഡവും (Mass) കേന്ദ്രത്തിലെ വളരെ ചെറിയൊരു ഭാഗത്താണ് കേന്ദ്രീകരിച്ചിരിക്കുന്നത്.</div>
+<div class="conc-card"><strong>പോസിറ്റീവ് ചാർജ് (Positive charge)</strong>പോസിറ്റീവ് ചാർജുള്ള α-Particles കേന്ദ്രഭാഗത്ത് തട്ടി വികർഷിക്കപ്പെട്ടതിലൂടെ, ആറ്റത്തിന്റെ കേന്ദ്രമായ nucleus-ന് പോസിറ്റീവ് ചാർജാണുള്ളതെന്ന് വ്യക്തമായി.</div>
+<div class="conc-card"><strong>പ്ലം പുഡ്ഡിംഗ് മോഡൽ തെറ്റാണെന്ന് തെളിഞ്ഞു (Refuted the plum pudding model)</strong>ആറ്റം മുഴുവൻ പോസിറ്റീവ് ചാർജ് പരന്നുകിടക്കുന്നു എന്ന തോംസണിന്റെ പഴയ മാതൃക ഈ പരീക്ഷണത്തോടെ തെറ്റാണെന്ന് തെളിയുകയും റൂഥർഫോർഡിന്റെ Nuclear Model നിലവിൽ വരുകയും ചെയ്തു.</div>
+</div>
+</div>
+<script>
+const canvas=document.getElementById('simCanvas');
+const ctx=canvas.getContext('2d');
+let view='lab';
+let unlimitedBeam=false, autoMode=false;
+let singleParticle=null, beamParticles=[], completedTrails=[], hitMarkers=[], flashes=[];
+let autoCounter=0, autoTimer=0, beamSpawnTick=0;
+const sliderSpeed=document.getElementById('sliderSpeed');
+const sliderPathMode=document.getElementById('sliderPathMode');
+// സ്ഥിരാങ്കങ്ങൾ - Lab-ഉം Atomic-ഉം തമ്മിൽ കൂട്ടിക്കുഴയരുത്
+const LAB_SLIT_X = 390, ATOMIC_SLIT_X = 205, FOIL_X = 585, FOIL_Y = 205;
+const LAB_GAP_Y=[188,222], LAB_GAP_Z=[-22,22];
+const ATOMIC_GAP_Y=[40,370], ATOMIC_GAP_Z=[-22,22];
+// 3D : കാഴ്ച മാത്രം, ഭൗതികശാസ്ത്രം 2D-യിൽ
+let yawDeg = 0, pitchDeg = 0;
+
+function reset3d() {
+  yawDeg = 0;
+  pitchDeg = 0;
+  document.getElementById('sliderYaw').value = 0;
+  document.getElementById('sliderPitch').value = 0;
+  upd3dLabel();
+}
+function upd3dLabel(){document.getElementById('lbl3d').textContent=Math.round(yawDeg)+'° / '+Math.round(pitchDeg)+'°';}
+function proj3d(x,y,z){
+  const cx=485, cy=205;
+  const yaw=yawDeg*Math.PI/180, pitch=pitchDeg*Math.PI/180;
+  let dx=x-cx, dy=y-cy, dz=z||0;
+  let dx1=dx*Math.cos(yaw)+dz*Math.sin(yaw);
+  let dz1=-dx*Math.sin(yaw)+dz*Math.cos(yaw);
+  let dy1=dy*Math.cos(pitch)-dz1*Math.sin(pitch);
+  let dz2=dy*Math.sin(pitch)+dz1*Math.cos(pitch);
+  const sc=1+dz2*0.0006;
+  return {x:cx+dx1*sc, y:cy+dy1*sc, depth:dz2, sc};
+}
+function poly3d(pts,fill,stroke){
+  ctx.beginPath();
+  pts.forEach((p,i)=>{const q=proj3d(p[0],p[1],p[2]); if(i===0)ctx.moveTo(q.x,q.y); else ctx.lineTo(q.x,q.y);});
+  ctx.closePath();
+  if(fill){ctx.fillStyle=fill;ctx.fill();}
+  if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke();}
+}
+function drawBox3d(x0,x1,y0,y1,z0,z1,fill){
+  poly3d([[x1,y0,z0],[x1,y0,z1],[x1,y1,z1],[x1,y1,z0]],fill,'#334155');
+  poly3d([[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1]],'#94a3b8','#334155');
+  poly3d([[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]],'#475569','#334155');
+}
+// ലേബൽ അരികിൽ മുറിഞ്ഞുപോകാതിരിക്കാൻ clamp ചെയ്യുന്നു
+function clampLabel(x,y){
+  return {x:Math.max(70,Math.min(830,x)), y:Math.max(18,Math.min(392,y))};
+}
+function canvasLabel(text,x,y){
+  const c=clampLabel(x,y);
+  ctx.font='bold 12px "Google Sans","Noto Sans Malayalam",sans-serif';
+  const w=ctx.measureText(text).width;
+  ctx.fillStyle='rgba(9,13,22,0.78)';
+  ctx.beginPath(); ctx.roundRect(c.x-w/2-7,c.y-13,w+14,17,6); ctx.fill();
+  ctx.fillStyle='#e2e8f0'; ctx.textAlign='center'; ctx.fillText(text,c.x,c.y);
+}
+function resizeCanvasForSharpness(){
+  const dpr=window.devicePixelRatio||1;
+  const displayW=canvas.clientWidth||900;
+  const displayH=displayW*410/900;
+  const newW=Math.round(displayW*dpr), newH=Math.round(displayH*dpr);
+  if(canvas.width!==newW||canvas.height!==newH){canvas.width=newW;canvas.height=newH;}
+  const scale=canvas.width/900;
+  ctx.setTransform(scale,0,0,scale,0,0);
+  ctx.imageSmoothingEnabled=true;
+}
+window.addEventListener('resize',resizeCanvasForSharpness);
+const atoms = [];
+  function buildAtoms() {
+    atoms.length = 0;
+    // 3 നിരകൾ (3 columns) - staggered (തട്ടിക്കൊടുത്ത) ക്രമീകരണത്തിൽ സ്ലിറ്റിലൂടെ വരുന്ന ബീമിന് നേരെ
+    const colX = [420, 485, 550];
+    const startY = [65, 95, 65];
+    const stepY = 62;
+
+    colX.forEach((cx, ci) => {
+      for (let y = startY[ci]; y <= 355; y += stepY) {
+        const electrons = [];
+        for (let k = 0; k < 3; k++) {
+          electrons.push({
+            orbitR: 22 + (k % 2) * 8,
+            angle: (k * Math.PI * 2) / 3 + ci * 0.8,
+            speed: (k % 2 === 0 ? 1 : -1) * 0.012
+          });
+        }
+        atoms.push({
+          x: cx,
+          y,
+          atomR: 32,
+          nucR: 5.5,
+          electrons
+        });
+      }
+    });
+  }
+  buildAtoms();
+function addHitMarker(x,y,type,z){
+  hitMarkers.push({x:Math.max(12,Math.min(888,x)),y:Math.max(12,Math.min(398,y)),type,alpha:0.92,z:z||0});
+  if(hitMarkers.length>350) hitMarkers.shift();
+}
+function setView(v){
+  view=v;
+  document.getElementById('btnLab').className=`view-btn ${v==='lab'?'active':''}`;
+  document.getElementById('btnAtomic').className=`view-btn ${v==='atomic'?'active':''}`;
+  singleParticle=null; beamParticles=[]; completedTrails=[]; hitMarkers=[]; flashes=[];
+  document.getElementById('statusBanner').innerHTML=v==='lab'
+    ? '<strong>പരീക്ഷണ സജ്ജീകരണം (Lab Setup) — 3D സ്ലിറ്റ് (Slit):</strong> സ്ലിറ്റ് വരെ കണം നേരെ പോകും. വിടവിൽ കൊള്ളാത്തവ സ്ലിറ്റ് തടയും. വളവ് ന്യൂക്ലിയസിന് (+Ze) അടുത്ത് മാത്രം.'
+    : '<strong>ആറ്റത്തിനുള്ളിലെ കാഴ്ച (Atomic Zoom):</strong> ശൂന്യസ്ഥലത്തിലൂടെ നേരെ പോകുന്നവയും, ന്യൂക്ലിയസിന് (+) അടുത്ത് വളഞ്ഞ് വ്യതിചലിക്കുന്നവയും Return ചെയ്യുന്നവയും കാണാം. ഇലക്ട്രോണുകൾ (e⁻) വികർഷിക്കില്ല.';
+}
+function toggleUnlimited() {
+  unlimitedBeam = !unlimitedBeam;
+  if (unlimitedBeam) {
+    autoMode = false;
+    const aBtn = document.getElementById('btnAuto');
+    aBtn.className = 'btn auto-btn';
+    aBtn.textContent = '🔁 Auto Slow: OFF';
+    document.getElementById('statusBanner').innerHTML =
+      '<strong>🌊 Unlimited Beam ON:</strong> ധാരാളം α-Particles ഒരുമിച്ച് പോകുന്നു! വിടവിൽ കൊള്ളാത്തവ സ്ലിറ്റിൽ തട്ടി നിൽക്കും. കടന്നവരിൽ ഭൂരിഭാഗം നേരെ പോകും, കുറച്ച് വളയും, അപൂർവ്വമായി Return ചെയ്യും.';
+  }
+  const btn = document.getElementById('btnUnlimited');
+  btn.className = `btn unlimited-btn ${unlimitedBeam ? 'active' : ''}`;
+  btn.textContent = `🌊 Unlimited Beam: ${unlimitedBeam ? 'ON' : 'OFF'}`;
+}
+
+function toggleAuto() {
+  autoMode = !autoMode;
+  if (autoMode && unlimitedBeam) {
+    unlimitedBeam = false;
+    const uBtn = document.getElementById('btnUnlimited');
+    uBtn.className = 'btn unlimited-btn';
+    uBtn.textContent = '🌊 Unlimited Beam: OFF';
+  }
+  const btn = document.getElementById('btnAuto');
+  btn.className = `btn auto-btn ${autoMode ? 'active' : ''}`;
+  btn.textContent = `🔁 Auto Slow: ${autoMode ? 'ON' : 'OFF'}`;
+}
+function clearTrails(){singleParticle=null;beamParticles=[];completedTrails=[];hitMarkers=[];flashes=[];}
+function pickAutoOutcome() {
+  const seq = [
+    1, 1, 1, 2, 1, 1, 1, 1, 3, 1,
+    1, 1, 1, 1, 2, 1, 1, 3, 1, 1,
+    1, 1, 1, 2, 1, 1, 1, 1, 3, 1
+  ];
+  const item = seq[autoCounter % seq.length];
+  autoCounter++;
+  return item;
+}
+
+function normAngle(a){while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a;}
+// ---------- സ്ലിറ്റ് : വിടവിലൂടെ മാത്രം, തടയപ്പെടുന്നവ സ്ലിറ്റിൽ നിൽക്കും ----------
+// Lab വിടവ് : y 188-222, z -22 മുതൽ +22 വരെ. Atomic വിടവ് : y 40-370 (ആറ്റങ്ങൾ മുഴുവൻ കാണാൻ), z -22 മുതൽ +22 വരെ.
+// പ്രധാനം : സ്ലിറ്റിന് മുമ്പ് വളവോ കേന്ദ്രത്തിലേക്ക് വലിക്കലോ ഇല്ല. കണം നേരെ പോകും, വിടവിൽ കൊണ്ടാൽ കടക്കും, ഇല്ലെങ്കിൽ തടയപ്പെടും.
+function checkSlitLab(p){
+  if(!p._passedSlit&&p.x>=LAB_SLIT_X){
+    p._passedSlit=true;
+    const pz=p.z||0;
+    if(p.y<LAB_GAP_Y[0]||p.y>LAB_GAP_Y[1]||pz<LAB_GAP_Z[0]||pz>LAB_GAP_Z[1]){
+      flashes.push({x:LAB_SLIT_X,y:p.y,z:pz,r:6,alpha:1});
+      p._blockedAtSlit=true;
+      return false;
+    }
+    return true;
+  }
+  return true;
+}
+function checkSlitAtomic(p){
+  if(!p._passedSlit&&p.x>=ATOMIC_SLIT_X){
+    p._passedSlit=true;
+    const pz=p.z||0;
+    if(p.y<ATOMIC_GAP_Y[0]||p.y>ATOMIC_GAP_Y[1]||pz<ATOMIC_GAP_Z[0]||pz>ATOMIC_GAP_Z[1]){
+      flashes.push({x:ATOMIC_SLIT_X,y:p.y,z:pz,r:6,alpha:1});
+      p._blockedAtSlit=true;
+      return false;
+    }
+    return true;
+  }
+  return true;
+}
+function spawnUnlimitedBatch(){
+  const count=5;
+  const ATOMIC_GAP_Y = [65, 355], ATOMIC_GAP_Z = [-28, 28];
+  for(let i=0;i<count;i++){
+    const r=Math.random(); let kind='straight';
+    if(r>0.98) kind='bounce'; else if(r>0.90) kind='deflect';
+    if(view==='lab'){
+      // Lab Unlimited : വിശാലമായ ബീം. സ്രോതസ്സിന്റെ പുറത്തുനിന്ന് (exit) നേരെ. സ്ലിറ്റ് ഫിൽട്ടർ ചെയ്യും.
+      const startY=FOIL_Y+(Math.random()-0.5)*160;
+      const startZ=(Math.random()-0.5)*120;
+      let angle=0;
+      if(kind==='deflect'){const sign=Math.random()<0.5?1:-1; angle=sign*(0.25+Math.random()*0.55);}
+      else if(kind==='bounce'){angle=Math.PI-(Math.random()-0.5)*0.25;}
+      beamParticles.push({x:237,y:startY,z:startZ,vx:2.5,vy:0,vz:0,foilX:FOIL_X,hitFoil:false,targetAngle:angle,curAngle:0,kind,color:kind==='straight'?'#4ade80':'#fb923c',trail:[{x:237,y:startY,z:startZ}]});
+    } else {
+        // 3 നിര ആറ്റങ്ങളെയും കവർ ചെയ്യുന്ന സമാന്തര (parallel) ബീം - വ്യത്യസ്ത ഉയരങ്ങളിൽ നിന്ന് നേരെ
+        const parallelRows = [75, 115, 155, 195, 235, 275, 315, 345];
+        let startY = parallelRows[Math.floor(Math.random() * parallelRows.length)] + (Math.random() - 0.5) * 10;
+
+        if (kind === 'bounce') {
+          const targetAtom = atoms[Math.floor(Math.random() * atoms.length)];
+          startY = targetAtom.y + (Math.random() - 0.5) * 3;
+        } else if (kind === 'deflect') {
+          const targetAtom = atoms[Math.floor(Math.random() * atoms.length)];
+          const s = Math.random() < 0.5 ? 1 : -1;
+          startY = targetAtom.y + s * (12 + Math.random() * 10);
+        }
+
+        const startZ = (Math.random() - 0.5) * 20;
+        beamParticles.push({
+          x: 118,
+          y: startY,
+          z: startZ,
+          vx: 2.3,
+          vy: 0,
+          vz: 0,
+          kind,
+          color: kind === 'straight' ? '#4ade80' : '#fb923c',
+          trail: [{ x: 118, y: startY, z: startZ }]
+        });
+      }
+  }
+}
+function fireNextParticle(){
+  const ATOMIC_GAP_Y = [65, 355], ATOMIC_GAP_Z = [-28, 28];
+  if(singleParticle){completedTrails.push({points:singleParticle.trail,color:singleParticle.trailColor}); if(completedTrails.length>10) completedTrails.shift();}
+  const modeVal=parseInt(sliderPathMode.value,10);
+  const choice=modeVal===0?pickAutoOutcome():modeVal;
+  if(view==='lab'){
+    let targetAngle=0, kind='straight', statusText='';
+    if(choice===1){targetAngle=0;kind='straight';statusText='Note: ആറ്റത്തിനുള്ളിലെ ഭൂരിഭാഗം സ്ഥലവും ശൂന്യമായതിനാൽ α-കണം വ്യതിയാനമില്ലാതെ നേരെ ZnS സ്ക്രീനിൽ പതിക്കുന്നു.';}
+    else if(choice===2){const sign=Math.random()<0.5?1:-1;targetAngle=sign*(0.25+Math.random()*0.55);kind='deflect';statusText='വളഞ്ഞ പാതയിലൂടെ വ്യതിചലനം (Curved Deflection): പോസിറ്റീവ് ന്യൂക്ലിയസിന് (+) അടുത്തെത്തുമ്പോൾ മാത്രം വികർഷണം മൂലം വളഞ്ഞ പാതയിലൂടെ സഞ്ചരിച്ച് സ്ക്രീനിൽ പതിക്കുന്നു.';}
+    else {targetAngle=Math.PI-(Math.random()-0.5)*0.25;kind='bounce';statusText='പുറകോട്ട് തെറിക്കൽ (Return): കേന്ദ്രത്തിലെ ചെറുതും സാന്ദ്രതയേറിയതുമായ പോസിറ്റീവ് ന്യൂക്ലിയസിൽ (+) നേരെ തട്ടിയതിനാൽ തിരിച്ചുതെറിക്കുന്നു.';}
+    // ഒറ്റ കണം : സ്ലിറ്റ് വിടവിലൂടെ കൃത്യമായി ലക്ഷ്യമാക്കി, നേരെ. സ്ലിറ്റിന് മുമ്പ് വളവില്ല.
+    singleParticle={x:237,y:205+(Math.random()-0.5)*8,z:(Math.random()-0.5)*12,vx:2.2,vy:0,vz:0,foilX:FOIL_X,hitFoil:false,targetAngle,curAngle:0,kind,trail:[{x:237,y:205,z:0}],trailColor:kind==='straight'?'#4ade80':'#fb923c'};
+    document.getElementById('statusBanner').innerHTML=`<strong>${statusText}</strong>`;
+  } else {
+      let startY = 195;
+      let kind = 'straight';
+      let statusText = '';
+
+      if (choice === 1) {
+        const parallelRows = [75, 135, 195, 255, 315];
+        startY = parallelRows[Math.floor(Math.random() * parallelRows.length)] + (Math.random() - 0.5) * 8;
+        kind = 'straight';
+        statusText = 'നേരെ കടന്നുപോകുന്നു: ആറ്റത്തിനുള്ളിലെ ശൂന്യസ്ഥലത്തിലൂടെ (ന്യൂക്ലിയസിൽ നിന്ന് അകലെ) സമാന്തരമായി നേരെ നീങ്ങുന്നു.';
+      } else if (choice === 2) {
+        const a = atoms[Math.floor(Math.random() * atoms.length)];
+        const s = Math.random() < 0.5 ? 1 : -1;
+        startY = a.y + s * (12 + Math.random() * 10);
+        kind = 'deflect';
+        statusText = 'വളഞ്ഞ പാതയിലൂടെ വ്യതിചലനം: പോസിറ്റീവ് ന്യൂക്ലിയസിന്റെ (+) അടുത്തെത്തുമ്പോൾ വികർഷണം മൂലം വളഞ്ഞ പാതയിലൂടെ വ്യതിചലിക്കുന്നു.';
+      } else {
+        const a = atoms[Math.floor(Math.random() * atoms.length)];
+        startY = a.y + (Math.random() - 0.5) * 3;
+        kind = 'bounce';
+        statusText = 'പുറകോട്ട് തെറിക്കൽ (Return): കേന്ദ്രത്തിലെ ചെറിയ പോസിറ്റീവ് ന്യൂക്ലിയസിൽ (+) നേരെ തട്ടിയതിനാൽ പുറകോട്ട് തെറിക്കുന്നു.';
+      }
+
+      const startZ = (Math.random() - 0.5) * 16;
+      singleParticle = {
+        x: 118,
+        y: startY,
+        z: startZ,
+        vx: 2.0,
+        vy: 0,
+        vz: 0,
+        kind,
+        trail: [{ x: 118, y: startY, z: startZ }],
+        trailColor: kind === 'straight' ? '#4ade80' : '#fb923c'
+      };
+      document.getElementById('statusBanner').innerHTML = `<strong>${statusText}</strong>`;
+    }
+}
+// ---------- വളഞ്ഞ ZnS ഡിറ്റക്ടർ - രണ്ട് കാഴ്ചയിലും ----------
+function drawCurvedDetector(cx,cy,r,a0,a1){
+  for(let zi=-70;zi<=70;zi+=14){
+    ctx.beginPath(); let first=true;
+    for(let a=a0;a<=a1;a+=0.12){
+      const x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r;
+      const q=proj3d(x,y,zi);
+      if(first){ctx.moveTo(q.x,q.y);first=false;} else ctx.lineTo(q.x,q.y);
+    }
+    ctx.strokeStyle=`rgba(56,189,248,${0.25+(zi+70)/140*0.4})`; ctx.lineWidth=2; ctx.stroke();
+  }
+}
+function drawLabSetup() {
+  ctx.fillStyle = '#7dd3fc'; ctx.font = 'bold 12px "Google Sans","Noto Sans Malayalam",sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('ZnS Detector Screen', 585, 22);
+  drawCurvedDetector(585, 205, 170, -Math.PI * 0.88, Math.PI * 0.88);
+  drawBox3d(382, 398, 105, 188, -70, 70, '#64748b');
+  drawBox3d(382, 398, 222, 305, -70, 70, '#64748b');
+  drawBox3d(382, 398, 188, 222, 22, 70, '#94a3b8');
+  drawBox3d(382, 398, 188, 222, -70, -22, '#94a3b8');
+  poly3d([[390, 188, -22], [390, 188, 22], [390, 222, 22], [390, 222, -22]], '#fde047', '#f59e0b');
+  const slitLbl = proj3d(390, 335, 0); canvasLabel('Slit', slitLbl.x, slitLbl.y);
+  drawBox3d(135, 237, 170, 240, -40, 40, '#334155');
+  const srcLbl = proj3d(186, 262, 0); canvasLabel('α-ray Emitter', srcLbl.x, srcLbl.y);
+  poly3d([[585, 140, -45], [585, 140, 45], [585, 270, 45], [585, 270, -45]], '#facc15', '#a16207');
+  const foilLbl = proj3d(585, 298, 0); canvasLabel('Gold Foil', foilLbl.x, foilLbl.y);
+  hitMarkers.forEach(m => {
+    const q = proj3d(m.x, m.y, m.z || 0);
+    ctx.beginPath(); ctx.arc(q.x, q.y, m.type === 'straight' ? 3.2 : 4.5, 0, Math.PI * 2);
+    ctx.fillStyle = m.type === 'straight' ? `rgba(74,222,128,${m.alpha})` : `rgba(251,146,60,${m.alpha})`; ctx.fill();
+    if (m.type === 'bounce') { ctx.strokeStyle = `rgba(248,113,113,${m.alpha})`; ctx.lineWidth = 1.5; ctx.stroke(); }
+    m.alpha = Math.max(0.28, m.alpha - 0.0006);
+  });
+  for (let i = flashes.length - 1; i >= 0; i--) { const f = flashes[i]; const q = proj3d(f.x, f.y, f.z || 0); ctx.beginPath(); ctx.arc(q.x, q.y, f.r, 0, Math.PI * 2); ctx.fillStyle = `rgba(253,224,71,${f.alpha})`; ctx.fill(); f.alpha -= 0.03; f.r += 0.14; if (f.alpha <= 0) flashes.splice(i, 1); }
+}
+function drawAtomicZoom() {
+  // വലുതാക്കിയ എമിറ്റർ (Emitter) ബോക്സ്
+  drawBox3d(12, 128, 105, 305, -48, 48, '#334155');
+  ctx.fillStyle = '#fde047';
+  ctx.font = 'bold 12.5px "Google Sans", "Noto Sans Malayalam", sans-serif';
+  ctx.textAlign = 'center';
+  const aBoxLbl = proj3d(70, 325, 0);
+  ctx.fillText('α-Ray Emitter', aBoxLbl.x, aBoxLbl.y);
+  ctx.fillText('(He²⁺ / +2)', aBoxLbl.x, aBoxLbl.y + 15);
+
+  // വലുതാക്കിയ 3D സ്ലിറ്റ് (Slit) പ്ലേറ്റുകളും വലിയ വിടവും (y: 55..355)
+  drawBox3d(195, 215, 20, 55, -80, 80, '#64748b');
+  drawBox3d(195, 215, 355, 390, -80, 80, '#64748b');
+  drawBox3d(195, 215, 55, 355, 34, 80, '#94a3b8');
+  drawBox3d(195, 215, 55, 355, -80, -34, '#94a3b8');
+  poly3d([[205, 55, -34], [205, 55, 34], [205, 355, 34], [205, 355, -34]], 'rgba(253, 224, 71, 0.14)', '#f59e0b');
+  const aSlitLbl = proj3d(205, 402, 0);
+  canvasLabel('Slit', aSlitLbl.x, aSlitLbl.y);
+  ctx.fillStyle='#94a3b8'; ctx.font='bold 11.5px "Google Sans","Noto Sans Malayalam",sans-serif'; ctx.textAlign='center';
+  ctx.fillText('Gold Atoms (Au)',520,22);
+  atoms.forEach(atom=>{
+    const ac=proj3d(atom.x,atom.y,0); const ar=atom.atomR*ac.sc;
+    // ആറ്റത്തിനുള്ളിലെ ശൂന്യസ്ഥലം : വലിയ വൃത്തം മിക്കവാറും ശൂന്യം, നടുവിൽ മാത്രം ചെറിയ ന്യൂക്ലിയസ്
+    ctx.beginPath(); ctx.arc(ac.x,ac.y,ar,0,Math.PI*2); ctx.fillStyle='rgba(251,191,36,0.03)'; ctx.fill();
+    ctx.setLineDash([4,4]); ctx.strokeStyle='rgba(251,191,36,0.28)'; ctx.lineWidth=1.2; ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='rgba(148,163,184,0.9)'; ctx.font='bold 12px "Google Sans","Noto Sans Malayalam",sans-serif'; ctx.textAlign='center';
+    ctx.beginPath(); ctx.arc(ac.x,ac.y,24*ac.sc,0,Math.PI*2); ctx.strokeStyle='rgba(239,68,68,0.22)'; ctx.lineWidth=1; ctx.stroke();
+    atom.electrons.forEach(el=>{
+      el.angle+=el.speed*parseFloat(sliderSpeed.value);
+      const ex=ac.x+Math.cos(el.angle)*el.orbitR*ac.sc, ey=ac.y+Math.sin(el.angle)*el.orbitR*ac.sc;
+      ctx.beginPath(); ctx.arc(ex,ey,4,0,Math.PI*2); ctx.fillStyle='#38bdf8'; ctx.fill();
+    });
+    ctx.beginPath(); ctx.arc(ac.x,ac.y,atom.nucR,0,Math.PI*2); ctx.fillStyle='#ef4444'; ctx.fill(); ctx.strokeStyle='#fecaca'; ctx.lineWidth=1.2; ctx.stroke();
+    ctx.fillStyle='#fff'; ctx.font='bold 12px sans-serif'; ctx.textAlign='center'; ctx.fillText('+',ac.x,ac.y+3);
+  });
+  // വളഞ്ഞ ZnS ഡിറ്റക്ടർ - Atomic-ലും . കേന്ദ്രം (520,205), ആരം 330, വലതുവശത്തെ ആർക്ക്.
+  ctx.fillStyle='#7dd3fc'; ctx.font='bold 12px "Google Sans","Noto Sans Malayalam",sans-serif'; ctx.textAlign='center';
+  ctx.fillText('ZnS Detector Screen',760,30);
+  drawCurvedDetector(520,205,330,-Math.PI*0.28,Math.PI*0.28);
+  hitMarkers.forEach(m=>{
+    const q=proj3d(m.x,m.y,m.z||0);
+    ctx.beginPath(); ctx.arc(q.x,q.y,3.5,0,Math.PI*2);
+    ctx.fillStyle=m.type==='straight'?`rgba(74,222,128,${m.alpha})`:`rgba(251,146,60,${m.alpha})`; ctx.fill();
+    m.alpha=Math.max(0.28,m.alpha-0.0006);
+  });
+  for(let i=flashes.length-1;i>=0;i--){const f=flashes[i];const q=proj3d(f.x,f.y,f.z||0);ctx.beginPath();ctx.arc(q.x,q.y,f.r,0,Math.PI*2);ctx.fillStyle=`rgba(253,224,71,${f.alpha})`;ctx.fill();f.alpha-=0.03;f.r+=0.14;if(f.alpha<=0)flashes.splice(i,1);}
+}
+function applyNucleusRepulsion(p,spd){
+  let bounced=false;
+  atoms.forEach(atom=>{
+    const dx=p.x-atom.x, dy=p.y-atom.y;
+    const d2=dx*dx+dy*dy, d=Math.sqrt(d2);
+    if(d<5&&d>0.5){
+      p.vx=-Math.abs(p.vx)*0.9; p.vy+=(Math.random()-0.5)*0.4;
+      p.x=atom.x+(dx/d)*6; p.y=atom.y+(dy/d)*6; bounced=true;
+    } else if(d<16&&d>=5){
+      let force=(95*spd)/d2; if(force>1.4) force=1.4;
+      p.vx+=(dx/d)*force*0.05; p.vy+=(dy/d)*force*0.05;
+    }
+  });
+  return bounced;
+}
+function stepAnimation(){
+  const spd=parseFloat(sliderSpeed.value);
+  completedTrails.forEach(tr=>{
+    if(tr.points.length>1){
+      ctx.beginPath();
+      tr.points.forEach((pt,pi)=>{const q=proj3d(pt.x,pt.y,pt.z||0); if(pi===0)ctx.moveTo(q.x,q.y); else ctx.lineTo(q.x,q.y);});
+      ctx.strokeStyle=tr.color; ctx.globalAlpha=0.35; ctx.lineWidth=2; ctx.stroke(); ctx.globalAlpha=1;
+    }
+  });
+  if(unlimitedBeam){beamSpawnTick++; if(beamSpawnTick%8===0) spawnUnlimitedBatch();}
+  for(let i=beamParticles.length-1;i>=0;i--){
+    const bp=beamParticles[i];
+    const mSpd=2.4*spd;
+    if (view === 'lab') {
+        if (!bp.hitFoil && bp.x >= bp.foilX) {
+          bp.hitFoil = true;
+          bp.x = bp.foilX;
+          if (bp.kind === 'bounce') {
+            // റാൻഡം ആംഗിളിൽ വ്യത്യസ്ത കോണുകളിലേക്ക് തിരിച്ചുതെറിക്കുന്നു (Return)
+            const sign = Math.random() < 0.5 ? 1 : -1;
+            const randomAngle = sign * (Math.PI * 0.35 + Math.random() * Math.PI * 0.65);
+            bp.vx = Math.cos(randomAngle) * mSpd;
+            bp.vy = Math.sin(randomAngle) * mSpd;
+            bp.vz = (Math.random() - 0.5) * 1.4;
+          } else {
+            bp.curAngle = 0;
+          }
+        } else if (bp.hitFoil && bp.kind === 'deflect') {
+          const diff = normAngle(bp.targetAngle - bp.curAngle);
+          bp.curAngle += Math.max(-0.045, Math.min(0.045, diff));
+          bp.vx = Math.cos(bp.curAngle) * mSpd;
+          bp.vy = Math.sin(bp.curAngle) * mSpd;
+        } else if (!bp.hitFoil) {
+          bp.vx = mSpd;
+          bp.vy = 0;
+          bp.vz = 0;
+        }
+        bp.x += bp.vx;
+        bp.y += bp.vy;
+        bp.z = (bp.z || 0) + (bp.vz || 0);
+        if (!checkSlitLab(bp)) {
+          beamParticles.splice(i, 1);
+          continue;
+        }
+        bp.trail.push({ x: bp.x, y: bp.y, z: bp.z || 0 });
+        if (bp.trail.length > 26) bp.trail.shift();
+
+        const dScreen = Math.hypot(bp.x - 585, bp.y - 205);
+        if (bp.hitFoil && dScreen >= 167) {
+          addHitMarker(bp.x, bp.y, bp.kind, bp.z || 0);
+          flashes.push({ x: bp.x, y: bp.y, z: bp.z || 0, r: 4.5, alpha: 0.9 });
+          beamParticles.splice(i, 1);
+          continue;
+        }
+        if (bp.x < 237) {
+          addHitMarker(240, bp.y, 'bounce', bp.z || 0);
+          beamParticles.splice(i, 1);
+          continue;
+        }
+        if (bp.x > 895 || bp.y < 12 || bp.y > 398) {
+          if (bp.hitFoil) {
+            addHitMarker(bp.x, bp.y, bp.kind, bp.z || 0);
+          }
+          beamParticles.splice(i, 1);
+          continue;
+        }
+      }else {
+      // Atomic : ആദ്യം സ്ലിറ്റ്, പിന്നെ ന്യൂക്ലിയസ് വികർഷണം. സ്ലിറ്റിന് മുമ്പ് വളവില്ല.
+      if(!bp._passedSlit){
+        bp.vx=2.3*spd*0.8+1.0; bp.vy=0; bp.vz=0;
+      } else {
+        applyNucleusRepulsion(bp,spd);
+      }
+      bp.x+=bp.vx*(spd*0.8); bp.y+=bp.vy*(spd*0.8); bp.z=(bp.z||0)+(bp.vz||0)*(spd*0.8);
+      if(!checkSlitAtomic(bp)){beamParticles.splice(i,1);continue;}
+      bp.trail.push({x:bp.x,y:bp.y,z:bp.z||0}); if(bp.trail.length>24)bp.trail.shift();
+      const dDet=Math.hypot(bp.x-520,bp.y-205);
+      if(dDet>=330&&bp.x>520){addHitMarker(bp.x,bp.y,bp.kind,bp.z||0);flashes.push({x:bp.x,y:bp.y,z:bp.z||0,r:5,alpha:1});beamParticles.splice(i,1);continue;}
+      if(bp.x<118){addHitMarker(122,bp.y,'bounce',bp.z||0);beamParticles.splice(i,1);continue;}
+      if(bp.y<12||bp.y>398){addHitMarker(bp.x,bp.y,'deflect',bp.z||0);beamParticles.splice(i,1);continue;}
+    }
+    if(bp.trail.length>1){
+      ctx.beginPath();
+      bp.trail.forEach((tp,ti)=>{const q=proj3d(tp.x,tp.y,tp.z||0); if(ti===0)ctx.moveTo(q.x,q.y); else ctx.lineTo(q.x,q.y);});
+      ctx.strokeStyle=bp.color; ctx.globalAlpha=0.55; ctx.lineWidth=2; ctx.stroke(); ctx.globalAlpha=1;
+    }
+    const bpQ=proj3d(bp.x,bp.y,bp.z||0);
+    ctx.beginPath(); ctx.arc(bpQ.x,bpQ.y,4,0,Math.PI*2); ctx.fillStyle='#fde047'; ctx.fill();
+  }
+  if(!singleParticle){
+    if(autoMode&&!unlimitedBeam){autoTimer++; if(autoTimer>32){autoTimer=0; fireNextParticle();}}
+    return;
+  }
+  const p=singleParticle;
+  if (view === 'lab') {
+      const speedMag = 2.4 * spd;
+      if (!p.hitFoil && p.x >= p.foilX) {
+        p.hitFoil = true;
+        p.x = p.foilX;
+        if (p.kind === 'bounce') {
+          const sign = Math.random() < 0.5 ? 1 : -1;
+          const randomAngle = sign * (Math.PI * 0.35 + Math.random() * Math.PI * 0.65);
+          p.vx = Math.cos(randomAngle) * speedMag;
+          p.vy = Math.sin(randomAngle) * speedMag;
+          p.vz = (Math.random() - 0.5) * 1.4;
+        } else {
+          p.curAngle = 0;
+        }
+      } else if (p.hitFoil && p.kind === 'deflect') {
+        const diff = normAngle(p.targetAngle - p.curAngle);
+        p.curAngle += Math.max(-0.045, Math.min(0.045, diff));
+        p.vx = Math.cos(p.curAngle) * speedMag;
+        p.vy = Math.sin(p.curAngle) * speedMag;
+      } else if (!p.hitFoil) {
+        p.vx = speedMag;
+        p.vy = 0;
+        p.vz = 0;
+      }
+    p.x+=p.vx; p.y+=p.vy; p.z=(p.z||0)+(p.vz||0);
+    if(!checkSlitLab(p)){completedTrails.push({points:p.trail,color:p.trailColor}); singleParticle=null;}
+    else {
+      p.trail.push({x:p.x,y:p.y,z:p.z||0});
+      const dScreen=Math.hypot(p.x-585,p.y-205);
+      if(p.hitFoil&&dScreen>=167){addHitMarker(p.x,p.y,p.kind,p.z||0);flashes.push({x:p.x,y:p.y,z:p.z||0,r:5,alpha:1});completedTrails.push({points:p.trail,color:p.trailColor}); if(completedTrails.length>10)completedTrails.shift(); singleParticle=null;}
+      else if(p.x<237){addHitMarker(240,p.y,'bounce',p.z||0);completedTrails.push({points:p.trail,color:p.trailColor}); if(completedTrails.length>10)completedTrails.shift(); singleParticle=null;}
+      else if(p.y<12||p.y>398){addHitMarker(p.x,p.y,p.kind,p.z||0);completedTrails.push({points:p.trail,color:p.trailColor}); if(completedTrails.length>10)completedTrails.shift(); singleParticle=null;}
+    }
+  } else {
+    if(!p._passedSlit){p.vx=2.0; p.vy=0; p.vz=0;}
+    else {applyNucleusRepulsion(p,spd);}
+    p.x+=p.vx; p.y+=p.vy; p.z=(p.z||0)+(p.vz||0);
+    if(!checkSlitAtomic(p)){completedTrails.push({points:p.trail,color:p.trailColor}); singleParticle=null;}
+    else {
+      p.trail.push({x:p.x,y:p.y,z:p.z||0});
+      const dDet=Math.hypot(p.x-520,p.y-205);
+      if(dDet>=330&&p.x>520){addHitMarker(p.x,p.y,p.kind,p.z||0);flashes.push({x:p.x,y:p.y,z:p.z||0,r:5,alpha:1});completedTrails.push({points:p.trail,color:p.trailColor}); if(completedTrails.length>10)completedTrails.shift(); singleParticle=null;}
+      else if(p.x<118){addHitMarker(122,p.y,'bounce',p.z||0);completedTrails.push({points:p.trail,color:p.trailColor}); if(completedTrails.length>10)completedTrails.shift(); singleParticle=null;}
+      else if(p.y<12||p.y>398){addHitMarker(p.x,p.y,'deflect',p.z||0);completedTrails.push({points:p.trail,color:p.trailColor}); if(completedTrails.length>10)completedTrails.shift(); singleParticle=null;}
+    }
+  }
+  if(singleParticle&&singleParticle.trail.length>1){
+    ctx.beginPath();
+    singleParticle.trail.forEach((pt,pi)=>{const q=proj3d(pt.x,pt.y,pt.z||0); if(pi===0)ctx.moveTo(q.x,q.y); else ctx.lineTo(q.x,q.y);});
+    ctx.strokeStyle=singleParticle.trailColor; ctx.lineWidth=2.6; ctx.stroke();
+    const spQ=proj3d(singleParticle.x,singleParticle.y,singleParticle.z||0);
+    ctx.beginPath(); ctx.arc(spQ.x,spQ.y,4.8,0,Math.PI*2); ctx.fillStyle='#fde047'; ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1.4; ctx.stroke();
+  }
+}
+function render(){
+  resizeCanvasForSharpness();
+  ctx.clearRect(0,0,900,410);
+  if(view==='lab') drawLabSetup(); else drawAtomicZoom();
+  stepAnimation();
+  requestAnimationFrame(render);
+}
+function speedLabel(v){
+  if(v<=0.6) return `Very Slow (${v}x)`;
+  if(v<=1.2) return `Slow (${v}x)`;
+  return `Speed (${v}x)`;
+}
+sliderSpeed.addEventListener('input',()=>{document.getElementById('lblSpeed').textContent=speedLabel(parseFloat(sliderSpeed.value));});
+sliderPathMode.addEventListener('input',()=>{
+  const m=parseInt(sliderPathMode.value,10);
+  const names=['Auto','Straight','Deflect','Return'];
+  document.getElementById('lblPathMode').textContent=names[m];
+});
+const yawSlider=document.getElementById('sliderYaw'), pitchSlider=document.getElementById('sliderPitch');
+yawSlider.addEventListener('input',()=>{yawDeg=parseInt(yawSlider.value,10);upd3dLabel();});
+pitchSlider.addEventListener('input',()=>{pitchDeg=parseInt(pitchSlider.value,10);upd3dLabel();});
+let dragging3d=false, lastX=0, lastY=0;
+canvas.addEventListener('pointerdown',e=>{dragging3d=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId);});
+canvas.addEventListener('pointermove',e=>{if(!dragging3d)return;const dx=e.clientX-lastX, dy=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;yawDeg=Math.max(-60,Math.min(60,yawDeg+dx*0.3));pitchDeg=Math.max(-45,Math.min(45,pitchDeg+dy*0.3));yawSlider.value=Math.round(yawDeg);pitchSlider.value=Math.round(pitchDeg);upd3dLabel();});
+canvas.addEventListener('pointerup',()=>dragging3d=false);
+canvas.addEventListener('pointercancel',()=>dragging3d=false);
+fireNextParticle();
+render();
+</script>
+</body>
+</html>
