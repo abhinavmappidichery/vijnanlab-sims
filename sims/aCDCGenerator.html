@@ -204,7 +204,7 @@
       <button class="mode-btn" id="btnDC" onclick="setMode('DC')">🔋 DC ജനറേറ്റർ (സ്പ്ലിറ്റ് റിങ്)</button>
     </div>
 
-    <button class="play-btn running" id="btnPlay" onclick="togglePlay()">⏸️ നിർത്തുക (Pause)</button>
+    <div class="btn-group"><button class="mode-btn active-ac" id="btnGalv" onclick="setLoad('galv')">🧭 ഗാൽവനോമീറ്റർ</button><button class="mode-btn" id="btnBulb" onclick="setLoad('bulb')">💡 ബൾബ് (Bulb)</button></div><button class="play-btn running" id="btnPlay" onclick="togglePlay()">⏸️ നിർത്തുക (Pause)</button>
   </div>
 
   <!-- MAIN GENERATOR SVG -->
@@ -238,13 +238,13 @@
 
       <!-- ARMATURE COIL (ABCD) - Dynamic -->
       <g id="armatureGroup">
-        <line id="armBC" x1="180" y1="65" x2="300" y2="65" stroke="#f59e0b" stroke-width="5" stroke-linecap="round" />
-        <line id="armAB" x1="180" y1="65" x2="180" y2="175" stroke="#fbbf24" stroke-width="6" stroke-linecap="round" />
-        <line id="armCD" x1="300" y1="65" x2="300" y2="175" stroke="#fb923c" stroke-width="6" stroke-linecap="round" />
+        <line id="armBC1" x1="180" y1="65" x2="240" y2="65" stroke="#cbd5e1" stroke-width="5" stroke-linecap="round" /><line id="armBC2" x1="240" y1="65" x2="300" y2="65" stroke="#f472b6" stroke-width="5" stroke-linecap="round" />
+        <line id="armAB" x1="180" y1="65" x2="180" y2="175" stroke="#cbd5e1" stroke-width="6" stroke-linecap="round" />
+        <line id="armCD" x1="300" y1="65" x2="300" y2="175" stroke="#f472b6" stroke-width="6" stroke-linecap="round" />
 
         <!-- Coil leads bending 90° and fixed to opposite points on rings -->
-        <polyline id="leadA" points="180,175 262,175 262,215" fill="none" stroke="#fbbf24" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" />
-        <polyline id="leadD" points="300,175 218,175 218,248" fill="none" stroke="#fb923c" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" />
+        <polyline id="leadA" points="180,175 262,175 262,215" fill="none" stroke="#cbd5e1" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" />
+        <polyline id="leadD" points="300,175 218,175 218,248" fill="none" stroke="#f472b6" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" />
 
         <!-- Current Direction Arrows on AB and CD -->
         <line id="arrowAB" x1="180" y1="145" x2="180" y2="95" stroke="#fde047" stroke-width="3" marker-end="url(#arrowYellow)" />
@@ -260,11 +260,11 @@
 
       <!-- AC ROTATING SLIP RINGS (R1, R2) WITH OPPOSITE ATTACHMENT POINTS -->
       <g id="acRingsGroup">
-        <ellipse cx="240" cy="215" rx="22" ry="8" fill="none" stroke="#f59e0b" stroke-width="5" />
-        <circle id="ptR1" cx="262" cy="215" r="4.5" fill="#fef08a" stroke="#0f172a" stroke-width="1.2" />
+        <ellipse cx="240" cy="215" rx="22" ry="8" fill="none" stroke="#cbd5e1" stroke-width="5" />
+        <circle id="ptR1" cx="262" cy="215" r="4.5" fill="#e2e8f0" stroke="#0f172a" stroke-width="1.2" />
 
-        <ellipse cx="240" cy="248" rx="22" ry="8" fill="none" stroke="#fb923c" stroke-width="5" />
-        <circle id="ptR2" cx="218" cy="248" r="4.5" fill="#fed7aa" stroke="#0f172a" stroke-width="1.2" />
+        <ellipse cx="240" cy="248" rx="22" ry="8" fill="none" stroke="#f472b6" stroke-width="5" />
+        <circle id="ptR2" cx="218" cy="248" r="4.5" fill="#ec4899" stroke="#0f172a" stroke-width="1.2" />
 
         <text x="240" y="280" fill="#fdba74" font-size="11.5" font-weight="700" text-anchor="middle">കറങ്ങുന്ന സ്ലിപ് റിങ്ങുകൾ (R1, R2)</text>
       </g>
@@ -273,11 +273,11 @@
       <g id="dcRingsGroup" style="display: none;">
         <g id="splitRingRotate" transform="translate(240, 232)">
           <!-- Left Half -->
-          <path d="M -3 -20 A 20 20 0 0 0 -3 20" fill="none" stroke="#fbbf24" stroke-width="7" stroke-linecap="round" />
+          <path d="M -3 -20 A 20 20 0 0 0 -3 20" fill="none" stroke="#cbd5e1" stroke-width="7" stroke-linecap="round" />
           <!-- Right Half -->
-          <path d="M 3 -20 A 20 20 0 0 1 3 20" fill="none" stroke="#fb923c" stroke-width="7" stroke-linecap="round" />
-          <circle cx="-20" cy="0" r="4.5" fill="#fef08a" stroke="#0f172a" stroke-width="1.2" />
-          <circle cx="20" cy="0" r="4.5" fill="#fed7aa" stroke="#0f172a" stroke-width="1.2" />
+          <path d="M 3 -20 A 20 20 0 0 1 3 20" fill="none" stroke="#f472b6" stroke-width="7" stroke-linecap="round" />
+          <circle cx="-20" cy="0" r="4.5" fill="#e2e8f0" stroke="#0f172a" stroke-width="1.2" />
+          <circle cx="20" cy="0" r="4.5" fill="#ec4899" stroke="#0f172a" stroke-width="1.2" />
         </g>
         <text x="240" y="280" fill="#93c5fd" font-size="11.5" font-weight="700" text-anchor="middle">കറങ്ങുന്ന സ്പ്ലിറ്റ് റിങ് (R1, R2)</text>
       </g>
@@ -298,12 +298,12 @@
             fill="none" stroke="#fde047" stroke-width="3.5" stroke-dasharray="6 16" />
 
       <!-- GALVANOMETER (Right Bottom) -->
-      <g transform="translate(545, 248)">
+      <g id="galvGroup" transform="translate(545, 248)">
         <circle cx="0" cy="0" r="30" fill="#1e293b" stroke="#94a3b8" stroke-width="2.5" />
         <path d="M -18 -8 A 20 20 0 0 1 18 -8" fill="none" stroke="#475569" stroke-width="2" />
         <line id="galvNeedle" x1="0" y1="8" x2="0" y2="-20" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
         <circle cx="0" cy="8" r="4" fill="#e2e8f0" />
-        <text x="0" y="22" fill="#cbd5e1" font-size="11" font-weight="800" text-anchor="middle">G</text>
+        <text x="0" y="22" fill="#cbd5e1" font-size="11" font-weight="800" text-anchor="middle">G</text></g><g id="bulbGroup" transform="translate(545, 248)" style="display:none;"><circle id="bulbGlow" cx="0" cy="-6" r="34" fill="#38bdf8" opacity="0" /><circle id="bulbGlass" cx="0" cy="-6" r="22" fill="#1e293b" stroke="#94a3b8" stroke-width="2" /><path id="bulbFilament" d="M -8 6 L -5 -8 L 0 -2 L 5 -8 L 8 6" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><rect x="-9" y="14" width="18" height="10" rx="2" fill="#475569" stroke="#94a3b8" stroke-width="1.5" /><text x="0" y="36" fill="#cbd5e1" font-size="10" font-weight="700" text-anchor="middle">BULB</text>
       </g>
       <text x="545" y="292" fill="#94a3b8" font-size="10.5" font-weight="700" text-anchor="middle">ഗാൽവനോമീറ്റർ</text>
 
@@ -329,7 +329,7 @@
   <div class="controls">
     <div class="slider-group">
       <label>
-        <span>🔄 ആർമെച്ചർ കോൺ (Manual Angle)</span>
+        <span>🔄 Armature Angle</span>
         <span id="lblAngle">0°</span>
       </label>
       <input type="range" id="sliderAngle" min="0" max="360" step="1" value="0" />
@@ -337,10 +337,10 @@
 
     <div class="slider-group">
       <label>
-        <span>⚡ കറങ്ങുന്ന വേഗത (Speed)</span>
+        <span>⚡ Speed</span>
         <span id="lblSpeed">സാധാരണ</span>
       </label>
-      <input type="range" id="sliderSpeed" min="0.5" max="4" step="0.5" value="1.5" />
+      <input type="range" id="sliderSpeed" min="0.1" max="4" step="0.1" value="1.5" />
     </div>
   </div>
 
@@ -356,7 +356,7 @@
   const sliderAngle = document.getElementById('sliderAngle');
   const sliderSpeed = document.getElementById('sliderSpeed');
 
-  function setMode(newMode) {
+  let loadType = 'galv'; function setLoad(newLoad) { loadType = newLoad; document.getElementById('btnGalv').className = 'mode-btn ' + (loadType === 'galv' ? 'active-ac' : ''); document.getElementById('btnBulb').className = 'mode-btn ' + (loadType === 'bulb' ? 'active-dc' : ''); document.getElementById('galvGroup').style.display = loadType === 'galv' ? 'block' : 'none'; document.getElementById('bulbGroup').style.display = loadType === 'bulb' ? 'block' : 'none'; } function setMode(newMode) {
     mode = newMode;
     document.getElementById('btnAC').className = `mode-btn ${mode === 'AC' ? 'active-ac' : ''}`;
     document.getElementById('btnDC').className = `mode-btn ${mode === 'DC' ? 'active-dc' : ''}`;
@@ -401,7 +401,7 @@
     for (let px = 0; px <= 190; px += 4) {
       const rad = (px / 190) * Math.PI * 2;
       const val = isAC ? Math.sin(rad) : Math.abs(Math.sin(rad));
-      const py = 75 - val * 35;
+      const py = 75 + val * 35;
       d += ` L ${25 + px} ${py.toFixed(1)}`;
     }
     wavePath.setAttribute('d', d);
@@ -452,10 +452,10 @@
     document.getElementById('armCD').setAttribute('x2', xCD);
     document.getElementById('armCD').setAttribute('y2', yBotCD);
 
-    document.getElementById('armBC').setAttribute('x1', xAB);
-    document.getElementById('armBC').setAttribute('y1', yTopAB);
-    document.getElementById('armBC').setAttribute('x2', xCD);
-    document.getElementById('armBC').setAttribute('y2', yTopCD);
+    const midBCX = (xAB + xCD) / 2; const midBCY = (yTopAB + yTopCD) / 2; document.getElementById('armBC1').setAttribute('x1', xAB);
+    document.getElementById('armBC1').setAttribute('y1', yTopAB);
+    document.getElementById('armBC1').setAttribute('x2', midBCX); document.getElementById('armBC1').setAttribute('y2', midBCY); document.getElementById('armBC2').setAttribute('x1', midBCX); document.getElementById('armBC2').setAttribute('y1', midBCY); document.getElementById('armBC2').setAttribute('x2', xCD);
+    document.getElementById('armBC2').setAttribute('y2', yTopCD);
 
     // Opposite attachment points on rotating rings
     const r1Cx = 240, r1Cy = 215;
@@ -550,13 +550,13 @@
     document.getElementById('galvNeedle').setAttribute('transform', `rotate(${needleAngle.toFixed(1)}, 0, 8)`);
 
     // External Current Flow Animation
-    flowOffset -= extOutput * 3.5;
+    flowOffset += extOutput * 3.5;
     document.getElementById('extFlow').setAttribute('stroke-dashoffset', flowOffset.toFixed(1));
-    document.getElementById('extFlow').setAttribute('opacity', (0.2 + absEmf * 0.8).toFixed(2));
+    document.getElementById('extFlow').setAttribute('opacity', (0.2 + absEmf * 0.8).toFixed(2)); const bulbInt = Math.min(1, Math.abs(extOutput)); const bulbPos = extOutput >= 0; const bulbCol = bulbPos ? '#f472b6' : '#e2e8f0'; document.getElementById('bulbGlow').setAttribute('fill', bulbCol); document.getElementById('bulbGlow').setAttribute('opacity', (bulbInt * 0.55).toFixed(2)); document.getElementById('bulbGlass').setAttribute('fill', bulbCol); document.getElementById('bulbGlass').setAttribute('fill-opacity', (0.12 + bulbInt * 0.78).toFixed(2)); document.getElementById('bulbGlass').setAttribute('stroke', bulbInt < 0.05 ? '#94a3b8' : bulbCol); document.getElementById('bulbFilament').setAttribute('stroke', bulbInt < 0.05 ? '#64748b' : (bulbPos ? '#fce7f3' : '#f8fafc'));
 
     // Wave Dot Position
     const dotX = 25 + (angleDeg / 360) * 190;
-    const dotY = 75 - extOutput * 35;
+    const dotY = 75 + extOutput * 35;
     document.getElementById('waveDot').setAttribute('cx', dotX.toFixed(1));
     document.getElementById('waveDot').setAttribute('cy', dotY.toFixed(1));
 
@@ -568,7 +568,7 @@
 
   function animate() {
     if (isPlaying) {
-      const spd = parseFloat(sliderSpeed.value);
+      const rawSpd = parseFloat(sliderSpeed.value); const spd = rawSpd <= 1 ? rawSpd * 0.4 : rawSpd;
       angleDeg = (angleDeg + spd) % 360;
       renderFrame();
     }
@@ -585,7 +585,7 @@
 
   sliderSpeed.addEventListener('input', () => {
     const v = parseFloat(sliderSpeed.value);
-    document.getElementById('lblSpeed').textContent = v <= 1 ? 'സ്ലോ' : v <= 2 ? 'സാധാരണ' : 'വേഗത്തിൽ';
+    document.getElementById('lblSpeed').textContent = v <= 1 ? 'Slow' : v <= 2 ? 'സാധാരണ' : 'വേഗത്തിൽ';
   });
 
   drawStaticWave();
