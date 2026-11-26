@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>വൈദ്യുതി → കാന്തികമണ്ഡലം - Textbook Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans+Malayalam:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body, button, input, svg text {
+    font-family: 'Google Sans', 'Noto Sans Malayalam', system-ui, sans-serif;
+  }
+  body {
+    margin: 0;
+    background: #fff7e6;
+    color: #222;
+    user-select: none;
+  }
+  header {
+    background: #fff;
+    padding: 8px 16px;
+    border-bottom: 3px solid #ff8c00;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: space-between;
+    align-items: center;
+  }
+  h1 { font-size: 18px; margin: 0; }
+  h1 small { display: block; font-size: 11.5px; color: #666; font-weight: 400; }
+
+  .wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 4px 18px rgba(0,0,0,.08);
+    overflow: hidden;
+  }
+  .stage {
+    position: relative;
+    background: #fffdf2;
+    height: 68vh;
+    min-height: 480px;
+    max-height: 700px;
+    touch-action: none;
+  }
+  svg { width: 100%; height: 100%; display: block; }
+
+  .controls {
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .controls-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+  }
+  .slider-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 700;
+  }
+  .slider-group input[type=range] { width: 105px; margin: 0; }
+  button {
+    border: 0;
+    padding: 8px 13px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 13px;
+    background: #eef2f7;
+    color: #1e293b;
+    transition: opacity 0.15s;
+  }
+  button:hover { opacity: 0.9; }
+  button.on { background: #2563eb; color: #fff; }
+  button.green { background: #16a34a; color: #fff; }
+  button.orange { background: #f97316; color: #fff; }
+  button.red { background: #dc2626; color: #fff; }
+
+  .pill {
+    background: #fff3cd;
+    border: 1px solid #ffd166;
+    padding: 7px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
+  }
+  .hint {
+    position: absolute;
+    left: 12px;
+    top: 10px;
+    background: rgba(255,255,255,.95);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid #ddd;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button id="switchBtn" class="green">● Switch ON</button>
+    <button id="polBtn" class="orange">⇄ Polarity: + → −</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <div class="stage" id="stage">
+      <div class="hint">Use Right Hand Grip Rule</div>
+      <svg id="svg" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+  </div>
+
+  <div class="card controls">
+    <div class="controls-bar">
+      <button data-mode="straight" class="on">Straight Conductor</button>
+      <button data-mode="loop">Circular Loop (A &amp; B)</button>
+      <button data-mode="coil">Coil</button>
+      <button data-mode="solenoid">Solenoid</button>
+    </div>
+
+    <div class="controls-bar" id="rotBar" style="display:none">
+      <div class="slider-group">
+        <span>🔄 Rotate: <span id="rotVal">0°</span></span>
+        <input id="rotSlider" type="range" min="-82" max="82" value="0">
+      </div>
+      <div class="slider-group">
+        <span>ചുരുളുകൾ: <span id="turnVal">7</span></span>
+        <input id="turns" type="range" min="1" max="12" value="7">
+      </div>
+    </div>
+
+    <div class="controls-bar">
+      <button id="fieldBtn" class="on">◉ Field ON</button>
+      <button id="elecBtn" class="on">⚡ Electrons (e⁻)</button>
+      <button id="handBtn" class="on">👍 Grip Rule</button>
+      <button id="compassBtn" class="on">🧭 Compass</button>
+      <button id="resetBtn">↺ Reset</button>
+      <div class="slider-group">
+        <span>വേഗത:</span>
+        <input id="speed" type="range" min="0.4" max="2.5" value="1" step="0.1">
+      </div>
+    </div>
+
+    <div class="pill" id="readout"></div>
+  </div>
+</div>
+
+<script>
+let mode = 'straight';
+let on = true;
+let polarity = 1; // 1: + right | -1: + left
+let showField = true;
+let showElectrons = true;
+let showHand = true;
+let showCompass = true;
+let turns = 7;
+let speed = 1;
+let t = 0;
+
+let solYaw = 0;
+let cx = 680, cy = 175, angle = 90, targetAngle = 90;
+const svg = document.getElementById('svg');
+
+function el(tag, attrs, parent) {
+  const node = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const k in attrs) node.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(node);
+  return node;
+}
+
+function txt(x, y, text, fill, sz, anchor, parent = svg) {
+  const node = el('text', {
+    x, y,
+    'font-size': sz || 14,
+    fill: fill || '#333',
+    'font-weight': 700,
+    'text-anchor': anchor || 'start'
+  }, parent);
+  node.textContent = text;
+  return node;
+}
+
+function drawRedArrow(x, y, rotDeg) {
+  const g = el('g', { transform: `translate(${x}, ${y}) rotate(${rotDeg})` }, svg);
+  el('path', {
+    d: 'M -7 -6 L 5 0 L -7 6',
+    fill: 'none',
+    stroke: '#dc2626',
+    'stroke-width': 3,
+    'stroke-linecap': 'round',
+    'stroke-linejoin': 'round'
+  }, g);
+}
+
+function drawMovingEllipseArrow(ecx, ecy, rx, ry, theta, dir, color) {
+  const x = ecx + rx * Math.cos(theta);
+  const y = ecy + ry * Math.sin(theta);
+  const dx = -rx * Math.sin(theta) * dir;
+  const dy = ry * Math.cos(theta) * dir;
+  const rot = (Math.atan2(dy, dx) * 180) / Math.PI;
+  const g = el('g', { transform: `translate(${x}, ${y}) rotate(${rot})` }, svg);
+  el('polygon', { points: '7,0 -5,-4.5 -5,4.5', fill: color }, g);
+}
+
+function samplePolyline(pts, cumLen, dist) {
+  const total = cumLen[cumLen.length - 1];
+  const d = ((dist % total) + total) % total;
+  let lo = 0, hi = cumLen.length - 1;
+  while (lo < hi - 1) {
+    const mid = (lo + hi) >> 1;
+    if (cumLen[mid] <= d) lo = mid;
+    else hi = mid;
+  }
+  const segLen = cumLen[hi] - cumLen[lo] || 1;
+  const f = (d - cumLen[lo]) / segLen;
+  const a = pts[lo], b = pts[hi];
+  return {
+    sx: a.sx + (b.sx - a.sx) * f,
+    sy: a.sy + (b.sy - a.sy) * f,
+    z: a.z + (b.z - a.z) * f,
+    scale: a.scale + (b.scale - a.scale) * f
+  };
+}
+
+// ==========================================
+// 3D ROTATABLE SOLENOID / COIL
+// ==========================================
+function project3D(x, y, z, yawDeg) {
+  const rad = (yawDeg * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  const rx = x * cos + z * sin;
+  const rz = -x * sin + z * cos;
+  const fov = 780;
+  const scale = fov / (fov - rz);
+  return { sx: 500 + rx * scale, sy: 280 + y * scale, z: rz, scale };
+}
+
+function draw3DHelixStage() {
+  const isCoil = mode === 'coil';
+  const L = turns === 1 ? 36 : (isCoil ? Math.min(220, turns * 32) : Math.min(380, turns * 48));
+  const R = isCoil ? 85 : 74;
+  const totalSteps = turns * 24;
+
+  const leftPole = polarity === 1 ? 'S' : 'N';
+  const rightPole = polarity === 1 ? 'N' : 'S';
+  const insideDir = polarity === 1 ? 1 : -1;
+
+  const pts3D = [];
+  for (let i = 0; i <= totalSteps; i++) {
+    const u = i / totalSteps;
+    const x = -L / 2 + u * L;
+    const theta = u * turns * Math.PI * 2;
+    const y = R * Math.cos(theta);
+    const z = R * Math.sin(theta);
+    pts3D.push({ x, y, z, ...project3D(x, y, z, solYaw) });
+  }
+
+  const leftEnd = pts3D[0];
+  const rightEnd = pts3D[pts3D.length - 1];
+  const wireColor = on ? '#b45309' : '#64748b';
+
+  const leads = [
+    `M ${leftEnd.sx} ${leftEnd.sy} L ${leftEnd.sx} 455 L 250 455 L 250 520 L 302 520`,
+    `M 382 520 L 460 520`,
+    `M 560 520 L 750 520 L 750 455 L ${rightEnd.sx} 455 L ${rightEnd.sx} ${rightEnd.sy}`
+  ];
+  leads.forEach((d) => {
+    el('path', { d, fill: 'none', stroke: wireColor, 'stroke-width': 7.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, svg);
+    el('path', { d, fill: 'none', stroke: on ? '#fbbf24' : '#cbd5e1', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, svg);
+  });
+
+  const renderItems = [];
+
+  for (let i = 0; i < pts3D.length - 1; i++) {
+    const p1 = pts3D[i], p2 = pts3D[i + 1];
+    const avgZ = (p1.z + p2.z) * 0.5;
+    renderItems.push({
+      z: avgZ,
+      draw: () => {
+        const isFront = avgZ >= 0;
+        const w = (isFront ? 9 : 7.5) * ((p1.scale + p2.scale) * 0.5);
+        el('line', { x1: p1.sx, y1: p1.sy, x2: p2.sx, y2: p2.sy, stroke: '#451a03', 'stroke-width': w + 2.2, 'stroke-linecap': 'round' }, svg);
+        el('line', {
+          x1: p1.sx, y1: p1.sy, x2: p2.sx, y2: p2.sy,
+          stroke: on ? (isFront ? '#d97706' : '#7c2d12') : (isFront ? '#94a3b8' : '#475569'),
+          'stroke-width': w, 'stroke-linecap': 'round'
+        }, svg);
+        if (isFront) {
+          el('line', {
+            x1: p1.sx, y1: p1.sy, x2: p2.sx, y2: p2.sy,
+            stroke: on ? '#fef08a' : '#e2e8f0', 'stroke-width': w * 0.28, 'stroke-linecap': 'round', opacity: 0.85
+          }, svg);
+        }
+      }
+    });
+  }
+
+  if (on && showField) {
+    [-36, -18, 0, 18, 36].forEach((oy, idx) => {
+      const f1 = project3D(-L / 2 - 42, oy, 0, solYaw);
+      const f2 = project3D(L / 2 + 42, oy, 0, solYaw);
+      renderItems.push({
+        z: (f1.z + f2.z) * 0.5,
+        draw: () => {
+          el('line', { x1: f1.sx, y1: f1.sy, x2: f2.sx, y2: f2.sy, stroke: '#2563eb', 'stroke-width': 2.2, opacity: 0.8 }, svg);
+          const frac = (t * 0.35 * speed + idx * 0.19) % 1;
+          const u = insideDir === 1 ? frac : (1 - frac);
+          const ax = f1.sx + (f2.sx - f1.sx) * u;
+          const ay = f1.sy + (f2.sy - f1.sy) * u;
+          const rot = (Math.atan2((f2.sy - f1.sy) * insideDir, (f2.sx - f1.sx) * insideDir) * 180) / Math.PI;
+          const ag = el('g', { transform: `translate(${ax}, ${ay}) rotate(${rot})` }, svg);
+          el('polygon', { points: '8,0 -5,-4.5 -5,4.5', fill: '#1d4ed8' }, ag);
+        }
+      });
+    });
+  }
+
+  if (on) {
+    const fullLoop = [
+      { sx: 560, sy: 520, z: 20, scale: 1 },
+      { sx: 750, sy: 520, z: 20, scale: 1 },
+      { sx: 750, sy: 455, z: 20, scale: 1 },
+      { sx: rightEnd.sx, sy: 455, z: 20, scale: 1 }
+    ];
+    for (let i = pts3D.length - 1; i >= 0; i--) fullLoop.push(pts3D[i]);
+    fullLoop.push(
+      { sx: leftEnd.sx, sy: 455, z: 20, scale: 1 },
+      { sx: 250, sy: 455, z: 20, scale: 1 },
+      { sx: 250, sy: 520, z: 20, scale: 1 },
+      { sx: 460, sy: 520, z: 20, scale: 1 }
+    );
+
+    const cumLen = [0];
+    for (let i = 1; i < fullLoop.length; i++) {
+      cumLen.push(cumLen[i - 1] + Math.hypot(fullLoop[i].sx - fullLoop[i - 1].sx, fullLoop[i].sy - fullLoop[i - 1].sy));
+    }
+    const totalLen = cumLen[cumLen.length - 1];
+    const dotCount = Math.max(14, Math.floor(totalLen / 95));
+
+    for (let k = 0; k < dotCount; k++) {
+      const rawDist = (t * 105 * speed + (k * totalLen) / dotCount) % totalLen;
+
+      const curDist = polarity === 1 ? rawDist : (totalLen - rawDist);
+      const pCur = samplePolyline(fullLoop, cumLen, curDist);
+      if (!(pCur.sy > 514 && pCur.sx > 300 && pCur.sx < 385)) {
+        renderItems.push({
+          z: pCur.z + 5,
+          draw: () => el('circle', { cx: pCur.sx, cy: pCur.sy, r: 5.4 * pCur.scale, fill: '#ef4444', stroke: '#fff', 'stroke-width': 1.6 }, svg)
+        });
+      }
+
+      if (showElectrons) {
+        const eDist = polarity === 1 ? (totalLen - rawDist) : rawDist;
+        const pElec = samplePolyline(fullLoop, cumLen, eDist);
+        if (!(pElec.sy > 514 && pElec.sx > 300 && pElec.sx < 385)) {
+          renderItems.push({
+            z: pElec.z + 5,
+            draw: () => el('circle', { cx: pElec.sx, cy: pElec.sy, r: 4.3 * pElec.scale, fill: '#0ea5e9', stroke: '#fff', 'stroke-width': 1.3 }, svg)
+          });
+        }
+      }
+    }
+  }
+
+  renderItems.sort((a, b) => a.z - b.z);
+  renderItems.forEach((item) => item.draw());
+
+  if (on) {
+    const pLeft = project3D(-L / 2 - 58, 0, 0, solYaw);
+    const pRight = project3D(L / 2 + 58, 0, 0, solYaw);
+
+    const drawEndBadge = (pt, pole) => {
+      const isN = pole === 'N';
+      el('circle', {
+        cx: pt.sx, cy: pt.sy, r: 22 * pt.scale,
+        fill: isN ? '#fee2e2' : '#dbeafe',
+        stroke: isN ? '#dc2626' : '#1d4ed8', 'stroke-width': 2.5
+      }, svg);
+      txt(pt.sx, pt.sy + 7 * pt.scale, pole, isN ? '#dc2626' : '#1d4ed8', 21 * pt.scale, 'middle');
+    };
+
+    if (pLeft.z < pRight.z) {
+      drawEndBadge(pLeft, leftPole);
+      drawEndBadge(pRight, rightPole);
+    } else {
+      drawEndBadge(pRight, rightPole);
+      drawEndBadge(pLeft, leftPole);
+    }
+
+    if (Math.abs(solYaw) > 45) {
+      const viewingLeft = solYaw > 0;
+      const poleSeen = viewingLeft ? leftPole : rightPole;
+      const clockText = poleSeen === 'N'
+        ? 'Anticlockwise (എതിർദിശ) → North Pole (N)'
+        : 'Clockwise (ഘടികാരദിശ) → South Pole (S)';
+      el('rect', { x: 300, y: 125, width: 400, height: 34, rx: 17, fill: poleSeen === 'N' ? '#fee2e2' : '#dbeafe', stroke: poleSeen === 'N' ? '#dc2626' : '#1d4ed8', 'stroke-width': 1.8 }, svg);
+      txt(500, 147, `${viewingLeft ? 'Left End' : 'Right End'}: ${clockText}`, poleSeen === 'N' ? '#b91c1c' : '#1e40af', 13.5, 'middle');
+    } else {
+      txt(500, 145, `${mode === 'solenoid' ? 'Solenoid' : 'Coil'} (${turns} ${turns === 1 ? 'Turn' : 'Turns'})`, '#92400e', 14.5, 'middle');
+    }
+  }
+}
+
+function circuitPath() {
+  if (mode === 'straight') return 'M 560 520 L 820 520 L 820 140 L 250 140 L 250 520 L 460 520';
+  if (mode === 'loop') return 'M 560 520 L 670 520 L 670 445 L 525 445 L 525 392 A 120 120 0 0 0 620 275 A 120 120 0 0 0 380 275 A 120 120 0 0 0 475 392 L 475 445 L 250 445 L 250 520 L 460 520';
+  return '';
+}
+
+function drawGripEmoji(gx, gy, isThumbUp, labelText, labelSide = 'right') {
+  const g = el('g', {
+    transform: isThumbUp ? `translate(${gx}, ${gy}) scale(-1, 1)` : `translate(${gx}, ${gy}) scale(1, -1)`
+  }, svg);
+
+  el('circle', { cx: 0, cy: 0, r: 24, fill: 'rgba(255,255,255,0.92)', stroke: '#f59e0b', 'stroke-width': 2 }, g);
+  const emoji = el('text', { x: 0, y: 0, 'font-size': 28, 'text-anchor': 'middle', 'dominant-baseline': 'central' }, g);
+  emoji.textContent = '👍';
+
+  if (labelText) {
+    txt(labelSide === 'right' ? gx + 32 : gx - 32, gy + 4, labelText, '#b45309', 12, labelSide === 'right' ? 'start' : 'end');
+  }
+}
+
+function draw3DCardboard() {
+  el('polygon', { points: '100,355 380,355 420,255 140,255', fill: 'rgba(15, 23, 42, 0.12)' }, svg);
+  el('polygon', { points: '90,335 370,335 410,235 130,235', fill: '#fde68a', stroke: '#b45309', 'stroke-width': 2 }, svg);
+  el('polygon', { points: '90,335 370,335 370,348 90,348', fill: '#d97706', stroke: '#92400e', 'stroke-width': 1.5 }, svg);
+  el('polygon', { points: '370,335 410,235 410,248 370,348', fill: '#b45309', stroke: '#78350f', 'stroke-width': 1.5 }, svg);
+  el('ellipse', { cx: 250, cy: 285, rx: 8, ry: 4, fill: '#451a03' }, svg);
+  txt(102, 368, '3D Cardboard / കാർഡ്ബോർഡ്', '#92400e', 12.5);
+}
+
+// Generic concentric magnetic field rings for any vertical wire (Left x=250 or Right x=820)
+function drawVerticalWireFieldHalf(wireX, wireY, dir, isFront, showLabel) {
+  if (!on || !showField) return;
+
+  [36, 64, 92].forEach((r, idx) => {
+    const rx = r * 1.15, ry = r * 0.36;
+    el('path', {
+      d: `M ${wireX - rx} ${wireY} A ${rx} ${ry} 0 0 ${isFront ? 0 : 1} ${wireX + rx} ${wireY}`,
+      fill: 'none',
+      stroke: isFront ? '#1d4ed8' : '#60a5fa',
+      'stroke-width': isFront ? 2.4 : 1.8,
+      'stroke-dasharray': isFront ? 'none' : '5 4',
+      opacity: isFront ? 0.9 : 0.7
+    }, svg);
+
+    for (let k = 0; k < 2; k++) {
+      const theta = ((t * 1.4 * speed * dir) + idx * 0.9 + k * Math.PI) % (Math.PI * 2);
+      if ((Math.sin(theta) >= 0) === isFront) {
+        drawMovingEllipseArrow(wireX, wireY, rx, ry, theta, dir, isFront ? '#1d4ed8' : '#3b82f6');
+      }
+    }
+  });
+
+  if (isFront && showLabel) {
+    const label = dir === 1 ? 'Clockwise (ഘടികാരദിശ)' : 'Anticlockwise (എതിർദിശ)';
+    if (wireX === 250) {
+      txt(250, 392, label, '#1d4ed8', 12.5, 'middle');
+    } else {
+      txt(820, 345, label, '#1d4ed8', 12.5, 'middle');
+    }
+  }
+}
+
+// Concentric magnetic field rings around the top horizontal wire (x=535, y=140)
+function drawTopWireFieldHalf(isFront) {
+  if (!on || !showField) return;
+  // polarity === 1 -> Current goes LEFT on top wire -> Front goes UP, Back goes DOWN -> dir = -1
+  // polarity === -1 -> Current goes RIGHT on top wire -> Front goes DOWN, Back goes UP -> dir = +1
+  const dir = polarity === 1 ? -1 : 1;
+
+  [24, 44].forEach((r, idx) => {
+    const rx = r * 0.42, ry = r * 1.1;
+    // Left half (x < 535) is back, Right half (x >= 535) is front in perspective
+    el('path', {
+      d: `M 535 ${140 - ry} A ${rx} ${ry} 0 0 ${isFront ? 1 : 0} 535 ${140 + ry}`,
+      fill: 'none',
+      stroke: isFront ? '#1d4ed8' : '#60a5fa',
+      'stroke-width': isFront ? 2.2 : 1.7,
+      'stroke-dasharray': isFront ? 'none' : '4 4',
+      opacity: isFront ? 0.88 : 0.65
+    }, svg);
+
+    for (let k = 0; k < 2; k++) {
+      const theta = ((t * 1.4 * speed * dir) + idx * 1.1 + k * Math.PI) % (Math.PI * 2);
+      if ((Math.cos(theta) >= 0) === isFront) {
+        drawMovingEllipseArrow(535, 140, rx, ry, theta, dir, isFront ? '#1d4ed8' : '#3b82f6');
+      }
+    }
+  });
+}
+
+function drawLoopStage() {
+  const wireColor = on ? '#c2410c' : '#64748b';
+  const aX = 380, bX = 620, holeY = 275;
+
+  [
+    'M 380 275 A 120 120 0 0 0 475 392 L 475 445 L 250 445 L 250 520 L 302 520',
+    'M 620 275 A 120 120 0 0 1 525 392 L 525 445 L 670 445 L 670 520 L 560 520',
+    'M 382 520 L 460 520'
+  ].forEach((d) => {
+    el('path', { d, fill: 'none', stroke: wireColor, 'stroke-width': 7, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, svg);
+  });
+
+  el('polygon', { points: '170,355 770,355 860,210 260,210', fill: 'rgba(15, 23, 42, 0.1)' }, svg);
+  el('polygon', { points: '160,340 760,340 850,195 250,195', fill: '#e9d89c', stroke: '#78350f', 'stroke-width': 2 }, svg);
+  el('polygon', { points: '160,340 760,340 760,350 160,350', fill: '#b45309', stroke: '#78350f', 'stroke-width': 1.5 }, svg);
+  el('polygon', { points: '760,340 850,195 850,205 760,350', fill: '#92400e', stroke: '#78350f', 'stroke-width': 1.5 }, svg);
+
+  el('ellipse', { cx: aX, cy: holeY, rx: 9, ry: 5, fill: '#451a03' }, svg);
+  el('ellipse', { cx: bX, cy: holeY, rx: 9, ry: 5, fill: '#451a03' }, svg);
+
+  const bUp = polarity === 1;
+  const aUp = !bUp;
+
+  if (on && showField) {
+    const drawHoleField = (hx, isUp) => {
+      const dir = isUp ? -1 : 1;
+      [26, 48, 72, 96].forEach((r, idx) => {
+        const rx = r * 1.05, ry = r * 0.44;
+        el('ellipse', { cx: hx, cy: holeY, rx, ry, fill: 'none', stroke: '#1e293b', 'stroke-width': 1.7, opacity: 0.8 }, svg);
+        for (let k = 0; k < 2; k++) {
+          const theta = ((t * 1.5 * speed * dir) + idx * 0.85 + k * Math.PI) % (Math.PI * 2);
+          drawMovingEllipseArrow(hx, holeY, rx, ry, theta, dir, '#1d4ed8');
+        }
+      });
+    };
+    drawHoleField(aX, aUp);
+    drawHoleField(bX, bUp);
+  }
+
+  el('path', { d: 'M 380 275 A 120 120 0 0 1 620 275', fill: 'none', stroke: wireColor, 'stroke-width': 8, 'stroke-linecap': 'round' }, svg);
+  el('path', { d: 'M 380 275 A 120 120 0 0 1 620 275', fill: 'none', stroke: on ? '#fbbf24' : '#cbd5e1', 'stroke-width': 2.2, 'stroke-linecap': 'round' }, svg);
+
+  if (on) {
+    drawRedArrow(500, 155, aUp ? 0 : 180);
+    drawRedArrow(425, 372, aUp ? -135 : 45);
+    drawRedArrow(575, 372, aUp ? 135 : -45);
+  }
+
+  txt(aX + 18, holeY + 12, 'A', '#dc2626', 22, 'middle');
+  txt(bX - 18, holeY + 12, 'B', '#dc2626', 22, 'middle');
+
+  if (on && showHand) {
+    drawGripEmoji(aX, 215, aUp, aUp ? 'A: Current ↑ (Anticlockwise)' : 'A: Current ↓ (Clockwise)', 'left');
+    drawGripEmoji(bX, 215, bUp, bUp ? 'B: Current ↑ (Anticlockwise)' : 'B: Current ↓ (Clockwise)', 'right');
+  }
+}
+
+function drawSwitchAndBattery() {
+  el('rect', { x: 302, y: 500, width: 80, height: 38, fill: '#fffdf2' }, svg);
+
+  const swGroup = el('g', { style: 'cursor:pointer', id: 'svgSwitch' }, svg);
+  el('rect', { x: 290, y: 488, width: 104, height: 50, fill: 'transparent' }, swGroup);
+  el('circle', { cx: 302, cy: 520, r: 6.5, fill: '#0f172a' }, swGroup);
+  el('circle', { cx: 382, cy: 520, r: 6.5, fill: '#0f172a' }, swGroup);
+
+  if (on) {
+    el('line', { x1: 302, x2: 382, y1: 520, y2: 520, stroke: '#16a34a', 'stroke-width': 5.5, 'stroke-linecap': 'round' }, swGroup);
+    txt(342, 496, 'Switch ON (Click)', '#15803d', 12, 'middle', swGroup);
+  } else {
+    el('line', { x1: 302, x2: 374, y1: 520, y2: 492, stroke: '#dc2626', 'stroke-width': 5.5, 'stroke-linecap': 'round' }, swGroup);
+    txt(342, 484, 'Switch OFF (Click)', '#dc2626', 12, 'middle', swGroup);
+  }
+
+  swGroup.addEventListener('click', (e) => {
+    e.stopPropagation();
+    on = !on;
+    const btn = document.getElementById('switchBtn');
+    btn.textContent = on ? '● Switch ON' : '○ Switch OFF';
+    btn.className = on ? 'green' : 'red';
+    draw();
+  });
+
+  el('rect', { x: 460, y: 505, width: 100, height: 30, rx: 6, fill: '#1e40af' }, svg);
+  if (polarity === 1) {
+    el('rect', { x: 460, y: 505, width: 22, height: 30, rx: 6, fill: '#f59e0b' }, svg);
+    txt(472, 525, '−', '#000', 15, 'middle');
+    txt(548, 525, '+', '#fff', 15, 'middle');
+  } else {
+    el('rect', { x: 538, y: 505, width: 22, height: 30, rx: 6, fill: '#f59e0b' }, svg);
+    txt(472, 525, '+', '#fff', 15, 'middle');
+    txt(549, 525, '−', '#000', 15, 'middle');
+  }
+  txt(510, 525, '1.5V', '#fff', 13, 'middle');
+  txt(510, 555, 'Battery', '#333', 12, 'middle');
+}
+
+function drawCompass() {
+  if (!showCompass) return;
+  const g = el('g', { transform: `translate(${cx} ${cy})`, style: 'cursor:grab', id: 'compassGroup' }, svg);
+  el('rect', { x: -14, y: 52, width: 28, height: 34, rx: 4, fill: '#d97706' }, g);
+  el('circle', { cx: 0, cy: 0, r: 52, fill: '#fff', stroke: '#111', 'stroke-width': 3 }, g);
+
+  const needle = el('g', { transform: `rotate(${angle})` }, g);
+  // North Pole = RED (#dc2626), South Pole = BLUE (#2563eb)
+  el('polygon', { points: '0,-42 8,0 -8,0', fill: '#dc2626' }, needle);
+  el('polygon', { points: '0,42 8,0 -8,0', fill: '#2563eb' }, needle);
+  el('circle', { cx: 0, cy: 0, r: 4.5, fill: '#0f172a' }, needle);
+  txt(0, -23, 'N', '#fff', 12, 'middle', needle);
+  txt(0, 32, 'S', '#fff', 11.5, 'middle', needle);
+
+  txt(0, 72, 'Compass', '#333', 12, 'middle', g);
+}
+
+function draw() {
+  svg.innerHTML = '';
+
+  const d = circuitPath();
+  let pathEl = null;
+
+  if (mode === 'loop') {
+    drawLoopStage();
+    pathEl = el('path', { d, fill: 'none', stroke: 'none' }, svg);
+  } else if (mode === 'solenoid' || mode === 'coil') {
+    draw3DHelixStage();
+  } else {
+    // STRAIGHT CONDUCTOR: Back field halves -> Circuit wire -> Front field halves
+    const leftDir = polarity === 1 ? 1 : -1;
+    const rightDir = -leftDir;
+
+    // Back halves of Right wire & Top wire (behind the wire)
+    drawVerticalWireFieldHalf(820, 285, rightDir, false, false);
+    drawTopWireFieldHalf(false);
+
+    pathEl = el('path', {
+      d, fill: 'none', stroke: on ? '#c2410c' : '#64748b',
+      'stroke-width': 7, 'stroke-linecap': 'round', 'stroke-linejoin': 'round'
+    }, svg);
+
+    // Left wire with 3D Cardboard
+    draw3DCardboard();
+    drawVerticalWireFieldHalf(250, 285, leftDir, false, false);
+    el('line', { x1: 250, y1: 140, x2: 250, y2: 285, stroke: on ? '#c2410c' : '#64748b', 'stroke-width': 7, 'stroke-linecap': 'round' }, svg);
+    drawVerticalWireFieldHalf(250, 285, leftDir, true, true);
+
+    // Front halves of Right wire & Top wire (in front of the wire)
+    drawVerticalWireFieldHalf(820, 285, rightDir, true, true);
+    drawTopWireFieldHalf(true);
+
+    if (on && showHand) {
+      drawGripEmoji(250, 205, polarity === -1, polarity === -1 ? 'Current ↑ (Anticlockwise)' : 'Current ↓ (Clockwise)', 'right');
+    }
+  }
+
+  drawSwitchAndBattery();
+
+  if (on && pathEl) {
+    try {
+      const L = pathEl.getTotalLength();
+      const count = 12;
+      for (let i = 0; i < count; i++) {
+        const rawPos = (t * 95 * speed + (i * L) / count) % L;
+        const curPos = polarity === 1 ? rawPos : (L - rawPos + L) % L;
+        const pt = pathEl.getPointAtLength(curPos);
+        const hidden = (mode === 'straight' && Math.abs(pt.x - 250) < 5 && pt.y > 285 && pt.y < 345) ||
+                       (mode === 'loop' && pt.y > 275 && pt.y < 345) ||
+                       (pt.y > 514 && pt.x > 300 && pt.x < 385);
+        if (!hidden) {
+          el('circle', { cx: pt.x, cy: pt.y, r: 5.2, fill: '#ef4444', stroke: '#fff', 'stroke-width': 1.6 }, svg);
+        }
+
+        if (showElectrons) {
+          const ePos = polarity === 1 ? (L - rawPos + L) % L : rawPos;
+          const ePt = pathEl.getPointAtLength(ePos);
+          const eHidden = (mode === 'straight' && Math.abs(ePt.x - 250) < 5 && ePt.y > 285 && ePt.y < 345) ||
+                          (mode === 'loop' && ePt.y > 275 && ePt.y < 345) ||
+                          (ePt.y > 514 && ePt.x > 300 && ePt.x < 385);
+          if (!eHidden) {
+            el('circle', { cx: ePt.x, cy: ePt.y, r: 4.2, fill: '#0ea5e9', stroke: '#fff', 'stroke-width': 1.3 }, svg);
+          }
+        }
+      }
+    } catch (err) {}
+  }
+
+  if (on) {
+    el('circle', { cx: 700, cy: 22, r: 5.5, fill: '#ef4444', stroke: '#fff', 'stroke-width': 1.5 }, svg);
+    txt(712, 27, 'Current (+)', '#dc2626', 16);
+    if (showElectrons) {
+      el('circle', { cx: 840, cy: 22, r: 4.8, fill: '#0ea5e9', stroke: '#fff', 'stroke-width': 1.4 }, svg);
+      txt(852, 27, 'Electron (−)', '#0284c7', 16);
+    }
+  }
+
+  drawCompass();
+}
+
+function updateCompass() {
+  if (!on) {
+    targetAngle = 0;
+  } else if (mode === 'straight') {
+    const nearRight = Math.abs(cx - 820) < Math.abs(cx - 250);
+    const wireX = nearRight ? 820 : 250;
+    const dir = nearRight ? (polarity === 1 ? -1 : 1) : (polarity === 1 ? 1 : -1);
+
+    const dx = cx - wireX;
+    const dy = cy - 285;
+    const bx = -dy * dir;
+    const by = dx * dir;
+    targetAngle = (Math.atan2(by, bx) * 180) / Math.PI + 90;
+  } else if (mode === 'loop') {
+    const bUp = polarity === 1;
+    const dirA = bUp ? 1 : -1;
+    const dirB = -dirA;
+
+    const dxA = cx - 380, dyA = cy - 275;
+    const r2A = Math.max(400, dxA * dxA + dyA * dyA);
+    const dxB = cx - 620, dyB = cy - 275;
+    const r2B = Math.max(400, dxB * dxB + dyB * dyB);
+
+    const bx = (-dyA * dirA) / r2A + (-dyB * dirB) / r2B;
+    const by = (dxA * dirA) / r2A + (dxB * dirB) / r2B;
+    targetAngle = (Math.atan2(by, bx) * 180) / Math.PI + 90;
+  } else {
+    const isCoil = mode === 'coil';
+    const L = turns === 1 ? 36 : (isCoil ? Math.min(220, turns * 32) : Math.min(380, turns * 48));
+    const R = isCoil ? 85 : 74;
+    const insideDir = polarity === 1 ? 1 : -1;
+
+    const pLeft = project3D(-L / 2, 0, 0, solYaw);
+    const pRight = project3D(L / 2, 0, 0, solYaw);
+
+    const minX = Math.min(pLeft.sx, pRight.sx);
+    const maxX = Math.max(pLeft.sx, pRight.sx);
+    const inside = cx > minX && cx < maxX && Math.abs(cy - 280) < R * 0.85;
+
+    if (inside) {
+      const bx = (pRight.sx - pLeft.sx) * insideDir;
+      const by = (pRight.sy - pLeft.sy) * insideDir;
+      targetAngle = (Math.atan2(by, bx) * 180) / Math.PI + 90;
+    } else {
+      const nPt = polarity === 1 ? pRight : pLeft;
+      const sPt = polarity === 1 ? pLeft : pRight;
+
+      const dxN = cx - nPt.sx, dyN = cy - nPt.sy;
+      const rN = Math.max(35, Math.hypot(dxN, dyN));
+      const dxS = cx - sPt.sx, dyS = cy - sPt.sy;
+      const rS = Math.max(35, Math.hypot(dxS, dyS));
+
+      const bx = dxN / (rN * rN * rN) - dxS / (rS * rS * rS);
+      const by = dyN / (rN * rN * rN) - dyS / (rS * rS * rS);
+      targetAngle = (Math.atan2(by, bx) * 180) / Math.PI + 90;
+    }
+  }
+
+  const diff = ((targetAngle - angle + 540) % 360) - 180;
+  angle += diff * 0.14;
+}
+
+let draggingCompass = false;
+let draggingSolenoid = false;
+let dragStartX = 0;
+let startYaw = 0;
+
+svg.addEventListener('pointerdown', (e) => {
+  const r = svg.getBoundingClientRect();
+  const x = ((e.clientX - r.left) / r.width) * 1000;
+  const y = ((e.clientY - r.top) / r.height) * 600;
+
+  if (showCompass && Math.hypot(x - cx, y - cy) < 68) {
+    draggingCompass = true;
+    svg.setPointerCapture(e.pointerId);
+    return;
+  }
+  if ((mode === 'solenoid' || mode === 'coil') && y > 150 && y < 410 && x > 220 && x < 780) {
+    draggingSolenoid = true;
+    dragStartX = x;
+    startYaw = solYaw;
+    svg.setPointerCapture(e.pointerId);
+  }
+});
+
+svg.addEventListener('pointermove', (e) => {
+  const r = svg.getBoundingClientRect();
+  const x = ((e.clientX - r.left) / r.width) * 1000;
+  const y = ((e.clientY - r.top) / r.height) * 600;
+
+  if (draggingCompass) {
+    cx = Math.max(60, Math.min(940, x));
+    cy = Math.max(60, Math.min(470, y));
+  } else if (draggingSolenoid) {
+    solYaw = Math.max(-82, Math.min(82, startYaw + (x - dragStartX) * 0.35));
+    document.getElementById('rotSlider').value = Math.round(solYaw);
+    document.getElementById('rotVal').textContent = `${Math.round(solYaw)}°`;
+  }
+});
+
+window.addEventListener('pointerup', () => {
+  draggingCompass = false;
+  draggingSolenoid = false;
+});
+
+document.getElementById('rotSlider').oninput = (e) => {
+  solYaw = +e.target.value;
+  document.getElementById('rotVal').textContent = `${Math.round(solYaw)}°`;
+  draw();
+};
+
+document.querySelectorAll('[data-mode]').forEach((btn) => {
+  btn.onclick = () => {
+    document.querySelectorAll('[data-mode]').forEach((x) => x.classList.remove('on'));
+    btn.classList.add('on');
+    mode = btn.dataset.mode;
+    const isHelix = mode === 'coil' || mode === 'solenoid';
+    document.getElementById('rotBar').style.display = isHelix ? 'flex' : 'none';
+    cx = mode === 'straight' ? 680 : 820;
+    cy = isHelix ? 140 : 170;
+    draw();
+  };
+});
+
+document.getElementById('switchBtn').onclick = (e) => {
+  on = !on;
+  e.target.textContent = on ? '● Switch ON' : '○ Switch OFF';
+  e.target.className = on ? 'green' : 'red';
+  draw();
+};
+
+document.getElementById('polBtn').onclick = (e) => {
+  polarity *= -1;
+  e.target.textContent = polarity === 1 ? '⇄ Polarity: + → −' : '⇄ Polarity: − → +';
+  draw();
+};
+
+document.getElementById('fieldBtn').onclick = (e) => {
+  showField = !showField;
+  e.target.classList.toggle('on', showField);
+  e.target.textContent = showField ? '◉ Field ON' : '○ Field OFF';
+  draw();
+};
+
+document.getElementById('elecBtn').onclick = (e) => {
+  showElectrons = !showElectrons;
+  e.target.classList.toggle('on', showElectrons);
+  draw();
+};
+
+document.getElementById('handBtn').onclick = (e) => {
+  showHand = !showHand;
+  e.target.classList.toggle('on', showHand);
+  draw();
+};
+
+document.getElementById('compassBtn').onclick = (e) => {
+  showCompass = !showCompass;
+  e.target.classList.toggle('on', showCompass);
+  draw();
+};
+
+document.getElementById('turns').oninput = (e) => {
+  turns = +e.target.value;
+  document.getElementById('turnVal').textContent = turns;
+  draw();
+};
+
+document.getElementById('speed').oninput = (e) => { speed = +e.target.value; };
+
+document.getElementById('resetBtn').onclick = () => {
+  solYaw = 0;
+  document.getElementById('rotSlider').value = 0;
+  document.getElementById('rotVal').textContent = '0°';
+  cx = mode === 'straight' ? 680 : 820;
+  cy = mode === 'straight' ? 175 : 140;
+  angle = 90;
+  draw();
+};
+
+setInterval(() => {
+  t += 0.06;
+  updateCompass();
+  draw();
+}, 50);
+
+draw();
+</script>
+</body>
+</html>
